@@ -157,13 +157,10 @@ export const startProSubscription = createServerFn({ method: "POST" })
 
     const baseUrl = resolveBaseUrl(data.origin ?? null);
     const backUrl = `${baseUrl}/assinatura`;
-    const planId = await ensureProPlanId(backUrl);
-
     const email = (context.claims as { email?: string } | undefined)?.email;
     if (!email) throw new Error("E-mail do usuário indisponível.");
 
     const preapproval = await createPreapproval({
-      planId,
       externalReference: store.id,
       payerEmail: email,
       backUrl,
