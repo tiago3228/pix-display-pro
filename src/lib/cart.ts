@@ -91,7 +91,9 @@ export function buildOrderMessage(opts: {
   paid: boolean;
   customerName?: string;
   note?: string;
+  installments?: number;
 }) {
+
   const lines: string[] = [];
   lines.push(`Olá, ${opts.sellerName || "tudo bem"}! 😊`);
   lines.push("");
