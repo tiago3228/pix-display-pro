@@ -38,6 +38,10 @@ export type MyStore = {
   plan: string;
   is_active: boolean;
   onboarding_done: boolean;
+  accept_pix: boolean;
+  allow_installments: boolean;
+  max_installments: number;
+  min_installment_amount: number;
 };
 
 export function useMyStore() {
