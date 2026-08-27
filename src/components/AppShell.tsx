@@ -171,7 +171,10 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="mx-auto max-w-5xl px-4 py-5 pb-24 lg:pb-8">{children}</main>
+        <main className="mx-auto max-w-5xl px-4 py-5 pb-24 lg:pb-8">
+          {children}
+          <p className="mt-8 text-center text-xs text-muted-foreground/70">By: Tiago Cardoso</p>
+        </main>
       </div>
 
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur lg:hidden">
