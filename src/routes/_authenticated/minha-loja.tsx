@@ -30,6 +30,7 @@ function MyStore() {
   const { data: store } = useMyStore();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const isPro = store?.plan === "pro";
   const [form, setForm] = useState({
     name: "",
     seller_name: "",
@@ -43,6 +44,10 @@ function MyStore() {
     pix_key_type: "email",
     pix_key: "",
     is_active: true,
+    accept_pix: true,
+    allow_installments: false,
+    max_installments: 3,
+    min_installment_amount: 20,
   });
 
   useEffect(() => {
@@ -60,8 +65,13 @@ function MyStore() {
       pix_key_type: store.pix_key_type,
       pix_key: store.pix_key,
       is_active: store.is_active,
+      accept_pix: store.accept_pix,
+      allow_installments: store.allow_installments,
+      max_installments: store.max_installments,
+      min_installment_amount: Number(store.min_installment_amount),
     });
   }, [store]);
+
 
   async function uploadImage(kind: "logo_url" | "banner_url", file: File) {
     const { data: userData } = await supabase.auth.getUser();
