@@ -96,7 +96,7 @@ function Collections() {
   });
 
   const paidMutation = useMutation({
-    mutationFn: (row: Row) => markPaid({ data: { installmentId: row.id, paid: true } }),
+    mutationFn: (row: Row) => markPaid({ data: { installmentId: row.id } }),
     onSuccess: () => {
       toast.success("Parcela marcada como paga.");
       queryClient.invalidateQueries({ queryKey: ["installments", store?.id] });
