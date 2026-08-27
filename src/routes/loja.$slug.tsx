@@ -164,13 +164,15 @@ function StorePage() {
   async function handleSend() {
     if (!cart.items.length) return;
     setSending(true);
+    const count = plans.some((p) => p.count === installments) ? installments : 1;
     const message = buildOrderMessage({
       sellerName: store.seller_name || store.name,
       items: cart.items,
       total: cart.total,
-      paid,
+      paid: count > 1 ? false : paid,
       customerName: customer.name,
       note: customer.note,
+      installments: count,
     });
     try {
       await sendOrder({
@@ -179,7 +181,9 @@ function StorePage() {
           customerName: customer.name,
           customerWhatsapp: customer.whatsapp,
           note: customer.note,
-          paymentDeclared: paid,
+          paymentDeclared: count > 1 ? false : paid,
+          paymentMethod: count > 1 ? "parcelado" : "pix_avista",
+          installments: count,
           items: cart.items.map((i) => ({
             productId: i.productId,
             variantId: i.variantId ?? null,
@@ -199,7 +203,9 @@ function StorePage() {
     setCartOpen(false);
     setStep("cart");
     setPaid(false);
+    setInstallments(1);
     toast.success("Pedido enviado para o WhatsApp da loja!");
+
   }
 
   const pixTypeLabel =
