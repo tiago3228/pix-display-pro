@@ -47,6 +47,14 @@ export function AppShell({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: isAdmin } = useIsAdmin();
+  const { data: store, isLoading: storeLoading } = useMyStore();
+
+  useEffect(() => {
+    if (!storeLoading && (!store || !store.onboarding_done)) {
+      navigate({ to: "/onboarding", replace: true });
+    }
+  }, [store, storeLoading, navigate]);
+
 
   async function signOut() {
     await queryClient.cancelQueries();
