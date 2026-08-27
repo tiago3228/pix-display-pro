@@ -15,7 +15,10 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedPedidosRouteImport } from './routes/_authenticated/pedidos'
 import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -47,9 +50,24 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPedidosRoute = AuthenticatedPedidosRouteImport.update({
+  id: '/pedidos',
+  path: '/pedidos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const LojaSlugRoute = LojaSlugRouteImport.update({
@@ -64,7 +82,10 @@ export interface FileRoutesByFullPath {
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/clientes': typeof AuthenticatedClientesRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/pedidos': typeof AuthenticatedPedidosRoute
   '/loja/$slug': typeof LojaSlugRoute
 }
 export interface FileRoutesByTo {
@@ -73,7 +94,10 @@ export interface FileRoutesByTo {
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/clientes': typeof AuthenticatedClientesRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/pedidos': typeof AuthenticatedPedidosRoute
   '/loja/$slug': typeof LojaSlugRoute
 }
 export interface FileRoutesById {
@@ -84,7 +108,10 @@ export interface FileRoutesById {
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/_authenticated/clientes': typeof AuthenticatedClientesRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/pedidos': typeof AuthenticatedPedidosRoute
   '/loja/$slug': typeof LojaSlugRoute
 }
 export interface FileRouteTypes {
@@ -95,7 +122,10 @@ export interface FileRouteTypes {
     | '/recuperar-senha'
     | '/reset-password'
     | '/signup'
+    | '/clientes'
+    | '/dashboard'
     | '/onboarding'
+    | '/pedidos'
     | '/loja/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -104,7 +134,10 @@ export interface FileRouteTypes {
     | '/recuperar-senha'
     | '/reset-password'
     | '/signup'
+    | '/clientes'
+    | '/dashboard'
     | '/onboarding'
+    | '/pedidos'
     | '/loja/$slug'
   id:
     | '__root__'
@@ -114,7 +147,10 @@ export interface FileRouteTypes {
     | '/recuperar-senha'
     | '/reset-password'
     | '/signup'
+    | '/_authenticated/clientes'
+    | '/_authenticated/dashboard'
     | '/_authenticated/onboarding'
+    | '/_authenticated/pedidos'
     | '/loja/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -172,11 +208,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/clientes': {
+      id: '/_authenticated/clientes'
+      path: '/clientes'
+      fullPath: '/clientes'
+      preLoaderRoute: typeof AuthenticatedClientesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pedidos': {
+      id: '/_authenticated/pedidos'
+      path: '/pedidos'
+      fullPath: '/pedidos'
+      preLoaderRoute: typeof AuthenticatedPedidosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/loja/$slug': {
@@ -190,11 +247,17 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedPedidosRoute: typeof AuthenticatedPedidosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedClientesRoute: AuthenticatedClientesRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedPedidosRoute: AuthenticatedPedidosRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
