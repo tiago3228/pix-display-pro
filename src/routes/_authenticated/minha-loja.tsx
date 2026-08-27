@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/minha-loja")({
 const COLORS = ["#0f766e", "#e11d48", "#7c3aed", "#ea580c", "#2563eb", "#16a34a", "#111827"];
 
 function MyStore() {
-  const { data: store } = useMyStore();
+  const { data: store, refetch } = useMyStore();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(
@@ -93,10 +93,6 @@ function MyStore() {
   }
 
   async function save() {
-    if (!store) {
-      setFeedback({ type: "error", text: "Carregando sua loja... tente novamente em instantes." });
-      return;
-    }
     setFeedback(null);
 
     if (!form.name.trim() || !form.seller_name.trim()) {
@@ -113,19 +109,45 @@ function MyStore() {
     }
 
     setSaving(true);
-    const { error } = await supabase
-      .from("stores")
-      .update({
-        ...form,
-        slug: slugify(form.slug) || store.slug,
-        instagram: form.instagram || null,
-      })
-      .eq("id", store.id);
+    let current = store;
+    if (!current) {
+      const { data: fresh } = await refetch();
+      current = fresh ?? null;
+    }
+
+    const payload = {
+      ...form,
+      slug: slugify(form.slug) || slugify(form.name),
+      instagram: form.instagram || null,
+    };
+
+    let error = null as { message: string } | null;
+    if (current) {
+      const res = await supabase
+        .from("stores")
+        .update({ ...payload, slug: payload.slug || current.slug })
+        .eq("id", current.id);
+      error = res.error;
+    } else {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
+        setSaving(false);
+        const text = "Sessão expirada. Entre novamente para salvar.";
+        setFeedback({ type: "error", text });
+        toast.error(text);
+        return;
+      }
+      const res = await supabase
+        .from("stores")
+        .insert({ ...payload, owner_id: userData.user.id, onboarding_done: true } as never);
+      error = res.error;
+    }
     setSaving(false);
     if (error) {
-      const text = error.message.includes("duplicate")
-        ? "Esse endereço de loja já está em uso."
-        : `Não foi possível salvar: ${error.message}`;
+      const text =
+        error.message.includes("duplicate") || error.message.includes("unique")
+          ? "Esse endereço de loja já está em uso. Escolha outro."
+          : `Não foi possível salvar: ${error.message}`;
       setFeedback({ type: "error", text });
       toast.error(text);
       return;
@@ -134,6 +156,8 @@ function MyStore() {
     toast.success("Loja atualizada!");
     queryClient.invalidateQueries({ queryKey: ["my-store"] });
   }
+
+
 
   return (
     <AppShell title="Minha loja" description="Personalize sua vitrine">
