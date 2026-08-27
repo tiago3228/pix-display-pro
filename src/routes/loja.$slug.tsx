@@ -21,7 +21,7 @@ import {
   type StorefrontProduct,
 } from "@/lib/storefront.functions";
 import { useCart, buildOrderMessage, type CartItem } from "@/lib/cart";
-import { brl, whatsappLink, PIX_KEY_TYPES } from "@/lib/format";
+import { brl, whatsappLink, installmentOptions, PIX_KEY_TYPES } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -101,6 +101,7 @@ function StorePage() {
   const [cartOpen, setCartOpen] = useState(false);
   const [step, setStep] = useState<Step>("cart");
   const [paid, setPaid] = useState(false);
+  const [installments, setInstallments] = useState(1);
   const [customer, setCustomer] = useState({ name: "", whatsapp: "", note: "" });
   const [sending, setSending] = useState(false);
 
@@ -110,6 +111,16 @@ function StorePage() {
     if (activeCategory === "featured") return data.products.filter((p) => p.is_featured);
     return data.products.filter((p) => p.category_id === activeCategory);
   }, [data, activeCategory]);
+
+  const plans = useMemo(() => {
+    if (!data?.store.allow_installments) return [];
+    return installmentOptions(
+      cart.total,
+      data.store.max_installments,
+      data.store.min_installment_amount,
+    );
+  }, [data, cart.total]);
+
 
   if (!data) {
     return (
@@ -153,13 +164,15 @@ function StorePage() {
   async function handleSend() {
     if (!cart.items.length) return;
     setSending(true);
+    const count = plans.some((p) => p.count === installments) ? installments : 1;
     const message = buildOrderMessage({
       sellerName: store.seller_name || store.name,
       items: cart.items,
       total: cart.total,
-      paid,
+      paid: count > 1 ? false : paid,
       customerName: customer.name,
       note: customer.note,
+      installments: count,
     });
     try {
       await sendOrder({
@@ -168,7 +181,9 @@ function StorePage() {
           customerName: customer.name,
           customerWhatsapp: customer.whatsapp,
           note: customer.note,
-          paymentDeclared: paid,
+          paymentDeclared: count > 1 ? false : paid,
+          paymentMethod: count > 1 ? "parcelado" : "pix_avista",
+          installments: count,
           items: cart.items.map((i) => ({
             productId: i.productId,
             variantId: i.variantId ?? null,
@@ -188,7 +203,9 @@ function StorePage() {
     setCartOpen(false);
     setStep("cart");
     setPaid(false);
+    setInstallments(1);
     toast.success("Pedido enviado para o WhatsApp da loja!");
+
   }
 
   const pixTypeLabel =
@@ -465,8 +482,52 @@ function StorePage() {
 
             {step === "checkout" && cart.items.length > 0 ? (
               <div className="space-y-4 pt-2">
+                {plans.length > 0 ? (
+                  <div className="rounded-xl border bg-card p-4">
+                    <p className="text-sm font-semibold">Como você quer pagar?</p>
+                    <div className="mt-3 space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => setInstallments(1)}
+                        className={`w-full rounded-lg border p-3 text-left text-sm transition ${
+                          installments === 1 ? "border-foreground" : "border-border"
+                        }`}
+                      >
+                        <span className="font-medium">Pix à vista</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {brl(cart.total)}
+                        </span>
+                      </button>
+                      {plans.map((plan) => (
+                        <button
+                          key={plan.count}
+                          type="button"
+                          onClick={() => setInstallments(plan.count)}
+                          className={`w-full rounded-lg border p-3 text-left text-sm transition ${
+                            installments === plan.count ? "border-foreground" : "border-border"
+                          }`}
+                        >
+                          <span className="font-medium">{plan.label}</span>
+                          <span className="block text-xs text-muted-foreground">
+                            Total {brl(cart.total)} · sem juros
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                    {installments > 1 ? (
+                      <p className="mt-3 rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+                        Parcelamento combinado diretamente com o vendedor. Não é parcelamento
+                        bancário nem cartão de crédito: você paga cada parcela por Pix nas datas
+                        combinadas e recebe lembretes pelo WhatsApp.
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 <div className="rounded-xl border bg-card p-4">
-                  <p className="text-sm font-semibold">Pagamento via Pix</p>
+                  <p className="text-sm font-semibold">
+                    {installments > 1 ? "Pix das parcelas" : "Pagamento via Pix"}
+                  </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {pixTypeLabel} do vendedor
                   </p>
@@ -484,19 +545,26 @@ function StorePage() {
                   >
                     <Copy className="mr-2 size-4" /> Copiar chave Pix
                   </Button>
-                  <label className="mt-3 flex items-start gap-2 text-sm">
-                    <Checkbox
-                      checked={paid}
-                      onCheckedChange={(value) => setPaid(value === true)}
-                      className="mt-0.5"
-                    />
-                    <span>Já fiz o pagamento (opcional)</span>
-                  </label>
+                  {installments === 1 ? (
+                    <label className="mt-3 flex items-start gap-2 text-sm">
+                      <Checkbox
+                        checked={paid}
+                        onCheckedChange={(value) => setPaid(value === true)}
+                        className="mt-0.5"
+                      />
+                      <span>Já fiz o pagamento (opcional)</span>
+                    </label>
+                  ) : (
+                    <p className="mt-3 text-xs text-muted-foreground">
+                      A primeira parcela vence hoje e as demais a cada 30 dias.
+                    </p>
+                  )}
                   <p className="mt-2 text-xs text-muted-foreground">
                     O pagamento é feito diretamente para o vendedor. O Vitrini não recebe nem
                     guarda esse valor.
                   </p>
                 </div>
+
 
                 <div className="space-y-3">
                   <div className="space-y-1.5">
