@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
