@@ -23,6 +23,8 @@ const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/produtos", label: "Produtos", icon: Package },
   { to: "/pedidos", label: "Pedidos", icon: ShoppingCart },
+  { to: "/cobrancas", label: "Cobranças", icon: Wallet },
+
   { to: "/minha-loja", label: "Minha Loja", icon: Store },
   { to: "/qrcodes", label: "QR Codes", icon: QrCode },
   { to: "/clientes", label: "Clientes", icon: Users },
