@@ -50,14 +50,17 @@ export function AppShell({
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { data: isAdmin } = useIsAdmin();
+  const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
   const { data: store, isLoading: storeLoading } = useMyStore();
 
   useEffect(() => {
-    if (!storeLoading && (!store || !store.onboarding_done)) {
+    if (adminLoading || storeLoading) return;
+    if (isAdmin) return;
+    if (!store || !store.onboarding_done) {
       navigate({ to: "/onboarding", replace: true });
     }
-  }, [store, storeLoading, navigate]);
+  }, [store, storeLoading, isAdmin, adminLoading, navigate]);
+
 
   async function signOut() {
     await queryClient.cancelQueries();
