@@ -58,13 +58,18 @@ export async function ensureProPlanId(backUrl: string): Promise<string> {
   return plan.id;
 }
 
-/** Mantém `stores.plan` coerente com o status real da assinatura. */
+/** Mantém `stores.plan` coerente com o status real da assinatura (e com o Pix manual aprovado). */
 export async function applyPlanToStore(storeId: string, status: string, graceUntil: string | null) {
   const db = await admin();
-  const plan = statusGrantsPro(status, graceUntil) ? "pro" : "free";
+  let plan = statusGrantsPro(status, graceUntil) ? "pro" : "free";
+  if (plan === "free") {
+    const { activePixGrant } = await import("./pro-pix.server");
+    if (await activePixGrant(storeId)) plan = "pro";
+  }
   await db.from("stores").update({ plan }).eq("id", storeId);
   return plan;
 }
+
 
 /**
  * Fonte da verdade: aplica no banco o estado devolvido pela API do Mercado Pago.
