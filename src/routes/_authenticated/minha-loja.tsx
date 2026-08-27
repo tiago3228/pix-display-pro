@@ -90,7 +90,25 @@ function MyStore() {
   }
 
   async function save() {
-    if (!store) return;
+    if (!store) {
+      setFeedback({ type: "error", text: "Carregando sua loja... tente novamente em instantes." });
+      return;
+    }
+    setFeedback(null);
+
+    if (!form.name.trim() || !form.seller_name.trim()) {
+      const text = "Preencha o nome da loja e o nome do vendedor.";
+      setFeedback({ type: "error", text });
+      toast.error(text);
+      return;
+    }
+    if (!form.whatsapp.trim()) {
+      const text = "Informe o WhatsApp da loja.";
+      setFeedback({ type: "error", text });
+      toast.error(text);
+      return;
+    }
+
     setSaving(true);
     const { error } = await supabase
       .from("stores")
@@ -102,13 +120,14 @@ function MyStore() {
       .eq("id", store.id);
     setSaving(false);
     if (error) {
-      toast.error(
-        error.message.includes("duplicate")
-          ? "Esse endereço de loja já está em uso."
-          : "Não foi possível salvar.",
-      );
+      const text = error.message.includes("duplicate")
+        ? "Esse endereço de loja já está em uso."
+        : `Não foi possível salvar: ${error.message}`;
+      setFeedback({ type: "error", text });
+      toast.error(text);
       return;
     }
+    setFeedback({ type: "success", text: "Alterações salvas com sucesso." });
     toast.success("Loja atualizada!");
     queryClient.invalidateQueries({ queryKey: ["my-store"] });
   }
