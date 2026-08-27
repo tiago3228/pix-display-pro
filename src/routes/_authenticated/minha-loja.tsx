@@ -72,13 +72,15 @@ function MyStore() {
     });
   }, [store]);
 
-
   async function uploadImage(kind: "logo_url" | "banner_url", file: File) {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user || !store) return;
     try {
       const path = await uploadAsset(userData.user.id, file);
-      const { error } = await supabase.from("stores").update({ [kind]: path } as never).eq("id", store.id);
+      const { error } = await supabase
+        .from("stores")
+        .update({ [kind]: path } as never)
+        .eq("id", store.id);
       if (error) throw error;
       toast.success("Imagem atualizada.");
       queryClient.invalidateQueries({ queryKey: ["my-store"] });
@@ -92,7 +94,11 @@ function MyStore() {
     setSaving(true);
     const { error } = await supabase
       .from("stores")
-      .update({ ...form, slug: slugify(form.slug) || store.slug, instagram: form.instagram || null })
+      .update({
+        ...form,
+        slug: slugify(form.slug) || store.slug,
+        instagram: form.instagram || null,
+      })
       .eq("id", store.id);
     setSaving(false);
     if (error) {
@@ -269,7 +275,6 @@ function MyStore() {
         </div>
 
         <div className="space-y-3 rounded-lg border border-border p-3">
-
           <p className="text-sm font-semibold">Formas de pagamento</p>
 
           <div className="flex items-center justify-between gap-3">
@@ -343,4 +348,3 @@ function MyStore() {
     </AppShell>
   );
 }
-

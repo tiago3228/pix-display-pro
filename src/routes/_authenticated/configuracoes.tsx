@@ -46,9 +46,7 @@ function Settings() {
       email: user.email ?? null,
     });
     setSaving(false);
-    toast[error ? "error" : "success"](
-      error ? "Não foi possível salvar." : "Dados atualizados.",
-    );
+    toast[error ? "error" : "success"](error ? "Não foi possível salvar." : "Dados atualizados.");
   }
 
   async function changePassword() {

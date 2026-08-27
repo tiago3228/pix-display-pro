@@ -59,12 +59,18 @@ const NICHES = [
 ];
 
 const FAQ: { q: string; a: string }[] = [
-  { q: "Preciso instalar algum aplicativo?", a: "Não. Sua loja funciona diretamente pelo navegador." },
+  {
+    q: "Preciso instalar algum aplicativo?",
+    a: "Não. Sua loja funciona diretamente pelo navegador.",
+  },
   { q: "Meu cliente precisa criar conta?", a: "Não. Ele escolhe os produtos e envia o pedido." },
   { q: "O pedido chega onde?", a: "Diretamente no seu WhatsApp, já com o resumo pronto." },
   { q: "Como recebo o pagamento?", a: "O cliente paga direto para você usando a sua chave Pix." },
   { q: "Vocês cobram comissão?", a: "Não. O plano tem mensalidade fixa e nenhuma taxa por venda." },
-  { q: "Posso vender roupas, doces ou joias?", a: "Sim. E também cosméticos, artesanato e muito mais." },
+  {
+    q: "Posso vender roupas, doces ou joias?",
+    a: "Sim. E também cosméticos, artesanato e muito mais.",
+  },
 ];
 
 function Landing() {
@@ -107,8 +113,7 @@ function Landing() {
                 <Smartphone className="size-3.5" /> Feito para quem vende pelo WhatsApp
               </span>
               <h1 className="mt-5 text-4xl leading-tight font-bold sm:text-5xl">
-                Venda seus produtos de um jeito{" "}
-                <span className="text-gradient">mais simples.</span>
+                Venda seus produtos de um jeito <span className="text-gradient">mais simples.</span>
               </h1>
               <p className="mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
                 Crie sua vitrine online, compartilhe seu QR Code, receba pedidos pelo WhatsApp e
@@ -178,9 +183,7 @@ function Landing() {
                   <div className="flex size-10 items-center justify-center rounded-lg bg-primary/12 text-primary">
                     <step.icon className="size-5" />
                   </div>
-                  <p className="mt-4 text-xs font-semibold text-muted-foreground">
-                    Passo {i + 1}
-                  </p>
+                  <p className="mt-4 text-xs font-semibold text-muted-foreground">Passo {i + 1}</p>
                   <h3 className="text-base font-semibold">{step.title}</h3>
                   <p className="mt-1 text-sm text-muted-foreground">{step.text}</p>
                 </div>
@@ -205,9 +208,7 @@ function Landing() {
         <section id="precos" className="border-y border-border bg-card/60 py-16">
           <div className="mx-auto max-w-4xl px-4">
             <h2 className="text-2xl font-bold sm:text-3xl">Preço simples</h2>
-            <p className="mt-2 text-muted-foreground">
-              Sem comissão sobre suas vendas. Nunca.
-            </p>
+            <p className="mt-2 text-muted-foreground">Sem comissão sobre suas vendas. Nunca.</p>
             <div className="mt-8 grid gap-4 md:grid-cols-2">
               <div className="surface p-6">
                 <p className="text-sm font-semibold text-muted-foreground">GRÁTIS</p>

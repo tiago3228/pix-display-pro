@@ -24,9 +24,7 @@ export type CollectionView = {
  * token aleatório. Nenhum ID interno é exposto na URL nem na resposta.
  */
 export const getCollection = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) =>
-    z.object({ token: z.string().min(16).max(120) }).parse(data),
-  )
+  .inputValidator((data: unknown) => z.object({ token: z.string().min(16).max(120) }).parse(data))
   .handler(async ({ data }): Promise<CollectionView> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -42,7 +40,9 @@ export const getCollection = createServerFn({ method: "GET" })
     const [{ data: store }, { data: order }, { data: items }] = await Promise.all([
       supabaseAdmin
         .from("stores")
-        .select("name, slug, seller_name, whatsapp, primary_color, pix_key, pix_key_type, is_active")
+        .select(
+          "name, slug, seller_name, whatsapp, primary_color, pix_key, pix_key_type, is_active",
+        )
         .eq("id", installment.store_id)
         .maybeSingle(),
       supabaseAdmin
@@ -59,7 +59,9 @@ export const getCollection = createServerFn({ method: "GET" })
     if (!store || !store.is_active) return null;
 
     const productName = (items ?? [])
-      .map((i) => `${i.quantity}x ${i.product_name}${i.variant_label ? ` (${i.variant_label})` : ""}`)
+      .map(
+        (i) => `${i.quantity}x ${i.product_name}${i.variant_label ? ` (${i.variant_label})` : ""}`,
+      )
       .join(", ");
 
     return {

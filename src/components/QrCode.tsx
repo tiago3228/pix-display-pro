@@ -38,9 +38,7 @@ export function QrImage({
       />
     );
   }
-  return (
-    <img src={dataUrl} alt={alt} width={size} height={size} className={className} />
-  );
+  return <img src={dataUrl} alt={alt} width={size} height={size} className={className} />;
 }
 
 export function downloadQr(dataUrl: string, filename: string) {

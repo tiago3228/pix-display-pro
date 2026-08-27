@@ -93,7 +93,6 @@ export function buildOrderMessage(opts: {
   note?: string;
   installments?: number;
 }) {
-
   const lines: string[] = [];
   lines.push(`Olá, ${opts.sellerName || "tudo bem"}! 😊`);
   lines.push("");
@@ -134,4 +133,3 @@ export function buildOrderMessage(opts: {
   }
   return lines.join("\n");
 }
-

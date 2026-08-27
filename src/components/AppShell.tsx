@@ -14,11 +14,11 @@ import {
   Store,
   Users,
   Wallet,
-
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin, useMyStore } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/BackButton";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -58,7 +58,6 @@ export function AppShell({
       navigate({ to: "/onboarding", replace: true });
     }
   }, [store, storeLoading, navigate]);
-
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -114,12 +113,18 @@ export function AppShell({
       <div className="lg:pl-60">
         <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
           <div className="flex items-center justify-between gap-3 px-4 py-3">
-            <div className="min-w-0">
-              <h1 className="truncate text-lg font-bold">{title}</h1>
-              {description ? (
-                <p className="truncate text-xs text-muted-foreground">{description}</p>
-              ) : null}
+            <div className="flex min-w-0 items-center gap-2">
+              {pathname === "/dashboard" ? null : (
+                <BackButton fallbackTo="/dashboard" iconOnly className="-ml-1 shrink-0" />
+              )}
+              <div className="min-w-0">
+                <h1 className="truncate text-lg font-bold">{title}</h1>
+                {description ? (
+                  <p className="truncate text-xs text-muted-foreground">{description}</p>
+                ) : null}
+              </div>
             </div>
+
             <div className="flex shrink-0 items-center gap-2">
               {action}
               <Button

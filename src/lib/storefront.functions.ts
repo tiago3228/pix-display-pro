@@ -55,14 +55,10 @@ export const getStorefront = createServerFn({ method: "GET" })
   .inputValidator((data: { slug: string }) => z.object({ slug: z.string().min(1) }).parse(data))
   .handler(async ({ data }): Promise<Storefront> => {
     const supabase = createPublicClient();
-    const { data: store } = await supabase
-      .from("stores")
-      .select(
-        "id, slug, name, seller_name, description, category, whatsapp, instagram, logo_url, banner_url, primary_color, welcome_message, pix_key, pix_key_type, accept_pix, allow_installments, max_installments, min_installment_amount, plan",
-      )
-      .eq("slug", data.slug)
-      .eq("is_active", true)
-      .maybeSingle();
+    // A leitura pública passa por uma função segura que devolve apenas os
+    // campos necessários para a vitrine (sem owner_id nem dados internos).
+    const { data: stores } = await supabase.rpc("get_public_store", { _slug: data.slug });
+    const store = stores?.[0] ?? null;
 
     if (!store) return null;
 
@@ -99,8 +95,11 @@ export const getStorefront = createServerFn({ method: "GET" })
         : Promise.resolve({ data: [] as never[] }),
     ]);
 
-    const paths = [store.logo_url, store.banner_url, ...(products ?? []).map((p) => p.image_url)]
-      .filter((p): p is string => Boolean(p) && !p!.startsWith("http"));
+    const paths = [
+      store.logo_url,
+      store.banner_url,
+      ...(products ?? []).map((p) => p.image_url),
+    ].filter((p): p is string => Boolean(p) && !p!.startsWith("http"));
     const signed = new Map<string, string>();
     if (paths.length) {
       const { data: urls } = await supabase.storage
@@ -130,8 +129,9 @@ export const getStorefront = createServerFn({ method: "GET" })
         pix_key: store.pix_key,
         pix_key_type: store.pix_key_type,
         accept_pix: store.accept_pix,
-        // Parcelamento é um recurso PRO: o backend decide, nunca o frontend.
-        allow_installments: store.allow_installments && store.plan === "pro",
+        // Parcelamento é um recurso PRO: a própria função do banco já aplica a regra.
+        allow_installments: store.allow_installments,
+
         max_installments: store.max_installments,
         min_installment_amount: Number(store.min_installment_amount),
       },
@@ -303,13 +303,16 @@ export const submitOrder = createServerFn({ method: "POST" })
       .insert(items.map((i) => ({ ...i, order_id: order.id })));
 
     if (installmentCount > 1) {
-      const { splitInstallments } = await import("./format");
+      const { splitInstallments, FIRST_DUE_OFFSET_DAYS, INSTALLMENT_INTERVAL_DAYS } =
+        await import("./format");
       const values = splitInstallments(total, installmentCount);
       const today = new Date();
       await supabaseAdmin.from("installments").insert(
         values.map((amount, index) => {
           const due = new Date(today);
-          due.setDate(due.getDate() + index * 30);
+          // Parcela 1 vence em +30 dias, parcela 2 em +60, e assim por diante.
+          due.setDate(due.getDate() + FIRST_DUE_OFFSET_DAYS + index * INSTALLMENT_INTERVAL_DAYS);
+
           return {
             store_id: store.id,
             order_id: order.id,

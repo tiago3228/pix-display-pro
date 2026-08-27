@@ -28,13 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
@@ -43,10 +37,7 @@ export const Route = createFileRoute("/loja/$slug")({
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
-        meta: [
-          { title: "Loja não encontrada | Vitrini" },
-          { name: "robots", content: "noindex" },
-        ],
+        meta: [{ title: "Loja não encontrada | Vitrini" }, { name: "robots", content: "noindex" }],
       };
     }
     const { store } = loaderData;
@@ -120,7 +111,6 @@ function StorePage() {
       data.store.min_installment_amount,
     );
   }, [data, cart.total]);
-
 
   if (!data) {
     return (
@@ -205,7 +195,6 @@ function StorePage() {
     setPaid(false);
     setInstallments(1);
     toast.success("Pedido enviado para o WhatsApp da loja!");
-
   }
 
   const pixTypeLabel =
@@ -330,9 +319,7 @@ function StorePage() {
                     </p>
                     <div className="mt-1 flex items-center gap-2">
                       <span className="text-base font-bold">{brl(product.price)}</span>
-                      {status === "last" ? (
-                        <Badge variant="secondary">Última unidade</Badge>
-                      ) : null}
+                      {status === "last" ? <Badge variant="secondary">Última unidade</Badge> : null}
                       {status === "sold_out" || status === "unavailable" ? (
                         <Badge variant="outline">Esgotado</Badge>
                       ) : null}
@@ -439,17 +426,13 @@ function StorePage() {
                       >
                         <Minus className="size-3.5" />
                       </Button>
-                      <span className="w-6 text-center text-sm font-semibold">
-                        {item.quantity}
-                      </span>
+                      <span className="w-6 text-center text-sm font-semibold">{item.quantity}</span>
                       <Button
                         size="icon"
                         variant="outline"
                         className="size-8"
                         aria-label="Aumentar"
-                        disabled={
-                          item.maxQuantity != null && item.quantity >= item.maxQuantity
-                        }
+                        disabled={item.maxQuantity != null && item.quantity >= item.maxQuantity}
                         onClick={() => cart.setQuantity(item.key, item.quantity + 1)}
                       >
                         <Plus className="size-3.5" />
@@ -528,9 +511,7 @@ function StorePage() {
                   <p className="text-sm font-semibold">
                     {installments > 1 ? "Pix das parcelas" : "Pagamento via Pix"}
                   </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {pixTypeLabel} do vendedor
-                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">{pixTypeLabel} do vendedor</p>
                   <p className="mt-1 font-mono text-sm break-all">
                     {store.pix_key || "Chave Pix não cadastrada"}
                   </p>
@@ -560,11 +541,10 @@ function StorePage() {
                     </p>
                   )}
                   <p className="mt-2 text-xs text-muted-foreground">
-                    O pagamento é feito diretamente para o vendedor. O Vitrini não recebe nem
-                    guarda esse valor.
+                    O pagamento é feito diretamente para o vendedor. O Vitrini não recebe nem guarda
+                    esse valor.
                   </p>
                 </div>
-
 
                 <div className="space-y-3">
                   <div className="space-y-1.5">
@@ -680,7 +660,10 @@ function VariantDialog({
   const [choices, setChoices] = useState<Record<string, string>>({});
 
   const label = product
-    ? product.options.map((o) => choices[o.name]).filter(Boolean).join(" / ")
+    ? product.options
+        .map((o) => choices[o.name])
+        .filter(Boolean)
+        .join(" / ")
     : "";
   const variant = product?.variants.find((v) => v.label === label) ?? null;
   const complete = product ? product.options.every((o) => choices[o.name]) : false;
@@ -727,9 +710,7 @@ function VariantDialog({
               </div>
             ))}
             <div className="flex items-center justify-between border-t pt-3">
-              <span className="text-lg font-bold">
-                {brl(variant?.price ?? product.price)}
-              </span>
+              <span className="text-lg font-bold">{brl(variant?.price ?? product.price)}</span>
               {complete ? (
                 outOfStock ? (
                   <Badge variant="outline">Esgotado</Badge>

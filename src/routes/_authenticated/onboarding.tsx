@@ -245,9 +245,7 @@ function Onboarding() {
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={(e) =>
-                      setForm({ ...form, logoFile: e.target.files?.[0] ?? null })
-                    }
+                    onChange={(e) => setForm({ ...form, logoFile: e.target.files?.[0] ?? null })}
                   />
                 </Field>
                 <Button className="h-11 w-full" disabled={saving} onClick={saveStore}>
@@ -352,9 +350,7 @@ function Onboarding() {
               <div className="mt-5 flex justify-center">
                 <QrImage value={storeUrl} size={180} alt="QR Code da loja" />
               </div>
-              <p className="mt-3 font-mono text-xs break-all text-muted-foreground">
-                {storeUrl}
-              </p>
+              <p className="mt-3 font-mono text-xs break-all text-muted-foreground">{storeUrl}</p>
               <div className="mt-5 grid gap-2">
                 <Button
                   variant="outline"

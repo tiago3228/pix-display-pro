@@ -2,7 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { CheckCircle2, Copy, MessageCircle, Store as StoreIcon } from "lucide-react";
 import { getCollection } from "@/lib/collection.functions";
-import { brl, formatDay, installmentState, daysLate, whatsappLink, PIX_KEY_TYPES } from "@/lib/format";
+import {
+  brl,
+  formatDay,
+  installmentState,
+  daysLate,
+  whatsappLink,
+  PIX_KEY_TYPES,
+} from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -109,7 +116,9 @@ function CollectionPage() {
           <section className="surface space-y-3 p-5">
             <p className="text-sm font-semibold">Pague com Pix</p>
             <p className="text-xs text-muted-foreground">{pixLabel} do vendedor</p>
-            <p className="font-mono text-sm break-all">{data.pixKey || "Chave Pix não cadastrada"}</p>
+            <p className="font-mono text-sm break-all">
+              {data.pixKey || "Chave Pix não cadastrada"}
+            </p>
             <Button
               className="h-12 w-full"
               disabled={!data.pixKey}
@@ -130,8 +139,8 @@ function CollectionPage() {
               <MessageCircle className="mr-2 size-4" /> Já paguei, avisar vendedor
             </Button>
             <p className="text-xs text-muted-foreground">
-              O pagamento vai direto para o vendedor. O Vitrini não recebe nem guarda esse valor —
-              a confirmação é feita pelo vendedor após verificar o recebimento.
+              O pagamento vai direto para o vendedor. O Vitrini não recebe nem guarda esse valor — a
+              confirmação é feita pelo vendedor após verificar o recebimento.
             </p>
           </section>
         ) : null}

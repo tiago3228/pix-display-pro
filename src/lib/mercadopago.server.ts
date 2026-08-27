@@ -68,7 +68,6 @@ async function mpFetch<T>(
   if (init.body !== undefined) request.body = JSON.stringify(init.body);
   const response = await fetch(`${API}${path}`, request);
 
-
   const text = await response.text();
   if (!response.ok) {
     // Log sem credenciais — apenas status e corpo de erro da API.
@@ -110,6 +109,9 @@ export async function createProPlan(backUrl: string): Promise<PreapprovalPlan> {
     body: {
       reason: PRO_PLAN_REASON,
       back_url: backUrl,
+      // Assinaturas não permitem configurar o webhook pelo painel:
+      // a notification_url precisa ser enviada na criação (doc oficial MP).
+      notification_url: webhookUrl(),
       auto_recurring: {
         frequency: 1,
         frequency_type: "months",
@@ -155,6 +157,8 @@ export async function createPreapproval(input: {
       external_reference: input.externalReference,
       payer_email: input.payerEmail,
       back_url: input.backUrl,
+      notification_url: webhookUrl(),
+
       status: "pending",
     },
   });
@@ -238,4 +242,23 @@ export function resolveBaseUrl(candidate?: string | null): string {
   if (clean && allowed(clean)) return clean;
   if (configured) return configured.replace(/\/$/, "");
   return "https://pix-display-pro.lovable.app";
+}
+
+/** Caminho público do webhook oficial do Mercado Pago. */
+export const MP_WEBHOOK_PATH = "/api/public/webhooks/mercadopago";
+
+/**
+ * URL absoluta informada ao Mercado Pago na criação do plano e da assinatura.
+ * Integrações de Assinaturas não permitem configurar o webhook pelo painel,
+ * portanto a `notification_url` precisa viajar no payload de criação.
+ */
+export function webhookUrl(): string {
+  // Sem o segredo de webhook o Mercado Pago enviaria notificações que o
+  // endpoint não consegue validar: bloqueamos a criação da assinatura.
+  if (!process.env["MERCADOPAGO_WEBHOOK_SECRET"]) {
+    throw new Error(
+      "Assinaturas indisponíveis: configure a chave secreta do webhook do Mercado Pago.",
+    );
+  }
+  return `${resolveBaseUrl(null)}${MP_WEBHOOK_PATH}`;
 }

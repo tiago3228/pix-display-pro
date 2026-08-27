@@ -96,7 +96,7 @@ function Collections() {
   });
 
   const paidMutation = useMutation({
-    mutationFn: (row: Row) => markPaid({ data: { installmentId: row.id, paid: true } }),
+    mutationFn: (row: Row) => markPaid({ data: { installmentId: row.id } }),
     onSuccess: () => {
       toast.success("Parcela marcada como paga.");
       queryClient.invalidateQueries({ queryKey: ["installments", store?.id] });
@@ -264,8 +264,8 @@ function Collections() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar recebimento?</AlertDialogTitle>
             <AlertDialogDescription>
-              Marque como pago somente depois de conferir o Pix na sua conta. O Vitrini não
-              confirma pagamentos automaticamente.
+              Marque como pago somente depois de conferir o Pix na sua conta. O Vitrini não confirma
+              pagamentos automaticamente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

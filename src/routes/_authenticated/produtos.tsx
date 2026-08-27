@@ -103,8 +103,7 @@ function Products() {
     },
   });
 
-  const limitReached =
-    store?.plan !== "pro" && (products?.length ?? 0) >= FREE_PLAN_PRODUCT_LIMIT;
+  const limitReached = store?.plan !== "pro" && (products?.length ?? 0) >= FREE_PLAN_PRODUCT_LIMIT;
 
   function openNew() {
     if (limitReached) {
@@ -540,10 +539,20 @@ function ProductCard({
         ) : null}
       </div>
       <div className="flex shrink-0 items-center">
-        <Button size="icon" variant="ghost" aria-label="Destacar" onClick={() => onToggle("is_featured")}>
+        <Button
+          size="icon"
+          variant="ghost"
+          aria-label="Destacar"
+          onClick={() => onToggle("is_featured")}
+        >
           <Star className="size-4" />
         </Button>
-        <Button size="icon" variant="ghost" aria-label="Ocultar" onClick={() => onToggle("is_hidden")}>
+        <Button
+          size="icon"
+          variant="ghost"
+          aria-label="Ocultar"
+          onClick={() => onToggle("is_hidden")}
+        >
           {product.is_hidden ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
         </Button>
         <Button size="icon" variant="ghost" aria-label="Editar" onClick={onEdit}>

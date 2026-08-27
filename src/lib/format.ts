@@ -146,3 +146,11 @@ export function reminderMessage(opts: {
     "Caso já tenha realizado o pagamento, desconsidere esta mensagem. ❤️",
   ].join("\n");
 }
+
+/**
+ * Vencimento da primeira parcela, em dias após a compra.
+ * Configurável no futuro por loja — hoje é a regra comercial padrão (+30 dias).
+ */
+export const FIRST_DUE_OFFSET_DAYS = 30;
+/** Intervalo entre as parcelas seguintes, em dias. */
+export const INSTALLMENT_INTERVAL_DAYS = 30;
