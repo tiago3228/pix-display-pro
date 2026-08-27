@@ -102,7 +102,10 @@ function Subscription() {
       }
       toast.error("Não foi possível iniciar a assinatura agora.");
     },
-    onError: () => toast.error("Não foi possível iniciar a assinatura agora."),
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : "";
+      toast.error(message || "Não foi possível iniciar a assinatura agora.");
+    },
   });
 
   const cancelMutation = useMutation({
