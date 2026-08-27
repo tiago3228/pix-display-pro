@@ -3,8 +3,8 @@
  *
  * Regras:
  * - O Access Token NUNCA sai daqui (nunca é retornado, logado ou enviado ao frontend).
- * - O ambiente padrão é SEMPRE `test`. Produção só é usada quando
- *   MERCADOPAGO_ENVIRONMENT === "live" E as credenciais de produção existem.
+ * - Produção é usada quando MERCADOPAGO_PROD_ACCESS_TOKEN existe.
+ *   MERCADOPAGO_ENVIRONMENT="test" força o sandbox mesmo assim.
  * - Endpoints usados (API oficial de Assinaturas):
  *     POST /preapproval_plan
  *     GET  /preapproval_plan/search
