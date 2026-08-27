@@ -28,7 +28,7 @@ function SignupPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", password: "", whatsapp: "" });
   const [loading, setLoading] = useState(false);
-  const [awaitingConfirm, setAwaitingConfirm] = useState(false);
+  
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
