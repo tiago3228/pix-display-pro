@@ -136,7 +136,7 @@ function Landing() {
                     💎
                   </div>
                   <div>
-                    <p className="font-semibold">Juliana Joias</p>
+                    <p className="font-semibold">Atena Joias</p>
                     <p className="text-xs text-muted-foreground">Joias e acessórios</p>
                   </div>
                 </div>
@@ -281,7 +281,7 @@ function Landing() {
                 <Link to="/signup">Criar minha loja grátis</Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link to="/loja/$slug" params={{ slug: "juliana-joias" }}>
+                <Link to="/loja/$slug" params={{ slug: "atena-joias" }}>
                   Ver loja de exemplo
                 </Link>
               </Button>
