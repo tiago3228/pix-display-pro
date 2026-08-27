@@ -34,7 +34,8 @@ const NAV = [
   { to: "/assinatura", label: "Assinatura", icon: CreditCard },
 ] as const;
 
-const MOBILE_NAV = NAV.slice(0, 5);
+const MOBILE_NAV = NAV.slice(0, 4);
+const MOBILE_MORE = NAV.slice(4);
 
 export function AppShell({
   title,
