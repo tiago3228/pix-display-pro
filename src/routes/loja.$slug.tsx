@@ -101,6 +101,7 @@ function StorePage() {
   const [cartOpen, setCartOpen] = useState(false);
   const [step, setStep] = useState<Step>("cart");
   const [paid, setPaid] = useState(false);
+  const [installments, setInstallments] = useState(1);
   const [customer, setCustomer] = useState({ name: "", whatsapp: "", note: "" });
   const [sending, setSending] = useState(false);
 
@@ -110,6 +111,16 @@ function StorePage() {
     if (activeCategory === "featured") return data.products.filter((p) => p.is_featured);
     return data.products.filter((p) => p.category_id === activeCategory);
   }, [data, activeCategory]);
+
+  const plans = useMemo(() => {
+    if (!data?.store.allow_installments) return [];
+    return installmentOptions(
+      cart.total,
+      data.store.max_installments,
+      data.store.min_installment_amount,
+    );
+  }, [data, cart.total]);
+
 
   if (!data) {
     return (
