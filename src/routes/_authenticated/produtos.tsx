@@ -144,7 +144,10 @@ function Products() {
   }
 
   async function save() {
-    if (!store) return;
+    if (!store) {
+      toast.error("Crie sua loja antes de cadastrar produtos.");
+      return;
+    }
     if (!form.name.trim()) {
       toast.error("Informe o nome do produto.");
       return;
@@ -156,15 +159,15 @@ function Products() {
       try {
         imagePath = await uploadAsset(userData.user!.id, imageFile);
       } catch {
-        toast.error("Não foi possível enviar a imagem.");
+        toast.error("Não foi possível enviar a imagem. O produto será salvo sem foto.");
       }
     }
 
     const cleanVariants = variants.filter((v) => v.label.trim());
     const payload = {
       store_id: store.id,
-      name: form.name,
-      description: form.description,
+      name: form.name.trim(),
+      description: form.description ?? "",
       price: Number(String(form.price).replace(",", ".")) || 0,
       stock: Number(form.stock) || 0,
       track_stock: form.track_stock,
@@ -182,9 +185,10 @@ function Products() {
 
     if (error || !saved) {
       setSaving(false);
-      toast.error("Não foi possível salvar o produto.");
+      toast.error(error?.message || "Não foi possível salvar o produto.");
       return;
     }
+
 
     await supabase.from("product_variants").delete().eq("product_id", saved.id);
     await supabase.from("product_options").delete().eq("product_id", saved.id);
