@@ -307,7 +307,9 @@ export const submitOrder = createServerFn({ method: "POST" })
       await supabaseAdmin.from("installments").insert(
         values.map((amount, index) => {
           const due = new Date(today);
-          due.setDate(due.getDate() + index * 30);
+          // Parcela 1 vence em +30 dias, parcela 2 em +60, e assim por diante.
+          due.setDate(due.getDate() + FIRST_DUE_OFFSET_DAYS + index * INSTALLMENT_INTERVAL_DAYS);
+
           return {
             store_id: store.id,
             order_id: order.id,
