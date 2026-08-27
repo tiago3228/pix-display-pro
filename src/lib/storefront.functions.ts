@@ -301,7 +301,8 @@ export const submitOrder = createServerFn({ method: "POST" })
       .insert(items.map((i) => ({ ...i, order_id: order.id })));
 
     if (installmentCount > 1) {
-      const { splitInstallments } = await import("./format");
+      const { splitInstallments, FIRST_DUE_OFFSET_DAYS, INSTALLMENT_INTERVAL_DAYS } =
+        await import("./format");
       const values = splitInstallments(total, installmentCount);
       const today = new Date();
       await supabaseAdmin.from("installments").insert(
