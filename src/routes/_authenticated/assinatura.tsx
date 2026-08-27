@@ -121,10 +121,17 @@ function Subscription() {
   return (
     <AppShell title="Assinatura" description="Plano Vitrini PRO">
       {data?.environment === "test" ? (
-        <p className="mb-4 rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
-          Ambiente de testes do Mercado Pago. Nenhuma cobrança real é feita.
-        </p>
+        <div className="mb-4 space-y-1 rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
+          <p>Ambiente de testes do Mercado Pago. Nenhuma cobrança real é feita.</p>
+          <p>
+            Importante: no checkout você precisa estar logado em uma conta Mercado Pago
+            <strong> diferente da conta vendedora</strong> (a que recebe o pagamento). Com a mesma
+            conta, o botão “Confirmar” fica desabilitado. Use uma conta de teste comprador ou uma
+            janela anônima.
+          </p>
+        </div>
       ) : null}
+
 
       {subscription ? (
         <section className="surface mb-5 space-y-2 p-5">
