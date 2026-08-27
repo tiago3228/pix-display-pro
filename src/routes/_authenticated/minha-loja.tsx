@@ -27,7 +27,7 @@ export const Route = createFileRoute("/_authenticated/minha-loja")({
 const COLORS = ["#0f766e", "#e11d48", "#7c3aed", "#ea580c", "#2563eb", "#16a34a", "#111827"];
 
 function MyStore() {
-  const { data: store } = useMyStore();
+  const { data: store, refetch } = useMyStore();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(
