@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, Copy, ExternalLink, Share2, Store } from "lucide-react";
+import { ArrowLeft, Check, Copy, ExternalLink, Share2, Store } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { BackButton } from "@/components/BackButton";
+
 import { useMyStore } from "@/hooks/useAuth";
 import { uploadAsset } from "@/lib/images";
 import { PIX_KEY_TYPES, STORE_CATEGORIES, slugify, whatsappLink } from "@/lib/format";
@@ -170,12 +172,25 @@ function Onboarding() {
   return (
     <div className="min-h-screen bg-muted/40 px-4 py-8">
       <div className="mx-auto max-w-lg">
+        <div className="mb-4 flex items-center justify-between">
+          {step > 1 && step < 4 ? (
+            <Button variant="ghost" size="sm" className="gap-1.5 px-2" onClick={() => setStep(step - 1)}>
+              <ArrowLeft className="size-4" /> Voltar
+            </Button>
+          ) : (
+            <BackButton fallbackTo="/dashboard" />
+          )}
+          <Button variant="ghost" size="sm" asChild>
+            <Link to="/dashboard">Ir para o painel</Link>
+          </Button>
+        </div>
         <div className="mb-6 flex items-center justify-center gap-2 font-semibold">
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Store className="size-4" />
           </span>
           <span className="font-[family-name:var(--font-display)]">Vitrini</span>
         </div>
+
 
         <div className="mb-5 flex items-center gap-2">
           {[1, 2, 3].map((n) => (
