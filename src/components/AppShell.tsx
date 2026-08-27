@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -6,6 +6,7 @@ import {
   CreditCard,
   LayoutDashboard,
   LogOut,
+  Menu,
   Package,
   QrCode,
   Settings,
@@ -19,6 +20,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin, useMyStore } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -34,7 +42,8 @@ const NAV = [
   { to: "/assinatura", label: "Assinatura", icon: CreditCard },
 ] as const;
 
-const MOBILE_NAV = NAV.slice(0, 5);
+const MOBILE_NAV = NAV.slice(0, 4);
+const MOBILE_MORE = NAV.slice(4);
 
 export function AppShell({
   title,
@@ -52,6 +61,7 @@ export function AppShell({
   const queryClient = useQueryClient();
   const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
   const { data: store, isLoading: storeLoading } = useMyStore();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (adminLoading || storeLoading) return;
@@ -161,6 +171,61 @@ export function AppShell({
               {item.label}
             </Link>
           ))}
+          <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+            <SheetTrigger
+              className={cn(
+                "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
+                MOBILE_MORE.some((item) => item.to === pathname) || pathname === "/admin"
+                  ? "text-primary"
+                  : "text-muted-foreground",
+              )}
+            >
+              <Menu className="size-5" />
+              Mais
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-2xl">
+              <SheetHeader className="text-left">
+                <SheetTitle>Menu</SheetTitle>
+              </SheetHeader>
+              <div className="grid gap-1 px-4 pb-6">
+                {MOBILE_MORE.map((item) => (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    onClick={() => setMoreOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition",
+                      pathname === item.to
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-accent/60",
+                    )}
+                  >
+                    <item.icon className="size-4" />
+                    {item.label}
+                  </Link>
+                ))}
+                {isAdmin ? (
+                  <Link
+                    to="/admin"
+                    onClick={() => setMoreOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground transition hover:bg-accent/60"
+                  >
+                    <ShieldCheck className="size-4" /> Administração
+                  </Link>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMoreOpen(false);
+                    void signOut();
+                  }}
+                  className="flex items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium text-muted-foreground transition hover:bg-accent/60"
+                >
+                  <LogOut className="size-4" /> Sair
+                </button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </nav>
     </div>
