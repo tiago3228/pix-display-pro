@@ -42,6 +42,10 @@ export type Storefront = {
     welcome_message: string;
     pix_key: string;
     pix_key_type: string;
+    accept_pix: boolean;
+    allow_installments: boolean;
+    max_installments: number;
+    min_installment_amount: number;
   };
   categories: { id: string; name: string }[];
   products: StorefrontProduct[];
@@ -54,7 +58,7 @@ export const getStorefront = createServerFn({ method: "GET" })
     const { data: store } = await supabase
       .from("stores")
       .select(
-        "id, slug, name, seller_name, description, category, whatsapp, instagram, logo_url, banner_url, primary_color, welcome_message, pix_key, pix_key_type",
+        "id, slug, name, seller_name, description, category, whatsapp, instagram, logo_url, banner_url, primary_color, welcome_message, pix_key, pix_key_type, accept_pix, allow_installments, max_installments, min_installment_amount, plan",
       )
       .eq("slug", data.slug)
       .eq("is_active", true)
@@ -125,6 +129,11 @@ export const getStorefront = createServerFn({ method: "GET" })
         welcome_message: store.welcome_message,
         pix_key: store.pix_key,
         pix_key_type: store.pix_key_type,
+        accept_pix: store.accept_pix,
+        // Parcelamento é um recurso PRO: o backend decide, nunca o frontend.
+        allow_installments: store.allow_installments && store.plan === "pro",
+        max_installments: store.max_installments,
+        min_installment_amount: Number(store.min_installment_amount),
       },
       categories: (categories ?? []).map((c) => ({ id: c.id, name: c.name })),
       products: (products ?? []).map((p) => ({
@@ -168,6 +177,8 @@ const orderSchema = z.object({
   customerWhatsapp: z.string().max(30).optional().default(""),
   note: z.string().max(500).optional().default(""),
   paymentDeclared: z.boolean().default(false),
+  paymentMethod: z.enum(["pix_avista", "parcelado"]).default("pix_avista"),
+  installments: z.number().int().min(1).max(12).default(1),
   items: z
     .array(
       z.object({
@@ -189,7 +200,7 @@ export const submitOrder = createServerFn({ method: "POST" })
 
     const { data: store } = await supabaseAdmin
       .from("stores")
-      .select("id, is_active")
+      .select("id, is_active, plan, allow_installments, max_installments, min_installment_amount")
       .eq("id", data.storeId)
       .maybeSingle();
     if (!store || !store.is_active) throw new Error("Loja indisponível");
@@ -256,6 +267,19 @@ export const submitOrder = createServerFn({ method: "POST" })
       }
     }
 
+    // O parcelamento é validado no servidor contra as regras reais do vendedor.
+    const installmentsAllowed =
+      store.plan === "pro" && store.allow_installments && data.paymentMethod === "parcelado";
+    let installmentCount = 1;
+    if (installmentsAllowed) {
+      const maxByRules = Math.min(store.max_installments, 12);
+      const candidate = Math.min(Math.max(data.installments, 1), maxByRules);
+      const perInstallment = total / candidate;
+      installmentCount =
+        candidate > 1 && perInstallment >= Number(store.min_installment_amount) ? candidate : 1;
+    }
+    const paymentMethod = installmentCount > 1 ? "parcelado" : "pix_avista";
+
     const { data: order, error } = await supabaseAdmin
       .from("orders")
       .insert({
@@ -266,6 +290,8 @@ export const submitOrder = createServerFn({ method: "POST" })
         note: data.note,
         total,
         payment_declared: data.paymentDeclared,
+        payment_method: paymentMethod,
+        installments_count: installmentCount,
         status: data.paymentDeclared ? "pagamento_informado" : "novo",
       })
       .select("id, number")
@@ -275,6 +301,34 @@ export const submitOrder = createServerFn({ method: "POST" })
     await supabaseAdmin
       .from("order_items")
       .insert(items.map((i) => ({ ...i, order_id: order.id })));
+
+    if (installmentCount > 1) {
+      const { splitInstallments } = await import("./format");
+      const values = splitInstallments(total, installmentCount);
+      const today = new Date();
+      await supabaseAdmin.from("installments").insert(
+        values.map((amount, index) => {
+          const due = new Date(today);
+          due.setDate(due.getDate() + index * 30);
+          return {
+            store_id: store.id,
+            order_id: order.id,
+            customer_id: customerId,
+            installment_number: index + 1,
+            total_installments: installmentCount,
+            amount,
+            due_date: due.toISOString().slice(0, 10),
+          };
+        }),
+      );
+      await supabaseAdmin.from("audit_logs").insert({
+        store_id: store.id,
+        action: "installments_created",
+        resource_type: "order",
+        resource_id: order.id,
+        metadata: { count: installmentCount, total } as never,
+      });
+    }
 
     await supabaseAdmin
       .from("store_events")

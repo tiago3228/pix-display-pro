@@ -60,3 +60,89 @@ export const statusLabel = (value: string) =>
   ORDER_STATUS.find((s) => s.value === value)?.label ?? value;
 
 export const FREE_PLAN_PRODUCT_LIMIT = 5;
+
+// ------------------------------------------------------------- Parcelamento
+
+export const PRO_PLAN_PRICE = 9.9;
+
+export const formatDay = (iso: string) =>
+  new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "UTC" }).format(
+    new Date(iso.length <= 10 ? `${iso}T12:00:00Z` : iso),
+  );
+
+export type InstallmentPlan = { count: number; amount: number; label: string };
+
+/** Opções de parcelamento permitidas pelas regras do vendedor. */
+export function installmentOptions(
+  total: number,
+  max: number,
+  minAmount: number,
+): InstallmentPlan[] {
+  const options: InstallmentPlan[] = [];
+  for (let count = 2; count <= Math.min(max, 12); count += 1) {
+    const amount = Math.floor((total / count) * 100) / 100;
+    if (amount < minAmount) break;
+    options.push({ count, amount, label: `${count}x de ${brl(amount)}` });
+  }
+  return options;
+}
+
+/** Divide o total em parcelas fechadas (a última absorve os centavos restantes). */
+export function splitInstallments(total: number, count: number): number[] {
+  const cents = Math.round(total * 100);
+  const base = Math.floor(cents / count);
+  const values = Array.from({ length: count }, () => base);
+  values[count - 1] = (values[count - 1] ?? 0) + (cents - base * count);
+  return values.map((v) => v / 100);
+}
+
+export const INSTALLMENT_STATUS: Record<string, string> = {
+  pending: "Pendente",
+  paid: "Pago",
+  overdue: "Em atraso",
+  canceled: "Cancelada",
+};
+
+export function installmentState(status: string, dueDate: string) {
+  if (status === "paid" || status === "canceled") return status;
+  const due = new Date(`${dueDate.slice(0, 10)}T23:59:59Z`).getTime();
+  return due < Date.now() ? "overdue" : "pending";
+}
+
+export function daysLate(dueDate: string) {
+  const due = new Date(`${dueDate.slice(0, 10)}T23:59:59Z`).getTime();
+  return Math.max(0, Math.floor((Date.now() - due) / 86_400_000));
+}
+
+export function collectionLink(origin: string, token: string) {
+  return `${origin.replace(/\/$/, "")}/cobranca/${token}`;
+}
+
+export function reminderMessage(opts: {
+  customerName: string;
+  productName: string;
+  number: number;
+  total: number;
+  amount: number;
+  dueDate: string;
+  link: string;
+  late: boolean;
+}) {
+  const head = opts.late
+    ? `Identificamos que a parcela referente ao produto "${opts.productName}" está em atraso.`
+    : `Passando para lembrar que a parcela referente ao produto "${opts.productName}" está próxima do vencimento.`;
+  return [
+    `Olá, ${opts.customerName || "tudo bem"}! 😊`,
+    "",
+    head,
+    "",
+    `📦 Parcela: ${opts.number} de ${opts.total}`,
+    `💰 Valor: ${brl(opts.amount)}`,
+    `📅 Vencimento: ${formatDay(opts.dueDate)}`,
+    "",
+    "Segue o link para facilitar o pagamento:",
+    opts.link,
+    "",
+    "Caso já tenha realizado o pagamento, desconsidere esta mensagem. ❤️",
+  ].join("\n");
+}
