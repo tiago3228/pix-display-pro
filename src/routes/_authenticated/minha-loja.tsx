@@ -363,6 +363,19 @@ function MyStore() {
           ) : null}
         </div>
 
+        {feedback ? (
+          <p
+            role="status"
+            className={`rounded-lg border p-3 text-sm ${
+              feedback.type === "success"
+                ? "border-primary/30 bg-primary/10 text-primary"
+                : "border-destructive/30 bg-destructive/10 text-destructive"
+            }`}
+          >
+            {feedback.text}
+          </p>
+        ) : null}
+
         <Button className="h-11 w-full" disabled={saving} onClick={save}>
           {saving ? "Salvando..." : "Salvar alterações"}
         </Button>
