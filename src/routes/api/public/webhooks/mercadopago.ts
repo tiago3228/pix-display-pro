@@ -10,9 +10,15 @@ import { createHmac, timingSafeEqual } from "crypto";
  * - Nunca confia no corpo recebido: sempre reconsulta a API do Mercado Pago.
  */
 
-function verifySignature(request: Request, dataId: string | null): "ok" | "invalid" | "skipped" {
+/** Janela máxima aceita entre o `ts` assinado e o horário de recebimento. */
+const REPLAY_WINDOW_SECONDS = 300;
+
+type SignatureResult = "ok" | "invalid" | "missing-secret" | "stale";
+
+function verifySignature(request: Request, dataId: string | null): SignatureResult {
   const secret = process.env["MERCADOPAGO_WEBHOOK_SECRET"];
-  if (!secret) return "skipped";
+  // Sem segredo configurado o webhook NUNCA aceita a requisição.
+  if (!secret) return "missing-secret";
 
   const signature = request.headers.get("x-signature");
   const requestId = request.headers.get("x-request-id") ?? "";
@@ -31,8 +37,17 @@ function verifySignature(request: Request, dataId: string | null): "ok" | "inval
   const a = Buffer.from(expected);
   const b = Buffer.from(parts.v1);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return "invalid";
+
+  // Replay protection: o `ts` vem em segundos (ou milissegundos em alguns eventos).
+  const raw = Number(parts.ts);
+  if (!Number.isFinite(raw)) return "invalid";
+  const seconds = raw > 1e12 ? raw / 1000 : raw;
+  const drift = Math.abs(Date.now() / 1000 - seconds);
+  if (drift > REPLAY_WINDOW_SECONDS) return "stale";
+
   return "ok";
 }
+
 
 export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
   server: {
