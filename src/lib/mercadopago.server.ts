@@ -253,5 +253,12 @@ export const MP_WEBHOOK_PATH = "/api/public/webhooks/mercadopago";
  * portanto a `notification_url` precisa viajar no payload de criação.
  */
 export function webhookUrl(): string {
+  // Sem o segredo de webhook o Mercado Pago enviaria notificações que o
+  // endpoint não consegue validar: bloqueamos a criação da assinatura.
+  if (!process.env["MERCADOPAGO_WEBHOOK_SECRET"]) {
+    throw new Error(
+      "Assinaturas indisponíveis: configure a chave secreta do webhook do Mercado Pago.",
+    );
+  }
   return `${resolveBaseUrl(null)}${MP_WEBHOOK_PATH}`;
 }
