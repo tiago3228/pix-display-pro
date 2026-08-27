@@ -133,20 +133,27 @@ export const startProSubscription = createServerFn({ method: "POST" })
     const { createPreapproval, resolveBaseUrl } = await import("./mercadopago.server");
     const { syncFromPreapproval, LIVE_STATUSES } = await import("./subscription.server");
 
-    const { data: store } = await context.supabase
+    const { data: stores } = await context.supabase
       .from("stores")
       .select("id, name")
       .eq("owner_id", context.userId)
-      .maybeSingle();
-    if (!store) throw new Error("Loja não encontrada.");
+      .order("created_at", { ascending: true })
+      .limit(1);
+    const store = stores?.[0] ?? null;
+    if (!store)
+      throw new Error(
+        "Crie sua loja em “Minha Loja” antes de assinar o PRO.",
+      );
 
     // Idempotência: nunca criar duas assinaturas vivas para a mesma loja.
-    const { data: live } = await context.supabase
+    const { data: liveRows } = await context.supabase
       .from("subscriptions")
       .select("id, status, init_point, provider_subscription_id")
       .eq("store_id", store.id)
       .in("status", LIVE_STATUSES as unknown as string[])
-      .maybeSingle();
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const live = liveRows?.[0] ?? null;
 
     if (live && (live.status === "active" || live.status === "authorized")) {
       return { alreadyActive: true, checkoutUrl: null as string | null };
