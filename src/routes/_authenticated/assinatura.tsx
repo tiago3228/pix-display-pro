@@ -132,8 +132,15 @@ function Subscription() {
             conta, o botão “Confirmar” fica desabilitado. Use uma conta de teste comprador ou uma
             janela anônima.
           </p>
+          <p>
+            Cartões reais são <strong>sempre recusados</strong> em teste. Use um cartão de teste:
+            Mastercard <strong>5031 4332 1540 6351</strong>, validade <strong>11/30</strong>, CVV{" "}
+            <strong>123</strong>, titular <strong>APRO</strong> (aprovado) e CPF{" "}
+            <strong>123.456.789-09</strong>. Titular <strong>OTHE</strong> simula recusa.
+          </p>
         </div>
       ) : null}
+
 
 
       {subscription ? (
