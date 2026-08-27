@@ -96,18 +96,6 @@ function SignupPage() {
     navigate({ to: "/onboarding" });
   }
 
-  if (awaitingConfirm) {
-    return (
-      <AuthShell
-        title="Confirme seu e-mail"
-        subtitle={`Enviamos um link de confirmação para ${form.email}. Depois de confirmar, faça login para criar sua loja.`}
-      >
-        <Button asChild className="h-11 w-full">
-          <Link to="/login">Ir para o login</Link>
-        </Button>
-      </AuthShell>
-    );
-  }
 
   return (
     <AuthShell
