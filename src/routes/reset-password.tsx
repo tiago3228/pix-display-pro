@@ -48,7 +48,6 @@ function ResetPasswordPage() {
           <Label htmlFor="password">Nova senha</Label>
           <Input
             id="password"
-            type="password"
             autoComplete="new-password"
             required
             value={password}

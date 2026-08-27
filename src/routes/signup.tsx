@@ -6,6 +6,7 @@ import { lovable } from "@/integrations/lovable";
 import { AuthShell } from "@/components/AuthShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/signup")({
@@ -129,9 +130,8 @@ function SignupPage() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="password">Senha</Label>
-          <Input
+          <PasswordInput
             id="password"
-            type="password"
             autoComplete="new-password"
             required
             value={form.password}

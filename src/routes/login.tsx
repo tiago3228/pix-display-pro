@@ -82,7 +82,6 @@ function LoginPage() {
           <Label htmlFor="password">Senha</Label>
           <Input
             id="password"
-            type="password"
             autoComplete="current-password"
             required
             value={password}

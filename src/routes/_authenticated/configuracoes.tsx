@@ -100,7 +100,6 @@ function Settings() {
         <div className="space-y-1.5">
           <Label>Senha atual</Label>
           <Input
-            type="password"
             value={passwords.current}
             onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
           />
@@ -108,7 +107,6 @@ function Settings() {
         <div className="space-y-1.5">
           <Label>Nova senha</Label>
           <Input
-            type="password"
             value={passwords.next}
             onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
           />
