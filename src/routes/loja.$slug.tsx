@@ -21,7 +21,7 @@ import {
   type StorefrontProduct,
 } from "@/lib/storefront.functions";
 import { useCart, buildOrderMessage, type CartItem } from "@/lib/cart";
-import { brl, whatsappLink, PIX_KEY_TYPES } from "@/lib/format";
+import { brl, whatsappLink, installmentOptions, PIX_KEY_TYPES } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
