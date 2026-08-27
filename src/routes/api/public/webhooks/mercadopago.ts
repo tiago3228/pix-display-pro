@@ -164,38 +164,71 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
             storeId = synced?.storeId ?? null;
           } else if (eventType === "payment") {
             const payment = await mp.getPayment(resourceId);
-            const reference = payment.external_reference;
-            if (reference) {
-              const { data: sub } = await supabaseAdmin
+            const meta = (payment.metadata ?? {}) as Record<string, unknown>;
+            // O Mercado Pago nem sempre propaga external_reference nos pagamentos
+            // de assinatura: quando existir, o preapproval_id é a referência confiável.
+            const preapprovalId =
+              (typeof meta["preapproval_id"] === "string" && meta["preapproval_id"]) ||
+              (typeof meta["preapprovalId"] === "string" && meta["preapprovalId"]) ||
+              null;
+
+            let sub: { id: string; store_id: string } | null = null;
+
+            if (preapprovalId) {
+              const remote = await mp.getPreapproval(preapprovalId);
+              await svc.syncFromPreapproval(remote);
+              const { data } = await supabaseAdmin
                 .from("subscriptions")
                 .select("id, store_id")
-                .eq("external_reference", reference)
+                .eq("provider_subscription_id", preapprovalId)
+                .maybeSingle();
+              sub = data ?? null;
+            }
+
+            if (!sub && payment.external_reference) {
+              const { data } = await supabaseAdmin
+                .from("subscriptions")
+                .select("id, store_id")
+                .eq("external_reference", payment.external_reference)
                 .order("created_at", { ascending: false })
                 .limit(1)
                 .maybeSingle();
-              if (sub) {
-                storeId = sub.store_id;
-                const approved = payment.status === "approved";
-                await supabaseAdmin.from("subscription_payments").upsert(
-                  {
-                    store_id: sub.store_id,
-                    subscription_id: sub.id,
-                    provider: "mercadopago",
-                    provider_payment_id: String(payment.id),
-                    amount: Number(payment.transaction_amount ?? 0),
-                    currency: payment.currency_id ?? "BRL",
-                    status: payment.status ?? "pending",
-                    external_status: payment.status_detail ?? null,
-                    paid_at: approved ? (payment.date_approved ?? null) : null,
-                  },
-                  { onConflict: "provider,provider_payment_id" },
-                );
-                if (!approved && payment.status === "rejected") {
-                  await svc.markPastDue(sub.id, sub.store_id);
-                }
+              sub = data ?? null;
+            }
+
+            if (sub) {
+              storeId = sub.store_id;
+              const approved = payment.status === "approved";
+              await supabaseAdmin.from("subscription_payments").upsert(
+                {
+                  store_id: sub.store_id,
+                  subscription_id: sub.id,
+                  provider: "mercadopago",
+                  provider_payment_id: String(payment.id),
+                  amount: Number(payment.transaction_amount ?? 0),
+                  currency: payment.currency_id ?? "BRL",
+                  status: payment.status ?? "pending",
+                  external_status: payment.status_detail ?? null,
+                  paid_at: approved ? (payment.date_approved ?? null) : null,
+                },
+                { onConflict: "provider,provider_payment_id" },
+              );
+              if (approved) {
+                await supabaseAdmin
+                  .from("subscriptions")
+                  .update({
+                    last_payment_at: payment.date_approved ?? new Date().toISOString(),
+                    past_due_since: null,
+                    grace_until: null,
+                  })
+                  .eq("id", sub.id);
+                await svc.applyPlanToStore(sub.store_id, "active", null);
+              } else if (payment.status === "rejected" || payment.status === "cancelled") {
+                await svc.markPastDue(sub.id, sub.store_id);
               }
             }
           }
+
 
           await supabaseAdmin
             .from("subscription_events")
