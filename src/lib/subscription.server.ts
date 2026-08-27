@@ -202,11 +202,14 @@ export async function enforceGracePeriod(subscription: {
 
 /**
  * Fonte única para autorização de recursos PRO no servidor.
- * Considera a assinatura mais recente (inclusive o período de tolerância)
- * e, como retaguarda, o plano gravado na loja.
+ * PRO é válido se houver assinatura Mercado Pago viva (inclusive tolerância)
+ * OU um pagamento Pix manual aprovado dentro do período de 30 dias.
  */
 export async function storeHasPro(storeId: string): Promise<boolean> {
   const db = await admin();
+
+  const { activePixGrant } = await import("./pro-pix.server");
+  if (await activePixGrant(storeId)) return true;
 
   const { data: rows } = await db
     .from("subscriptions")
@@ -223,9 +226,16 @@ export async function storeHasPro(storeId: string): Promise<boolean> {
       status: sub.status,
       grace_until: sub.grace_until,
     });
-    return statusGrantsPro(status, sub.grace_until);
+    if (statusGrantsPro(status, sub.grace_until)) return true;
+    await db.from("stores").update({ plan: "free" }).eq("id", storeId);
+    return false;
   }
 
   const { data: store } = await db.from("stores").select("plan").eq("id", storeId).maybeSingle();
-  return store?.plan === "pro";
+  if (store?.plan === "pro") {
+    // Sem assinatura e sem Pix válido: o plano gravado está obsoleto.
+    await db.from("stores").update({ plan: "free" }).eq("id", storeId);
+  }
+  return false;
 }
+
