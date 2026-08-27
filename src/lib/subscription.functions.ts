@@ -131,8 +131,7 @@ export const startProSubscription = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { createPreapproval, resolveBaseUrl } = await import("./mercadopago.server");
-    const { ensureProPlanId, syncFromPreapproval, LIVE_STATUSES } =
-      await import("./subscription.server");
+    const { syncFromPreapproval, LIVE_STATUSES } = await import("./subscription.server");
 
     const { data: store } = await context.supabase
       .from("stores")
