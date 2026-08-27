@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
@@ -99,16 +100,14 @@ function Settings() {
         <p className="font-semibold">Alterar senha</p>
         <div className="space-y-1.5">
           <Label>Senha atual</Label>
-          <Input
-            type="password"
+          <PasswordInput
             value={passwords.current}
             onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
           />
         </div>
         <div className="space-y-1.5">
           <Label>Nova senha</Label>
-          <Input
-            type="password"
+          <PasswordInput
             value={passwords.next}
             onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
           />
