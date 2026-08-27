@@ -159,6 +159,8 @@ export async function createPreapproval(input: {
       external_reference: input.externalReference,
       payer_email: input.payerEmail,
       back_url: input.backUrl,
+      notification_url: webhookUrl(),
+
       status: "pending",
     },
   });
