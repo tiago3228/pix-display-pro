@@ -30,6 +30,9 @@ function MyStore() {
   const { data: store } = useMyStore();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(
+    null,
+  );
   const isPro = store?.plan === "pro";
   const [form, setForm] = useState({
     name: "",
