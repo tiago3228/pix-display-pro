@@ -80,7 +80,7 @@ function LoginPage() {
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="password">Senha</Label>
-          <Input
+          <PasswordInput
             id="password"
             autoComplete="current-password"
             required
