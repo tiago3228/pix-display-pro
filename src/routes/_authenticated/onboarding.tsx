@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Check, Copy, ExternalLink, Share2, Store } from "lucide-react";
+import { ArrowLeft, Check, Copy, ExternalLink, Share2, Store } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { BackButton } from "@/components/BackButton";
+
 import { useMyStore } from "@/hooks/useAuth";
 import { uploadAsset } from "@/lib/images";
 import { PIX_KEY_TYPES, STORE_CATEGORIES, slugify, whatsappLink } from "@/lib/format";
