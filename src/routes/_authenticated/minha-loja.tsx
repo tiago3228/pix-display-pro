@@ -262,7 +262,14 @@ function MyStore() {
               Desative para deixar sua vitrine temporariamente fora do ar.
             </p>
           </div>
+          <Switch
+            checked={form.is_active}
+            onCheckedChange={(checked) => setForm({ ...form, is_active: checked })}
+          />
+        </div>
+
         <div className="space-y-3 rounded-lg border border-border p-3">
+
           <p className="text-sm font-semibold">Formas de pagamento</p>
 
           <div className="flex items-center justify-between gap-3">
