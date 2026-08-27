@@ -19,6 +19,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin, useMyStore } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { BackButton } from "@/components/BackButton";
 import { cn } from "@/lib/utils";
 
 const NAV = [

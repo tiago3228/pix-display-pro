@@ -1,17 +1,21 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { Store } from "lucide-react";
+import { BackButton } from "@/components/BackButton";
 
 export function AuthShell({
   title,
   subtitle,
   children,
   footer,
+  backTo = "/",
 }: {
   title: string;
   subtitle: string;
   children: ReactNode;
   footer?: ReactNode;
+  /** Destino do botão Voltar quando não há histórico. */
+  backTo?: string;
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-muted/40">
@@ -22,6 +26,9 @@ export function AuthShell({
           </span>
           <span className="font-[family-name:var(--font-display)] text-lg">Vitrini</span>
         </Link>
+        <div className="mb-3">
+          <BackButton fallbackTo={backTo} />
+        </div>
         <div className="surface p-6">
           <h1 className="text-xl font-bold">{title}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
