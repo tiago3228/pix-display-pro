@@ -229,7 +229,7 @@ function Subscription() {
                 disabled={startMutation.isPending || isLoading}
               >
                 <Sparkles className="mr-2 size-4" />
-                {startMutation.isPending ? "Abrindo o Mercado Pago..." : "Assinar PRO"}
+                {startMutation.isPending ? "Abrindo o Mercado Pago..." : "Assinar com Mercado Pago"}
               </Button>
             )
           }

@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Store as StoreIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +6,9 @@ import { useIsAdmin } from "@/hooks/useAuth";
 import { AppShell, StatCard } from "@/components/AppShell";
 import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useServerFn } from "@tanstack/react-start";
+import { countPendingProPixRequests } from "@/lib/pro-pix.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
@@ -29,6 +32,13 @@ function Admin() {
     },
   });
 
+  const fetchPending = useServerFn(countPendingProPixRequests);
+  const { data: pixPending } = useQuery({
+    queryKey: ["admin-pro-pix-pending"],
+    enabled: isAdmin === true,
+    queryFn: () => fetchPending(),
+  });
+
   if (isLoading) {
     return (
       <AppShell title="Administração">
@@ -47,10 +57,23 @@ function Admin() {
     );
   }
 
+  const pendingPix = pixPending?.pending ?? 0;
+
   const pro = (data?.stores ?? []).filter((s) => s.plan === "pro").length;
 
   return (
     <AppShell title="Administração" description="Visão geral da plataforma">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border px-3 py-2">
+        <p className="text-sm">
+          {pendingPix > 0
+            ? `🔔 ${pendingPix} nova(s) solicitação(ões) PRO via Pix aguardando confirmação.`
+            : "Solicitações PRO via Pix"}
+        </p>
+        <Button asChild size="sm" variant={pendingPix > 0 ? "default" : "outline"}>
+          <Link to="/admin/solicitacoes-pro">Ver solicitações</Link>
+        </Button>
+      </div>
+
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <StatCard label="Lojas" value={String(data?.stores.length ?? 0)} icon={StoreIcon} />
         <StatCard label="Assinantes Pro" value={String(pro)} />

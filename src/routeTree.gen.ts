@@ -28,6 +28,7 @@ import { Route as AuthenticatedProdutosRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedQrcodesRouteImport } from './routes/_authenticated/qrcodes'
 import { Route as CobrancaTokenRouteImport } from './routes/cobranca.$token'
 import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
+import { Route as AuthenticatedAdminSolicitacoesProRouteImport } from './routes/_authenticated/admin_.solicitacoes-pro'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public/webhooks/mercadopago'
 
 const IndexRoute = IndexRouteImport.update({
@@ -125,6 +126,12 @@ const LojaSlugRoute = LojaSlugRouteImport.update({
   path: '/loja/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminSolicitacoesProRoute =
+  AuthenticatedAdminSolicitacoesProRouteImport.update({
+    id: '/admin_/solicitacoes-pro',
+    path: '/admin/solicitacoes-pro',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicWebhooksMercadopagoRoute =
   ApiPublicWebhooksMercadopagoRouteImport.update({
     id: '/api/public/webhooks/mercadopago',
@@ -151,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/qrcodes': typeof AuthenticatedQrcodesRoute
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
+  '/admin/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRoutesByTo {
@@ -172,6 +180,7 @@ export interface FileRoutesByTo {
   '/qrcodes': typeof AuthenticatedQrcodesRoute
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
+  '/admin/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRoutesById {
@@ -195,6 +204,7 @@ export interface FileRoutesById {
   '/_authenticated/qrcodes': typeof AuthenticatedQrcodesRoute
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
+  '/_authenticated/admin_/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRouteTypes {
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/qrcodes'
     | '/cobranca/$token'
     | '/loja/$slug'
+    | '/admin/solicitacoes-pro'
     | '/api/public/webhooks/mercadopago'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -239,6 +250,7 @@ export interface FileRouteTypes {
     | '/qrcodes'
     | '/cobranca/$token'
     | '/loja/$slug'
+    | '/admin/solicitacoes-pro'
     | '/api/public/webhooks/mercadopago'
   id:
     | '__root__'
@@ -261,6 +273,7 @@ export interface FileRouteTypes {
     | '/_authenticated/qrcodes'
     | '/cobranca/$token'
     | '/loja/$slug'
+    | '/_authenticated/admin_/solicitacoes-pro'
     | '/api/public/webhooks/mercadopago'
   fileRoutesById: FileRoutesById
 }
@@ -411,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LojaSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin_/solicitacoes-pro': {
+      id: '/_authenticated/admin_/solicitacoes-pro'
+      path: '/admin/solicitacoes-pro'
+      fullPath: '/admin/solicitacoes-pro'
+      preLoaderRoute: typeof AuthenticatedAdminSolicitacoesProRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/webhooks/mercadopago': {
       id: '/api/public/webhooks/mercadopago'
       path: '/api/public/webhooks/mercadopago'
@@ -433,6 +453,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPedidosRoute: typeof AuthenticatedPedidosRoute
   AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRoute
   AuthenticatedQrcodesRoute: typeof AuthenticatedQrcodesRoute
+  AuthenticatedAdminSolicitacoesProRoute: typeof AuthenticatedAdminSolicitacoesProRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -447,6 +468,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPedidosRoute: AuthenticatedPedidosRoute,
   AuthenticatedProdutosRoute: AuthenticatedProdutosRoute,
   AuthenticatedQrcodesRoute: AuthenticatedQrcodesRoute,
+  AuthenticatedAdminSolicitacoesProRoute:
+    AuthenticatedAdminSolicitacoesProRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
