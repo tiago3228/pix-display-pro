@@ -191,3 +191,33 @@ export async function enforceGracePeriod(subscription: {
   });
   return "expired";
 }
+
+/**
+ * Fonte única para autorização de recursos PRO no servidor.
+ * Considera a assinatura mais recente (inclusive o período de tolerância)
+ * e, como retaguarda, o plano gravado na loja.
+ */
+export async function storeHasPro(storeId: string): Promise<boolean> {
+  const db = await admin();
+
+  const { data: rows } = await db
+    .from("subscriptions")
+    .select("id, store_id, status, grace_until")
+    .eq("store_id", storeId)
+    .order("created_at", { ascending: false })
+    .limit(1);
+
+  const sub = rows?.[0];
+  if (sub) {
+    const status = await enforceGracePeriod({
+      id: sub.id,
+      store_id: sub.store_id,
+      status: sub.status,
+      grace_until: sub.grace_until,
+    });
+    return statusGrantsPro(status, sub.grace_until);
+  }
+
+  const { data: store } = await db.from("stores").select("plan").eq("id", storeId).maybeSingle();
+  return store?.plan === "pro";
+}
