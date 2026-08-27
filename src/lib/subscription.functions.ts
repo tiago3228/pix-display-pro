@@ -29,7 +29,6 @@ export type SubscriptionView = {
   }[];
 };
 
-
 /** Lê a assinatura da loja do usuário, revalidando no Mercado Pago quando necessário. */
 export const getMySubscription = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -132,9 +131,8 @@ export const startProSubscription = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { createPreapproval, resolveBaseUrl } = await import("./mercadopago.server");
-    const { ensureProPlanId, syncFromPreapproval, LIVE_STATUSES } = await import(
-      "./subscription.server"
-    );
+    const { ensureProPlanId, syncFromPreapproval, LIVE_STATUSES } =
+      await import("./subscription.server");
 
     const { data: store } = await context.supabase
       .from("stores")
@@ -189,9 +187,8 @@ export const cancelProSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { cancelPreapproval } = await import("./mercadopago.server");
-    const { syncFromPreapproval, applyPlanToStore, logAudit, LIVE_STATUSES } = await import(
-      "./subscription.server"
-    );
+    const { syncFromPreapproval, applyPlanToStore, logAudit, LIVE_STATUSES } =
+      await import("./subscription.server");
 
     const { data: store } = await context.supabase
       .from("stores")

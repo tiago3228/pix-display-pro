@@ -40,7 +40,10 @@ function Dashboard() {
           .select("id, number, customer_name, total, status, created_at")
           .eq("store_id", storeId)
           .order("created_at", { ascending: false }),
-        supabase.from("products").select("id", { count: "exact", head: true }).eq("store_id", storeId),
+        supabase
+          .from("products")
+          .select("id", { count: "exact", head: true })
+          .eq("store_id", storeId),
         supabase
           .from("store_events")
           .select("id", { count: "exact", head: true })
@@ -81,7 +84,11 @@ function Dashboard() {
       }
     >
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Pedidos do mês" value={String(data?.monthOrders ?? 0)} icon={ShoppingBag} />
+        <StatCard
+          label="Pedidos do mês"
+          value={String(data?.monthOrders ?? 0)}
+          icon={ShoppingBag}
+        />
         <StatCard label="Faturamento do mês" value={brl(data?.revenue ?? 0)} icon={Wallet} />
         <StatCard label="Produtos" value={String(data?.products ?? 0)} icon={Package} />
         <StatCard label="Visitas na vitrine" value={String(data?.views ?? 0)} icon={Eye} />

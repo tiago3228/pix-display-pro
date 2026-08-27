@@ -48,7 +48,6 @@ function verifySignature(request: Request, dataId: string | null): SignatureResu
   return "ok";
 }
 
-
 export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
   server: {
     handlers: {
@@ -78,7 +77,6 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
           console.warn("[mercadopago-webhook] notificação rejeitada", { eventType, signature });
           return new Response("unauthorized", { status: 401 });
         }
-
 
         if (!resourceId) return new Response("ok");
 
@@ -124,8 +122,11 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
 
               if (sub) {
                 storeId = sub.store_id;
-                const paymentStatus = (authorized.payment?.status ?? authorized.status ?? "")
-                  .toLowerCase();
+                const paymentStatus = (
+                  authorized.payment?.status ??
+                  authorized.status ??
+                  ""
+                ).toLowerCase();
                 const approved = paymentStatus === "approved" || authorized.status === "processed";
                 await supabaseAdmin.from("subscription_payments").upsert(
                   {
@@ -135,9 +136,11 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
                     provider_payment_id: String(authorized.payment?.id ?? authorized.id),
                     amount: Number(authorized.transaction_amount ?? 0),
                     currency: authorized.currency_id ?? "BRL",
-                    status: approved ? "approved" : (paymentStatus || "pending"),
+                    status: approved ? "approved" : paymentStatus || "pending",
                     external_status: authorized.status ?? null,
-                    paid_at: approved ? (authorized.date_created ?? new Date().toISOString()) : null,
+                    paid_at: approved
+                      ? (authorized.date_created ?? new Date().toISOString())
+                      : null,
                     due_at: authorized.debit_date ?? null,
                   },
                   { onConflict: "provider,provider_payment_id" },
@@ -228,7 +231,6 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
               }
             }
           }
-
 
           await supabaseAdmin
             .from("subscription_events")

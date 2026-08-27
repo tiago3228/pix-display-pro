@@ -62,7 +62,6 @@ export const getStorefront = createServerFn({ method: "GET" })
 
     if (!store) return null;
 
-
     const [{ data: categories }, { data: products }] = await Promise.all([
       supabase
         .from("categories")
@@ -96,8 +95,11 @@ export const getStorefront = createServerFn({ method: "GET" })
         : Promise.resolve({ data: [] as never[] }),
     ]);
 
-    const paths = [store.logo_url, store.banner_url, ...(products ?? []).map((p) => p.image_url)]
-      .filter((p): p is string => Boolean(p) && !p!.startsWith("http"));
+    const paths = [
+      store.logo_url,
+      store.banner_url,
+      ...(products ?? []).map((p) => p.image_url),
+    ].filter((p): p is string => Boolean(p) && !p!.startsWith("http"));
     const signed = new Map<string, string>();
     if (paths.length) {
       const { data: urls } = await supabase.storage

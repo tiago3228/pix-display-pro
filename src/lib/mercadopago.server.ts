@@ -68,7 +68,6 @@ async function mpFetch<T>(
   if (init.body !== undefined) request.body = JSON.stringify(init.body);
   const response = await fetch(`${API}${path}`, request);
 
-
   const text = await response.text();
   if (!response.ok) {
     // Log sem credenciais — apenas status e corpo de erro da API.
@@ -125,7 +124,6 @@ export async function createProPlan(backUrl: string): Promise<PreapprovalPlan> {
     },
   });
 }
-
 
 // --------------------------------------------------------------- Assinatura
 

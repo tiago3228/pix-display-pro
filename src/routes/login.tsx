@@ -57,7 +57,10 @@ function LoginPage() {
       footer={
         <>
           Ainda não tem conta?{" "}
-          <Link to="/signup" className="font-medium text-primary underline-offset-4 hover:underline">
+          <Link
+            to="/signup"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
             Criar loja grátis
           </Link>
         </>

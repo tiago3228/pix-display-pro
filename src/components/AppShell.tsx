@@ -14,7 +14,6 @@ import {
   Store,
   Users,
   Wallet,
-
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin, useMyStore } from "@/hooks/useAuth";
@@ -59,7 +58,6 @@ export function AppShell({
       navigate({ to: "/onboarding", replace: true });
     }
   }, [store, storeLoading, navigate]);
-
 
   async function signOut() {
     await queryClient.cancelQueries();

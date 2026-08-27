@@ -264,8 +264,8 @@ function Collections() {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar recebimento?</AlertDialogTitle>
             <AlertDialogDescription>
-              Marque como pago somente depois de conferir o Pix na sua conta. O Vitrini não
-              confirma pagamentos automaticamente.
+              Marque como pago somente depois de conferir o Pix na sua conta. O Vitrini não confirma
+              pagamentos automaticamente.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -218,9 +218,9 @@ function Subscription() {
       </div>
 
       <p className="mt-4 text-center text-xs text-muted-foreground">
-        Assinatura recorrente de {brl(PRO_PLAN_PRICE)} por mês, cobrada automaticamente pelo
-        Mercado Pago. Você pode cancelar quando quiser e o acesso permanece até o fim do período
-        já pago. A liberação do PRO acontece apenas após a confirmação do Mercado Pago.
+        Assinatura recorrente de {brl(PRO_PLAN_PRICE)} por mês, cobrada automaticamente pelo Mercado
+        Pago. Você pode cancelar quando quiser e o acesso permanece até o fim do período já pago. A
+        liberação do PRO acontece apenas após a confirmação do Mercado Pago.
       </p>
 
       {isError ? (

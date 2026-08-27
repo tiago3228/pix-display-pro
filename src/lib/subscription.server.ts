@@ -44,7 +44,11 @@ export async function ensureProPlanId(backUrl: string): Promise<string> {
   const db = await admin();
   const key = `mercadopago_plan_id_${mpEnvironment()}`;
 
-  const { data: stored } = await db.from("app_settings").select("value").eq("key", key).maybeSingle();
+  const { data: stored } = await db
+    .from("app_settings")
+    .select("value")
+    .eq("key", key)
+    .maybeSingle();
   if (stored?.value) return stored.value;
 
   const existing = await searchProPlan();
@@ -80,7 +84,7 @@ export async function syncFromPreapproval(preapproval: Preapproval) {
   if (!storeId) return null;
 
   const externalStatus = preapproval.status ?? null;
-  let status = mapPreapprovalStatus(externalStatus);
+  const status = mapPreapprovalStatus(externalStatus);
 
   // Uma falha de cobrança mantém o PRO durante o período de tolerância.
   let graceUntil: string | null = existing?.grace_until ?? null;
@@ -107,8 +111,7 @@ export async function syncFromPreapproval(preapproval: Preapproval) {
     last_payment_at: preapproval.summarized?.last_charged_date ?? existing?.last_payment_at ?? null,
     grace_until: graceUntil,
     past_due_since: pastDueSince,
-    canceled_at:
-      status === "canceled" ? (existing?.canceled_at ?? new Date().toISOString()) : null,
+    canceled_at: status === "canceled" ? (existing?.canceled_at ?? new Date().toISOString()) : null,
     paused_at: status === "paused" ? (existing?.paused_at ?? new Date().toISOString()) : null,
   };
 

@@ -76,7 +76,6 @@ export const markInstallmentPaid = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-
 /** Registra que o vendedor acionou uma cobrança (a mensagem é enviada por ele no WhatsApp). */
 export const registerReminder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
