@@ -110,6 +110,9 @@ export async function createProPlan(backUrl: string): Promise<PreapprovalPlan> {
     body: {
       reason: PRO_PLAN_REASON,
       back_url: backUrl,
+      // Assinaturas não permitem configurar o webhook pelo painel:
+      // a notification_url precisa ser enviada na criação (doc oficial MP).
+      notification_url: webhookUrl(),
       auto_recurring: {
         frequency: 1,
         frequency_type: "months",
@@ -122,6 +125,7 @@ export async function createProPlan(backUrl: string): Promise<PreapprovalPlan> {
     },
   });
 }
+
 
 // --------------------------------------------------------------- Assinatura
 
