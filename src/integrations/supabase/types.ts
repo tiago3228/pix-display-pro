@@ -949,6 +949,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      enforce_subscription_grace: { Args: never; Returns: number }
+      get_public_store: {
+        Args: { _slug: string }
+        Returns: {
+          accept_pix: boolean
+          allow_installments: boolean
+          banner_url: string
+          category: string
+          description: string
+          id: string
+          instagram: string
+          logo_url: string
+          max_installments: number
+          min_installment_amount: number
+          name: string
+          pix_key: string
+          pix_key_type: string
+          primary_color: string
+          seller_name: string
+          slug: string
+          welcome_message: string
+          whatsapp: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -956,6 +980,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      mark_overdue_installments: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "admin" | "seller"
