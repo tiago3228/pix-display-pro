@@ -5,6 +5,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export type SubscriptionView = {
   plan: "free" | "pro";
   hasProAccess: boolean;
+  proSource: "mercadopago" | "pix_manual" | null;
+  pixActiveUntil: string | null;
   environment: "test" | "live";
   subscription: {
     id: string;
@@ -45,6 +47,8 @@ export const getMySubscription = createServerFn({ method: "GET" })
     const empty: SubscriptionView = {
       plan: "free",
       hasProAccess: false,
+      proSource: null,
+      pixActiveUntil: null,
       environment: mpEnvironment(),
       subscription: null,
       payments: [],
@@ -91,11 +95,17 @@ export const getMySubscription = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(12);
 
-    const hasProAccess = sub ? statusGrantsPro(sub.status, sub.grace_until) : false;
+    const mpPro = sub ? statusGrantsPro(sub.status, sub.grace_until) : false;
+
+    const { activePixGrant } = await import("./pro-pix.server");
+    const pixGrant = await activePixGrant(store.id);
+    const hasProAccess = mpPro || Boolean(pixGrant);
 
     return {
       plan: hasProAccess ? "pro" : "free",
       hasProAccess,
+      proSource: mpPro ? "mercadopago" : pixGrant ? "pix_manual" : null,
+      pixActiveUntil: pixGrant?.periodEnd ?? null,
       environment: mpEnvironment(),
       subscription: sub
         ? {

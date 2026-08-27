@@ -6,6 +6,8 @@ import { Check, ExternalLink, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useMyStore } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
+import { ProPixCard } from "@/components/ProPixCard";
+
 import {
   cancelProSubscription,
   getMySubscription,
@@ -227,18 +229,22 @@ function Subscription() {
                 disabled={startMutation.isPending || isLoading}
               >
                 <Sparkles className="mr-2 size-4" />
-                {startMutation.isPending ? "Abrindo o Mercado Pago..." : "Assinar PRO"}
+                {startMutation.isPending ? "Abrindo o Mercado Pago..." : "Assinar com Mercado Pago"}
               </Button>
             )
           }
         />
       </div>
 
+      <ProPixCard hasPro={isPro} />
+
       <p className="mt-4 text-center text-xs text-muted-foreground">
         Assinatura recorrente de {brl(PRO_PLAN_PRICE)} por mês, cobrada automaticamente pelo Mercado
         Pago. Você pode cancelar quando quiser e o acesso permanece até o fim do período já pago. A
-        liberação do PRO acontece apenas após a confirmação do Mercado Pago.
+        liberação do PRO acontece apenas após a confirmação do Mercado Pago. No Pix, a liberação
+        depende da confirmação manual do administrador.
       </p>
+
 
       {isError ? (
         <p className="mt-3 text-center text-xs text-destructive">
