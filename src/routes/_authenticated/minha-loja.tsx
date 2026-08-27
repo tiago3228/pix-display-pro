@@ -30,6 +30,9 @@ function MyStore() {
   const { data: store } = useMyStore();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(
+    null,
+  );
   const isPro = store?.plan === "pro";
   const [form, setForm] = useState({
     name: "",
@@ -90,7 +93,25 @@ function MyStore() {
   }
 
   async function save() {
-    if (!store) return;
+    if (!store) {
+      setFeedback({ type: "error", text: "Carregando sua loja... tente novamente em instantes." });
+      return;
+    }
+    setFeedback(null);
+
+    if (!form.name.trim() || !form.seller_name.trim()) {
+      const text = "Preencha o nome da loja e o nome do vendedor.";
+      setFeedback({ type: "error", text });
+      toast.error(text);
+      return;
+    }
+    if (!form.whatsapp.trim()) {
+      const text = "Informe o WhatsApp da loja.";
+      setFeedback({ type: "error", text });
+      toast.error(text);
+      return;
+    }
+
     setSaving(true);
     const { error } = await supabase
       .from("stores")
@@ -102,13 +123,14 @@ function MyStore() {
       .eq("id", store.id);
     setSaving(false);
     if (error) {
-      toast.error(
-        error.message.includes("duplicate")
-          ? "Esse endereço de loja já está em uso."
-          : "Não foi possível salvar.",
-      );
+      const text = error.message.includes("duplicate")
+        ? "Esse endereço de loja já está em uso."
+        : `Não foi possível salvar: ${error.message}`;
+      setFeedback({ type: "error", text });
+      toast.error(text);
       return;
     }
+    setFeedback({ type: "success", text: "Alterações salvas com sucesso." });
     toast.success("Loja atualizada!");
     queryClient.invalidateQueries({ queryKey: ["my-store"] });
   }
@@ -340,6 +362,19 @@ function MyStore() {
             </div>
           ) : null}
         </div>
+
+        {feedback ? (
+          <p
+            role="status"
+            className={`rounded-lg border p-3 text-sm ${
+              feedback.type === "success"
+                ? "border-primary/30 bg-primary/10 text-primary"
+                : "border-destructive/30 bg-destructive/10 text-destructive"
+            }`}
+          >
+            {feedback.text}
+          </p>
+        ) : null}
 
         <Button className="h-11 w-full" disabled={saving} onClick={save}>
           {saving ? "Salvando..." : "Salvar alterações"}
