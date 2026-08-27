@@ -30,6 +30,7 @@ function MyStore() {
   const { data: store } = useMyStore();
   const queryClient = useQueryClient();
   const [saving, setSaving] = useState(false);
+  const isPro = store?.plan === "pro";
   const [form, setForm] = useState({
     name: "",
     seller_name: "",
@@ -43,6 +44,10 @@ function MyStore() {
     pix_key_type: "email",
     pix_key: "",
     is_active: true,
+    accept_pix: true,
+    allow_installments: false,
+    max_installments: 3,
+    min_installment_amount: 20,
   });
 
   useEffect(() => {
@@ -60,8 +65,13 @@ function MyStore() {
       pix_key_type: store.pix_key_type,
       pix_key: store.pix_key,
       is_active: store.is_active,
+      accept_pix: store.accept_pix,
+      allow_installments: store.allow_installments,
+      max_installments: store.max_installments,
+      min_installment_amount: Number(store.min_installment_amount),
     });
   }, [store]);
+
 
   async function uploadImage(kind: "logo_url" | "banner_url", file: File) {
     const { data: userData } = await supabase.auth.getUser();
@@ -258,6 +268,74 @@ function MyStore() {
           />
         </div>
 
+        <div className="space-y-3 rounded-lg border border-border p-3">
+
+          <p className="text-sm font-semibold">Formas de pagamento</p>
+
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Aceitar Pix à vista</p>
+              <p className="text-xs text-muted-foreground">
+                O cliente paga direto na sua chave Pix.
+              </p>
+            </div>
+            <Switch
+              checked={form.accept_pix}
+              onCheckedChange={(checked) => setForm({ ...form, accept_pix: checked })}
+            />
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium">Permitir parcelamento {isPro ? "" : "(PRO)"}</p>
+              <p className="text-xs text-muted-foreground">
+                Parcelamento combinado direto com o cliente, sem banco ou cartão. Você recebe cada
+                parcela por Pix e confirma manualmente.
+              </p>
+            </div>
+            <Switch
+              disabled={!isPro}
+              checked={form.allow_installments && isPro}
+              onCheckedChange={(checked) => setForm({ ...form, allow_installments: checked })}
+            />
+          </div>
+
+          {form.allow_installments && isPro ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>Máximo de parcelas</Label>
+                <Select
+                  value={String(form.max_installments)}
+                  onValueChange={(v) => setForm({ ...form, max_installments: Number(v) })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[2, 3, 4, 5, 6, 8, 10, 12].map((n) => (
+                      <SelectItem key={n} value={String(n)}>
+                        {n}x
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Valor mínimo por parcela (R$)</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  step="0.01"
+                  value={form.min_installment_amount}
+                  onChange={(e) =>
+                    setForm({ ...form, min_installment_amount: Number(e.target.value) })
+                  }
+                />
+              </div>
+            </div>
+          ) : null}
+        </div>
+
         <Button className="h-11 w-full" disabled={saving} onClick={save}>
           {saving ? "Salvando..." : "Salvar alterações"}
         </Button>
@@ -265,3 +343,4 @@ function MyStore() {
     </AppShell>
   );
 }
+

@@ -14,6 +14,71 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          created_at: string
+          key: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          key: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          key?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          metadata: Json
+          reference: string | null
+          resource_id: string | null
+          resource_type: string | null
+          store_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          reference?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
+          store_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          metadata?: Json
+          reference?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
+          store_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -49,37 +114,125 @@ export type Database = {
       customers: {
         Row: {
           created_at: string
+          email: string | null
           id: string
           last_order_at: string | null
           name: string
+          notes: string | null
           orders_count: number
           store_id: string
           total_spent: number
+          updated_at: string
           whatsapp: string
         }
         Insert: {
           created_at?: string
+          email?: string | null
           id?: string
           last_order_at?: string | null
           name?: string
+          notes?: string | null
           orders_count?: number
           store_id: string
           total_spent?: number
+          updated_at?: string
           whatsapp?: string
         }
         Update: {
           created_at?: string
+          email?: string | null
           id?: string
           last_order_at?: string | null
           name?: string
+          notes?: string | null
           orders_count?: number
           store_id?: string
           total_spent?: number
+          updated_at?: string
           whatsapp?: string
         }
         Relationships: [
           {
             foreignKeyName: "customers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      installments: {
+        Row: {
+          amount: number
+          created_at: string
+          customer_id: string | null
+          due_date: string
+          id: string
+          installment_number: number
+          order_id: string
+          paid_at: string | null
+          paid_by: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          public_token: string
+          status: string
+          store_id: string
+          total_installments: number
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          customer_id?: string | null
+          due_date: string
+          id?: string
+          installment_number: number
+          order_id: string
+          paid_at?: string | null
+          paid_by?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          public_token?: string
+          status?: string
+          store_id: string
+          total_installments: number
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          customer_id?: string | null
+          due_date?: string
+          id?: string
+          installment_number?: number
+          order_id?: string
+          paid_at?: string | null
+          paid_by?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          public_token?: string
+          status?: string
+          store_id?: string
+          total_installments?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "installments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "installments_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -142,9 +295,11 @@ export type Database = {
           customer_name: string
           customer_whatsapp: string
           id: string
+          installments_count: number
           note: string | null
           number: number
           payment_declared: boolean
+          payment_method: string
           status: string
           store_id: string
           total: number
@@ -156,9 +311,11 @@ export type Database = {
           customer_name?: string
           customer_whatsapp?: string
           id?: string
+          installments_count?: number
           note?: string | null
           number?: number
           payment_declared?: boolean
+          payment_method?: string
           status?: string
           store_id: string
           total?: number
@@ -170,9 +327,11 @@ export type Database = {
           customer_name?: string
           customer_whatsapp?: string
           id?: string
+          installments_count?: number
           note?: string | null
           number?: number
           payment_declared?: boolean
+          payment_method?: string
           status?: string
           store_id?: string
           total?: number
@@ -188,6 +347,64 @@ export type Database = {
           },
           {
             foreignKeyName: "orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_reminders: {
+        Row: {
+          channel: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          id: string
+          installment_id: string
+          link: string | null
+          message: string | null
+          store_id: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          id?: string
+          installment_id: string
+          link?: string | null
+          message?: string | null
+          store_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          id?: string
+          installment_id?: string
+          link?: string | null
+          message?: string | null
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_reminders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_reminders_installment_id_fkey"
+            columns: ["installment_id"]
+            isOneToOne: false
+            referencedRelation: "installments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_reminders_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -428,6 +645,8 @@ export type Database = {
       }
       stores: {
         Row: {
+          accept_pix: boolean
+          allow_installments: boolean
           banner_url: string | null
           category: string
           created_at: string
@@ -436,6 +655,8 @@ export type Database = {
           instagram: string | null
           is_active: boolean
           logo_url: string | null
+          max_installments: number
+          min_installment_amount: number
           name: string
           onboarding_done: boolean
           owner_id: string | null
@@ -450,6 +671,8 @@ export type Database = {
           whatsapp: string
         }
         Insert: {
+          accept_pix?: boolean
+          allow_installments?: boolean
           banner_url?: string | null
           category?: string
           created_at?: string
@@ -458,6 +681,8 @@ export type Database = {
           instagram?: string | null
           is_active?: boolean
           logo_url?: string | null
+          max_installments?: number
+          min_installment_amount?: number
           name: string
           onboarding_done?: boolean
           owner_id?: string | null
@@ -472,6 +697,8 @@ export type Database = {
           whatsapp?: string
         }
         Update: {
+          accept_pix?: boolean
+          allow_installments?: boolean
           banner_url?: string | null
           category?: string
           created_at?: string
@@ -480,6 +707,8 @@ export type Database = {
           instagram?: string | null
           is_active?: boolean
           logo_url?: string | null
+          max_installments?: number
+          min_installment_amount?: number
           name?: string
           onboarding_done?: boolean
           owner_id?: string | null
@@ -495,36 +724,197 @@ export type Database = {
         }
         Relationships: []
       }
-      subscriptions: {
+      subscription_events: {
         Row: {
-          created_at: string
-          current_period_end: string | null
+          error_message: string | null
+          event_id: string
+          event_type: string
           id: string
-          plan: string
-          provider: string | null
-          provider_ref: string | null
+          payload_hash: string | null
+          processed_at: string | null
+          provider: string
+          received_at: string
+          resource_id: string | null
           status: string
-          store_id: string
+          store_id: string | null
         }
         Insert: {
-          created_at?: string
-          current_period_end?: string | null
+          error_message?: string | null
+          event_id: string
+          event_type: string
           id?: string
-          plan?: string
-          provider?: string | null
-          provider_ref?: string | null
+          payload_hash?: string | null
+          processed_at?: string | null
+          provider?: string
+          received_at?: string
+          resource_id?: string | null
           status?: string
-          store_id: string
+          store_id?: string | null
         }
         Update: {
-          created_at?: string
-          current_period_end?: string | null
+          error_message?: string | null
+          event_id?: string
+          event_type?: string
           id?: string
-          plan?: string
-          provider?: string | null
-          provider_ref?: string | null
+          payload_hash?: string | null
+          processed_at?: string | null
+          provider?: string
+          received_at?: string
+          resource_id?: string | null
+          status?: string
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_events_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscription_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          due_at: string | null
+          external_status: string | null
+          id: string
+          paid_at: string | null
+          provider: string
+          provider_payment_id: string
+          status: string
+          store_id: string
+          subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          due_at?: string | null
+          external_status?: string | null
+          id?: string
+          paid_at?: string | null
+          provider?: string
+          provider_payment_id: string
+          status?: string
+          store_id: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          due_at?: string | null
+          external_status?: string | null
+          id?: string
+          paid_at?: string | null
+          provider?: string
+          provider_payment_id?: string
           status?: string
           store_id?: string
+          subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscription_payments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscription_payments_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscriptions: {
+        Row: {
+          amount: number
+          canceled_at: string | null
+          created_at: string
+          currency: string
+          current_period_end: string | null
+          external_reference: string | null
+          external_status: string | null
+          grace_until: string | null
+          id: string
+          init_point: string | null
+          last_payment_at: string | null
+          next_billing_date: string | null
+          past_due_since: string | null
+          paused_at: string | null
+          plan: string
+          provider: string | null
+          provider_plan_id: string | null
+          provider_ref: string | null
+          provider_subscription_id: string | null
+          started_at: string | null
+          status: string
+          store_id: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number
+          canceled_at?: string | null
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          external_reference?: string | null
+          external_status?: string | null
+          grace_until?: string | null
+          id?: string
+          init_point?: string | null
+          last_payment_at?: string | null
+          next_billing_date?: string | null
+          past_due_since?: string | null
+          paused_at?: string | null
+          plan?: string
+          provider?: string | null
+          provider_plan_id?: string | null
+          provider_ref?: string | null
+          provider_subscription_id?: string | null
+          started_at?: string | null
+          status?: string
+          store_id: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          canceled_at?: string | null
+          created_at?: string
+          currency?: string
+          current_period_end?: string | null
+          external_reference?: string | null
+          external_status?: string | null
+          grace_until?: string | null
+          id?: string
+          init_point?: string | null
+          last_payment_at?: string | null
+          next_billing_date?: string | null
+          past_due_since?: string | null
+          paused_at?: string | null
+          plan?: string
+          provider?: string | null
+          provider_plan_id?: string | null
+          provider_ref?: string | null
+          provider_subscription_id?: string | null
+          started_at?: string | null
+          status?: string
+          store_id?: string
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {

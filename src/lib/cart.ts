@@ -91,7 +91,9 @@ export function buildOrderMessage(opts: {
   paid: boolean;
   customerName?: string;
   note?: string;
+  installments?: number;
 }) {
+
   const lines: string[] = [];
   lines.push(`Olá, ${opts.sellerName || "tudo bem"}! 😊`);
   lines.push("");
@@ -119,8 +121,17 @@ export function buildOrderMessage(opts: {
     lines.push(`Observação: ${opts.note}`);
   }
   lines.push("");
-  lines.push(
-    opts.paid ? "Já realizei o pagamento via Pix." : "Vou realizar o pagamento via Pix.",
-  );
+  const count = opts.installments ?? 1;
+  if (count > 1) {
+    const per = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+      Math.floor((opts.total / count) * 100) / 100,
+    );
+    lines.push(`Forma de pagamento: parcelado em ${count}x de ${per} via Pix, combinado com você.`);
+  } else {
+    lines.push(
+      opts.paid ? "Já realizei o pagamento via Pix." : "Vou realizar o pagamento via Pix.",
+    );
+  }
   return lines.join("\n");
 }
+
