@@ -16,7 +16,9 @@ const REPLAY_WINDOW_SECONDS = 300;
 type SignatureResult = "ok" | "invalid" | "missing-secret" | "stale";
 
 function verifySignature(request: Request, dataId: string | null): SignatureResult {
-  const secret = process.env["MERCADOPAGO_WEBHOOK_SECRET"];
+  // Em produção o segredo pode ser específico; cai para o segredo único quando não houver.
+  const secret =
+    process.env["MERCADOPAGO_PROD_WEBHOOK_SECRET"] || process.env["MERCADOPAGO_WEBHOOK_SECRET"];
   // Sem segredo configurado o webhook NUNCA aceita a requisição.
   if (!secret) return "missing-secret";
 
