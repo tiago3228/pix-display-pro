@@ -74,10 +74,11 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
         );
 
         const signature = verifySignature(request, resourceId || null);
-        if (signature === "invalid") {
-          console.warn("[mercadopago-webhook] assinatura inválida", { eventType });
-          return new Response("invalid signature", { status: 401 });
+        if (signature !== "ok") {
+          console.warn("[mercadopago-webhook] notificação rejeitada", { eventType, signature });
+          return new Response("unauthorized", { status: 401 });
         }
+
 
         if (!resourceId) return new Response("ok");
 
