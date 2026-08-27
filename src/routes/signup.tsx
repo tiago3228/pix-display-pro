@@ -44,12 +44,11 @@ function SignupPage() {
       email: form.email,
       password: form.password,
       options: {
-        emailRedirectTo: window.location.origin,
         data: { name: form.name, whatsapp: form.whatsapp },
       },
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       toast.error(
         error.message.includes("already")
           ? "Este e-mail já possui uma conta. Faça login."
@@ -57,18 +56,33 @@ function SignupPage() {
       );
       return;
     }
+    let userId = data.user?.id ?? null;
     if (!data.session) {
-      setAwaitingConfirm(true);
-      return;
+      // Sem confirmação de e-mail: entra direto após o cadastro.
+      const { data: signIn, error: signInError } = await supabase.auth.signInWithPassword({
+        email: form.email,
+        password: form.password,
+      });
+      if (signInError || !signIn.session) {
+        setLoading(false);
+        toast.error("Conta criada, mas não foi possível entrar. Tente fazer login.");
+        navigate({ to: "/login" });
+        return;
+      }
+      userId = signIn.user.id;
     }
-    await supabase.from("profiles").upsert({
-      id: data.user!.id,
-      name: form.name,
-      email: form.email,
-      whatsapp: form.whatsapp,
-    });
+    setLoading(false);
+    if (userId) {
+      await supabase.from("profiles").upsert({
+        id: userId,
+        name: form.name,
+        email: form.email,
+        whatsapp: form.whatsapp,
+      });
+    }
     navigate({ to: "/onboarding" });
   }
+
 
   async function handleGoogle() {
     const result = await lovable.auth.signInWithOAuth("google", {
