@@ -13,6 +13,8 @@ import {
   ShoppingCart,
   Store,
   Users,
+  Wallet,
+
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin, useMyStore } from "@/hooks/useAuth";
