@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -15,7 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useIsAdmin } from "@/hooks/useAuth";
+import { useIsAdmin, useMyStore } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +47,14 @@ export function AppShell({
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: isAdmin } = useIsAdmin();
+  const { data: store, isLoading: storeLoading } = useMyStore();
+
+  useEffect(() => {
+    if (!storeLoading && (!store || !store.onboarding_done)) {
+      navigate({ to: "/onboarding", replace: true });
+    }
+  }, [store, storeLoading, navigate]);
+
 
   async function signOut() {
     await queryClient.cancelQueries();

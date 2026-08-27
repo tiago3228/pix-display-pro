@@ -15,7 +15,16 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAssinaturaRouteImport } from './routes/_authenticated/assinatura'
+import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
+import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedMinhaLojaRouteImport } from './routes/_authenticated/minha-loja'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedPedidosRouteImport } from './routes/_authenticated/pedidos'
+import { Route as AuthenticatedProdutosRouteImport } from './routes/_authenticated/produtos'
+import { Route as AuthenticatedQrcodesRouteImport } from './routes/_authenticated/qrcodes'
 import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -47,9 +56,55 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAssinaturaRoute = AuthenticatedAssinaturaRouteImport.update({
+  id: '/assinatura',
+  path: '/assinatura',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedConfiguracoesRoute =
+  AuthenticatedConfiguracoesRouteImport.update({
+    id: '/configuracoes',
+    path: '/configuracoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMinhaLojaRoute = AuthenticatedMinhaLojaRouteImport.update({
+  id: '/minha-loja',
+  path: '/minha-loja',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedPedidosRoute = AuthenticatedPedidosRouteImport.update({
+  id: '/pedidos',
+  path: '/pedidos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProdutosRoute = AuthenticatedProdutosRouteImport.update({
+  id: '/produtos',
+  path: '/produtos',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedQrcodesRoute = AuthenticatedQrcodesRouteImport.update({
+  id: '/qrcodes',
+  path: '/qrcodes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const LojaSlugRoute = LojaSlugRouteImport.update({
@@ -64,7 +119,16 @@ export interface FileRoutesByFullPath {
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/assinatura': typeof AuthenticatedAssinaturaRoute
+  '/clientes': typeof AuthenticatedClientesRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/pedidos': typeof AuthenticatedPedidosRoute
+  '/produtos': typeof AuthenticatedProdutosRoute
+  '/qrcodes': typeof AuthenticatedQrcodesRoute
   '/loja/$slug': typeof LojaSlugRoute
 }
 export interface FileRoutesByTo {
@@ -73,7 +137,16 @@ export interface FileRoutesByTo {
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/assinatura': typeof AuthenticatedAssinaturaRoute
+  '/clientes': typeof AuthenticatedClientesRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/pedidos': typeof AuthenticatedPedidosRoute
+  '/produtos': typeof AuthenticatedProdutosRoute
+  '/qrcodes': typeof AuthenticatedQrcodesRoute
   '/loja/$slug': typeof LojaSlugRoute
 }
 export interface FileRoutesById {
@@ -84,7 +157,16 @@ export interface FileRoutesById {
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/assinatura': typeof AuthenticatedAssinaturaRoute
+  '/_authenticated/clientes': typeof AuthenticatedClientesRoute
+  '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/pedidos': typeof AuthenticatedPedidosRoute
+  '/_authenticated/produtos': typeof AuthenticatedProdutosRoute
+  '/_authenticated/qrcodes': typeof AuthenticatedQrcodesRoute
   '/loja/$slug': typeof LojaSlugRoute
 }
 export interface FileRouteTypes {
@@ -95,7 +177,16 @@ export interface FileRouteTypes {
     | '/recuperar-senha'
     | '/reset-password'
     | '/signup'
+    | '/admin'
+    | '/assinatura'
+    | '/clientes'
+    | '/configuracoes'
+    | '/dashboard'
+    | '/minha-loja'
     | '/onboarding'
+    | '/pedidos'
+    | '/produtos'
+    | '/qrcodes'
     | '/loja/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -104,7 +195,16 @@ export interface FileRouteTypes {
     | '/recuperar-senha'
     | '/reset-password'
     | '/signup'
+    | '/admin'
+    | '/assinatura'
+    | '/clientes'
+    | '/configuracoes'
+    | '/dashboard'
+    | '/minha-loja'
     | '/onboarding'
+    | '/pedidos'
+    | '/produtos'
+    | '/qrcodes'
     | '/loja/$slug'
   id:
     | '__root__'
@@ -114,7 +214,16 @@ export interface FileRouteTypes {
     | '/recuperar-senha'
     | '/reset-password'
     | '/signup'
+    | '/_authenticated/admin'
+    | '/_authenticated/assinatura'
+    | '/_authenticated/clientes'
+    | '/_authenticated/configuracoes'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/minha-loja'
     | '/_authenticated/onboarding'
+    | '/_authenticated/pedidos'
+    | '/_authenticated/produtos'
+    | '/_authenticated/qrcodes'
     | '/loja/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -172,11 +281,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/assinatura': {
+      id: '/_authenticated/assinatura'
+      path: '/assinatura'
+      fullPath: '/assinatura'
+      preLoaderRoute: typeof AuthenticatedAssinaturaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/clientes': {
+      id: '/_authenticated/clientes'
+      path: '/clientes'
+      fullPath: '/clientes'
+      preLoaderRoute: typeof AuthenticatedClientesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/configuracoes': {
+      id: '/_authenticated/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/minha-loja': {
+      id: '/_authenticated/minha-loja'
+      path: '/minha-loja'
+      fullPath: '/minha-loja'
+      preLoaderRoute: typeof AuthenticatedMinhaLojaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/onboarding': {
       id: '/_authenticated/onboarding'
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pedidos': {
+      id: '/_authenticated/pedidos'
+      path: '/pedidos'
+      fullPath: '/pedidos'
+      preLoaderRoute: typeof AuthenticatedPedidosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/produtos': {
+      id: '/_authenticated/produtos'
+      path: '/produtos'
+      fullPath: '/produtos'
+      preLoaderRoute: typeof AuthenticatedProdutosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/qrcodes': {
+      id: '/_authenticated/qrcodes'
+      path: '/qrcodes'
+      fullPath: '/qrcodes'
+      preLoaderRoute: typeof AuthenticatedQrcodesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/loja/$slug': {
@@ -190,11 +362,29 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAssinaturaRoute: typeof AuthenticatedAssinaturaRoute
+  AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
+  AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedMinhaLojaRoute: typeof AuthenticatedMinhaLojaRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedPedidosRoute: typeof AuthenticatedPedidosRoute
+  AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRoute
+  AuthenticatedQrcodesRoute: typeof AuthenticatedQrcodesRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
+  AuthenticatedAssinaturaRoute: AuthenticatedAssinaturaRoute,
+  AuthenticatedClientesRoute: AuthenticatedClientesRoute,
+  AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedMinhaLojaRoute: AuthenticatedMinhaLojaRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
+  AuthenticatedPedidosRoute: AuthenticatedPedidosRoute,
+  AuthenticatedProdutosRoute: AuthenticatedProdutosRoute,
+  AuthenticatedQrcodesRoute: AuthenticatedQrcodesRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

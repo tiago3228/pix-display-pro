@@ -115,7 +115,7 @@ function Onboarding() {
     setSlug(saved.slug);
     await supabase
       .from("profiles")
-      .upsert({ id: user.id, name: form.seller_name || form.name, email: user.email });
+      .upsert({ id: user.id, name: form.seller_name || form.name, email: user.email ?? null });
     setStep(2);
   }
 
