@@ -412,6 +412,107 @@ export type Database = {
           },
         ]
       }
+      pix_settings: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          pix_key: string
+          pix_key_type: string
+          receiver_city: string
+          receiver_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          pix_key: string
+          pix_key_type?: string
+          receiver_city: string
+          receiver_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          pix_key?: string
+          pix_key_type?: string
+          receiver_city?: string
+          receiver_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pro_pix_requests: {
+        Row: {
+          amount: number
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          id: string
+          payment_method: string
+          period_end: string | null
+          period_start: string | null
+          pix_key_snapshot: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          rejection_reason: string | null
+          requested_at: string
+          status: string
+          store_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          payment_method?: string
+          period_end?: string | null
+          period_start?: string | null
+          pix_key_snapshot?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          status?: string
+          store_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          id?: string
+          payment_method?: string
+          period_end?: string | null
+          period_start?: string | null
+          pix_key_snapshot?: string | null
+          rejected_at?: string | null
+          rejected_by?: string | null
+          rejection_reason?: string | null
+          requested_at?: string
+          status?: string
+          store_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pro_pix_requests_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_option_values: {
         Row: {
           id: string
