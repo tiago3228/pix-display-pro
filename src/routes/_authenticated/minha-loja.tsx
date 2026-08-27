@@ -68,7 +68,7 @@ function MyStore() {
     if (!userData.user || !store) return;
     try {
       const path = await uploadAsset(userData.user.id, file);
-      const { error } = await supabase.from("stores").update({ [kind]: path }).eq("id", store.id);
+      const { error } = await supabase.from("stores").update({ [kind]: path } as never).eq("id", store.id);
       if (error) throw error;
       toast.success("Imagem atualizada.");
       queryClient.invalidateQueries({ queryKey: ["my-store"] });
