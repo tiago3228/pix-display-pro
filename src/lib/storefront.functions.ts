@@ -127,8 +127,9 @@ export const getStorefront = createServerFn({ method: "GET" })
         pix_key: store.pix_key,
         pix_key_type: store.pix_key_type,
         accept_pix: store.accept_pix,
-        // Parcelamento é um recurso PRO: o backend decide, nunca o frontend.
-        allow_installments: store.allow_installments && store.plan === "pro",
+        // Parcelamento é um recurso PRO: a própria função do banco já aplica a regra.
+        allow_installments: store.allow_installments,
+
         max_installments: store.max_installments,
         min_installment_amount: Number(store.min_installment_amount),
       },
