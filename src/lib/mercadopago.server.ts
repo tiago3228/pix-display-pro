@@ -20,11 +20,11 @@ const API = "https://api.mercadopago.com";
 export type MpEnvironment = "test" | "live";
 
 export function mpEnvironment(): MpEnvironment {
-  const configured = (process.env["MERCADOPAGO_ENVIRONMENT"] ?? "test").toLowerCase();
-  if (configured === "live" || configured === "production" || configured === "prod") {
-    // Só permite produção quando a credencial de produção realmente existe.
-    if (process.env["MERCADOPAGO_PROD_ACCESS_TOKEN"]) return "live";
-  }
+  const configured = (process.env["MERCADOPAGO_ENVIRONMENT"] ?? "").toLowerCase();
+  // Forçar teste explicitamente sempre vence.
+  if (configured === "test" || configured === "sandbox") return "test";
+  // Produção quando pedida explicitamente OU quando só existe credencial de produção.
+  if (process.env["MERCADOPAGO_PROD_ACCESS_TOKEN"]) return "live";
   return "test";
 }
 
