@@ -6,6 +6,8 @@ import { Check, ExternalLink, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useMyStore } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
+import { ProPixCard } from "@/components/ProPixCard";
+
 import {
   cancelProSubscription,
   getMySubscription,
