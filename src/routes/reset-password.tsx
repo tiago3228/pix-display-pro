@@ -47,7 +47,7 @@ function ResetPasswordPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="password">Nova senha</Label>
-          <Input
+          <PasswordInput
             id="password"
             autoComplete="new-password"
             required
