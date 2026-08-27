@@ -40,6 +40,7 @@ function RecoverPage() {
 
   return (
     <AuthShell
+      backTo="/login"
       title="Recuperar senha"
       subtitle="Enviaremos um link para você criar uma nova senha."
       footer={
