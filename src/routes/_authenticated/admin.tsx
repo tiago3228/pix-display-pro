@@ -1,0 +1,80 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { Store as StoreIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useIsAdmin } from "@/hooks/useAuth";
+import { AppShell, StatCard } from "@/components/AppShell";
+import { formatDate } from "@/lib/format";
+import { Badge } from "@/components/ui/badge";
+
+export const Route = createFileRoute("/_authenticated/admin")({
+  component: Admin,
+});
+
+function Admin() {
+  const { data: isAdmin, isLoading } = useIsAdmin();
+
+  const { data } = useQuery({
+    queryKey: ["admin-overview"],
+    enabled: isAdmin === true,
+    queryFn: async () => {
+      const [stores, orders] = await Promise.all([
+        supabase
+          .from("stores")
+          .select("id, name, slug, plan, is_active, created_at")
+          .order("created_at", { ascending: false }),
+        supabase.from("orders").select("id", { count: "exact", head: true }),
+      ]);
+      return { stores: stores.data ?? [], orders: orders.count ?? 0 };
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <AppShell title="Administração">
+        <p className="text-sm text-muted-foreground">Carregando...</p>
+      </AppShell>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <AppShell title="Administração">
+        <div className="surface p-10 text-center text-sm text-muted-foreground">
+          Você não tem acesso a esta área.
+        </div>
+      </AppShell>
+    );
+  }
+
+  const pro = (data?.stores ?? []).filter((s) => s.plan === "pro").length;
+
+  return (
+    <AppShell title="Administração" description="Visão geral da plataforma">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+        <StatCard label="Lojas" value={String(data?.stores.length ?? 0)} icon={StoreIcon} />
+        <StatCard label="Assinantes Pro" value={String(pro)} />
+        <StatCard label="Pedidos" value={String(data?.orders ?? 0)} />
+      </div>
+
+      <div className="surface mt-4 divide-y divide-border p-4">
+        {(data?.stores ?? []).map((store) => (
+          <div key={store.id} className="flex items-center justify-between gap-3 py-2.5">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium">{store.name}</p>
+              <p className="text-xs text-muted-foreground">
+                /loja/{store.slug} · {formatDate(store.created_at)}
+              </p>
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <Badge variant={store.plan === "pro" ? "default" : "secondary"}>{store.plan}</Badge>
+              <Badge variant={store.is_active ? "secondary" : "destructive"}>
+                {store.is_active ? "ativa" : "inativa"}
+              </Badge>
+            </div>
+          </div>
+        ))}
+      </div>
+    </AppShell>
+  );
+}
