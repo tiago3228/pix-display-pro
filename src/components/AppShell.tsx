@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -15,7 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useIsAdmin } from "@/hooks/useAuth";
+import { useIsAdmin, useMyStore } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
