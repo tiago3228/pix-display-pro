@@ -12,6 +12,7 @@ import {
   Settings,
   ShieldCheck,
   ShoppingCart,
+  Sparkles,
   Store,
   Users,
   Wallet,
@@ -118,6 +119,14 @@ export function AppShell({
             </Link>
           ) : null}
         </nav>
+        {store && store.plan !== "pro" ? (
+          <Link
+            to="/assinatura"
+            className="mb-2 flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
+          >
+            <Sparkles className="size-4" /> Assinar PRO — R$ 9,90
+          </Link>
+        ) : null}
         <Button variant="ghost" className="justify-start" onClick={signOut}>
           <LogOut className="mr-2 size-4" /> Sair
         </Button>
@@ -140,6 +149,15 @@ export function AppShell({
 
             <div className="flex shrink-0 items-center gap-2">
               {action}
+              {store && store.plan !== "pro" && pathname !== "/assinatura" ? (
+                <Button asChild size="sm" className="h-9 shrink-0">
+                  <Link to="/assinatura">
+                    <Sparkles className="size-4 sm:mr-1" />
+                    <span className="hidden sm:inline">Assinar PRO</span>
+                    <span className="sr-only sm:hidden">Assinar PRO</span>
+                  </Link>
+                </Button>
+              ) : null}
               <Button
                 variant="ghost"
                 size="icon"
@@ -188,6 +206,15 @@ export function AppShell({
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
               <div className="grid gap-1 px-4 pb-6">
+                {store && store.plan !== "pro" ? (
+                  <Link
+                    to="/assinatura"
+                    onClick={() => setMoreOpen(false)}
+                    className="mb-1 flex items-center gap-3 rounded-lg bg-primary px-3 py-3 text-sm font-semibold text-primary-foreground"
+                  >
+                    <Sparkles className="size-4" /> Assinar PRO — R$ 9,90/mês
+                  </Link>
+                ) : null}
                 {MOBILE_MORE.map((item) => (
                   <Link
                     key={item.to}
