@@ -157,10 +157,7 @@ function MyStore() {
     queryClient.invalidateQueries({ queryKey: ["my-store"] });
   }
 
-    setFeedback({ type: "success", text: "Alterações salvas com sucesso." });
-    toast.success("Loja atualizada!");
-    queryClient.invalidateQueries({ queryKey: ["my-store"] });
-  }
+
 
   return (
     <AppShell title="Minha loja" description="Personalize sua vitrine">
