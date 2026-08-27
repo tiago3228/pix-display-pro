@@ -245,3 +245,15 @@ export function resolveBaseUrl(candidate?: string | null): string {
   if (configured) return configured.replace(/\/$/, "");
   return "https://pix-display-pro.lovable.app";
 }
+
+/** Caminho público do webhook oficial do Mercado Pago. */
+export const MP_WEBHOOK_PATH = "/api/public/webhooks/mercadopago";
+
+/**
+ * URL absoluta informada ao Mercado Pago na criação do plano e da assinatura.
+ * Integrações de Assinaturas não permitem configurar o webhook pelo painel,
+ * portanto a `notification_url` precisa viajar no payload de criação.
+ */
+export function webhookUrl(): string {
+  return `${resolveBaseUrl(null)}${MP_WEBHOOK_PATH}`;
+}
