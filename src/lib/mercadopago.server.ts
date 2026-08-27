@@ -141,8 +141,13 @@ export type Preapproval = {
   summarized?: { last_charged_date?: string; charged_quantity?: number };
 };
 
+/**
+ * Cria a assinatura em modo checkout (sem cartão ainda).
+ * IMPORTANTE: enviar `preapproval_plan_id` exige `card_token_id` (erro 400).
+ * Para o fluxo de redirecionamento usamos preapproval sem plano, com
+ * `auto_recurring` explícito + `status: "pending"`, que devolve `init_point`.
+ */
 export async function createPreapproval(input: {
-  planId: string;
   externalReference: string;
   payerEmail: string;
   backUrl: string;
@@ -152,13 +157,17 @@ export async function createPreapproval(input: {
     method: "POST",
     idempotencyKey: input.idempotencyKey,
     body: {
-      preapproval_plan_id: input.planId,
       reason: PRO_PLAN_REASON,
       external_reference: input.externalReference,
       payer_email: input.payerEmail,
       back_url: input.backUrl,
       notification_url: webhookUrl(),
-
+      auto_recurring: {
+        frequency: 1,
+        frequency_type: "months",
+        transaction_amount: PRO_PLAN_AMOUNT,
+        currency_id: PRO_PLAN_CURRENCY,
+      },
       status: "pending",
     },
   });
