@@ -6,6 +6,7 @@ import {
   CreditCard,
   LayoutDashboard,
   LogOut,
+  Menu,
   Package,
   QrCode,
   Settings,
@@ -19,6 +20,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin, useMyStore } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -53,6 +61,7 @@ export function AppShell({
   const queryClient = useQueryClient();
   const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
   const { data: store, isLoading: storeLoading } = useMyStore();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (adminLoading || storeLoading) return;
