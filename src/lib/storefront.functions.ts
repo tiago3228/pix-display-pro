@@ -55,16 +55,13 @@ export const getStorefront = createServerFn({ method: "GET" })
   .inputValidator((data: { slug: string }) => z.object({ slug: z.string().min(1) }).parse(data))
   .handler(async ({ data }): Promise<Storefront> => {
     const supabase = createPublicClient();
-    const { data: store } = await supabase
-      .from("stores")
-      .select(
-        "id, slug, name, seller_name, description, category, whatsapp, instagram, logo_url, banner_url, primary_color, welcome_message, pix_key, pix_key_type, accept_pix, allow_installments, max_installments, min_installment_amount, plan",
-      )
-      .eq("slug", data.slug)
-      .eq("is_active", true)
-      .maybeSingle();
+    // A leitura pública passa por uma função segura que devolve apenas os
+    // campos necessários para a vitrine (sem owner_id nem dados internos).
+    const { data: stores } = await supabase.rpc("get_public_store", { _slug: data.slug });
+    const store = stores?.[0] ?? null;
 
     if (!store) return null;
+
 
     const [{ data: categories }, { data: products }] = await Promise.all([
       supabase
