@@ -27,6 +27,21 @@ export const PIX_STATUS_LABEL: Record<string, string> = {
   canceled: "⚪ Cancelado",
 };
 
+/** WhatsApp do administrador master do Vitrini. */
+const ADMIN_WHATSAPP = "5531975414498";
+
+function adminWhatsAppUrl(requestId?: string | null) {
+  const text = [
+    "Olá! Acabei de pagar o Vitrini PRO via Pix.",
+    `Valor: ${brl(PRO_PLAN_PRICE)}`,
+    requestId ? `Solicitação: ${requestId}` : null,
+    "Pode liberar meu PRO, por favor?",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(text)}`;
+}
+
 export function ProPixCard({ hasPro }: { hasPro: boolean }) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -52,6 +67,7 @@ export function ProPixCard({ hasPro }: { hasPro: boolean }) {
       if (result.created) {
         toast.success("Pagamento enviado para análise.");
         setOpen(false);
+        window.open(adminWhatsAppUrl(result.requestId ?? null), "_blank", "noopener");
       } else {
         toast.info(result.message);
       }
