@@ -67,6 +67,7 @@ export function ProPixCard({ hasPro }: { hasPro: boolean }) {
       if (result.created) {
         toast.success("Pagamento enviado para análise.");
         setOpen(false);
+        window.open(adminWhatsAppUrl(result.requestId ?? null), "_blank", "noopener");
       } else {
         toast.info(result.message);
       }
