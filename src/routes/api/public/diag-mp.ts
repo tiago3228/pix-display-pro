@@ -27,6 +27,21 @@ export const Route = createFileRoute("/api/public/diag-mp")({
             status_site: j["status"],
           };
         }
+        if (prod) {
+          const r2 = await fetch(
+            "https://api.mercadopago.com/v1/payments/search?sort=date_created&criteria=desc&limit=10",
+            { headers: { Authorization: `Bearer ${prod}` } },
+          );
+          const j2 = (await r2.json()) as { results?: Array<Record<string, unknown>> };
+          info["payments"] = (j2.results ?? []).map((p) => ({
+            id: p["id"],
+            status: p["status"],
+            detail: p["status_detail"],
+            amount: p["transaction_amount"],
+            date: p["date_created"],
+            desc: p["description"],
+          }));
+        }
         return new Response(JSON.stringify(info), {
           headers: { "content-type": "application/json" },
         });
