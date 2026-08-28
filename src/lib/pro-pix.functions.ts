@@ -371,7 +371,7 @@ export const grantProManually = createServerFn({ method: "POST" })
       .from("pro_pix_requests")
       .insert({
         store_id: store.id,
-        user_id: store.owner_id,
+        user_id: store.owner_id ?? context.userId,
         amount: AMOUNT,
         payment_method: "pix_manual",
         status: "approved",
