@@ -29,6 +29,7 @@ import { Route as AuthenticatedQrcodesRouteImport } from './routes/_authenticate
 import { Route as CobrancaTokenRouteImport } from './routes/cobranca.$token'
 import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
 import { Route as AuthenticatedAdminSolicitacoesProRouteImport } from './routes/_authenticated/admin_.solicitacoes-pro'
+import { Route as ApiPublicDiagMpRouteImport } from './routes/api/public/diag-mp'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public/webhooks/mercadopago'
 
 const IndexRoute = IndexRouteImport.update({
@@ -132,6 +133,11 @@ const AuthenticatedAdminSolicitacoesProRoute =
     path: '/admin/solicitacoes-pro',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicDiagMpRoute = ApiPublicDiagMpRouteImport.update({
+  id: '/api/public/diag-mp',
+  path: '/api/public/diag-mp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicWebhooksMercadopagoRoute =
   ApiPublicWebhooksMercadopagoRouteImport.update({
     id: '/api/public/webhooks/mercadopago',
@@ -159,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
   '/admin/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
+  '/api/public/diag-mp': typeof ApiPublicDiagMpRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRoutesByTo {
@@ -181,6 +188,7 @@ export interface FileRoutesByTo {
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
   '/admin/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
+  '/api/public/diag-mp': typeof ApiPublicDiagMpRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRoutesById {
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
   '/_authenticated/admin_/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
+  '/api/public/diag-mp': typeof ApiPublicDiagMpRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRouteTypes {
@@ -229,6 +238,7 @@ export interface FileRouteTypes {
     | '/cobranca/$token'
     | '/loja/$slug'
     | '/admin/solicitacoes-pro'
+    | '/api/public/diag-mp'
     | '/api/public/webhooks/mercadopago'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/cobranca/$token'
     | '/loja/$slug'
     | '/admin/solicitacoes-pro'
+    | '/api/public/diag-mp'
     | '/api/public/webhooks/mercadopago'
   id:
     | '__root__'
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/cobranca/$token'
     | '/loja/$slug'
     | '/_authenticated/admin_/solicitacoes-pro'
+    | '/api/public/diag-mp'
     | '/api/public/webhooks/mercadopago'
   fileRoutesById: FileRoutesById
 }
@@ -286,6 +298,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   CobrancaTokenRoute: typeof CobrancaTokenRoute
   LojaSlugRoute: typeof LojaSlugRoute
+  ApiPublicDiagMpRoute: typeof ApiPublicDiagMpRoute
   ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
 }
 
@@ -431,6 +444,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSolicitacoesProRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/diag-mp': {
+      id: '/api/public/diag-mp'
+      path: '/api/public/diag-mp'
+      fullPath: '/api/public/diag-mp'
+      preLoaderRoute: typeof ApiPublicDiagMpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/webhooks/mercadopago': {
       id: '/api/public/webhooks/mercadopago'
       path: '/api/public/webhooks/mercadopago'
@@ -484,6 +504,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   CobrancaTokenRoute: CobrancaTokenRoute,
   LojaSlugRoute: LojaSlugRoute,
+  ApiPublicDiagMpRoute: ApiPublicDiagMpRoute,
   ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
 }
 export const routeTree = rootRouteImport
