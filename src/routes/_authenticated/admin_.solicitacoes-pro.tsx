@@ -9,7 +9,9 @@ import { PIX_STATUS_LABEL } from "@/components/ProPixCard";
 import {
   approveProPixRequest,
   getPixSettingsAdmin,
+  grantProManually,
   listProPixRequests,
+  listStoresForProGrant,
   rejectProPixRequest,
   savePixSettings,
   type ProPixRequestView,
@@ -181,6 +183,8 @@ function ProPixAdmin() {
           </div>
         ))}
       </div>
+
+      <ManualGrantSection />
 
       <PixSettingsSection />
 
