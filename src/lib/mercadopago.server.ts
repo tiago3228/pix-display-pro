@@ -250,7 +250,7 @@ export function resolveBaseUrl(candidate?: string | null): string {
   const clean = (candidate ?? "").replace(/\/$/, "");
   if (clean && allowed(clean)) return clean;
   if (configured) return configured.replace(/\/$/, "");
-  return "https://pix-display-pro.lovable.app";
+  return "https://cardosovitrini.lovable.app";
 }
 
 /** Caminho público do webhook oficial do Mercado Pago. */
