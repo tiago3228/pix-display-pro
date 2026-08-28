@@ -316,6 +316,92 @@ export const rejectProPixRequest = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Lojas disponíveis para liberação manual do PRO (uso administrativo). */
+export const listStoresForProGrant = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
+      .from("stores")
+      .select("id, name, slug, plan, owner_id")
+      .order("name", { ascending: true })
+      .limit(300);
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      plan: row.plan,
+      ownerId: row.owner_id,
+    }));
+  });
+
+/**
+ * Liberação manual do PRO por 30 dias quando o Pix chegou mas o lojista
+ * não registrou a solicitação no app. Cria a solicitação já aprovada.
+ */
+export const grantProManually = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ storeId: z.string().uuid(), note: z.string().trim().max(300).optional() }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { logAudit } = await import("./subscription.server");
+
+    const { data: store } = await supabaseAdmin
+      .from("stores")
+      .select("id, owner_id, name")
+      .eq("id", data.storeId)
+      .maybeSingle();
+    if (!store) throw new Error("Loja não encontrada.");
+
+    const start = new Date();
+    const end = new Date(start.getTime() + PERIOD_DAYS * 24 * 60 * 60 * 1000);
+
+    // Encerra qualquer solicitação pendente da loja para não duplicar análise.
+    await supabaseAdmin
+      .from("pro_pix_requests")
+      .update({ status: "canceled" })
+      .eq("store_id", store.id)
+      .eq("status", "pending");
+
+    const { data: inserted, error } = await supabaseAdmin
+      .from("pro_pix_requests")
+      .insert({
+        store_id: store.id,
+        user_id: store.owner_id ?? context.userId,
+        amount: AMOUNT,
+        payment_method: "pix_manual",
+        status: "approved",
+        approved_at: start.toISOString(),
+        approved_by: context.userId,
+        period_start: start.toISOString(),
+        period_end: end.toISOString(),
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error("Não foi possível liberar o PRO agora.");
+
+    await supabaseAdmin.from("stores").update({ plan: "pro" }).eq("id", store.id);
+
+    await logAudit({
+      storeId: store.id,
+      userId: context.userId,
+      action: "pro_pix_manual_grant",
+      resourceType: "pro_pix_request",
+      resourceId: inserted.id,
+      metadata: {
+        granted_by: context.userId,
+        period_end: end.toISOString(),
+        note: data.note ?? null,
+      },
+    });
+
+    return { ok: true, periodEnd: end.toISOString() };
+  });
+
 /** Configuração administrativa da chave Pix (visível apenas para administradores). */
 export const getPixSettingsAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

@@ -9,7 +9,9 @@ import { PIX_STATUS_LABEL } from "@/components/ProPixCard";
 import {
   approveProPixRequest,
   getPixSettingsAdmin,
+  grantProManually,
   listProPixRequests,
+  listStoresForProGrant,
   rejectProPixRequest,
   savePixSettings,
   type ProPixRequestView,
@@ -181,6 +183,8 @@ function ProPixAdmin() {
           </div>
         ))}
       </div>
+
+      <ManualGrantSection />
 
       <PixSettingsSection />
 
@@ -389,6 +393,80 @@ function PixSettingsSection() {
         disabled={saveMutation.isPending}
       >
         Salvar configuração
+      </Button>
+    </section>
+  );
+}
+
+/** Liberação manual: o Pix caiu na conta mas o lojista não registrou a solicitação. */
+function ManualGrantSection() {
+  const fetchStores = useServerFn(listStoresForProGrant);
+  const grant = useServerFn(grantProManually);
+  const queryClient = useQueryClient();
+  const [storeId, setStoreId] = useState("");
+  const [note, setNote] = useState("");
+
+  const { data: stores } = useQuery({
+    queryKey: ["admin-stores-pro"],
+    queryFn: () => fetchStores(),
+  });
+
+  const grantMutation = useMutation({
+    mutationFn: () => grant({ data: { storeId, note: note.trim() || undefined } }),
+    onSuccess: () => {
+      toast.success("PRO liberado por 30 dias para a loja.");
+      setStoreId("");
+      setNote("");
+      queryClient.invalidateQueries({ queryKey: ["admin-pro-pix"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-stores-pro"] });
+    },
+    onError: (error: unknown) =>
+      toast.error(error instanceof Error ? error.message : "Não foi possível liberar o PRO."),
+  });
+
+  return (
+    <section className="surface mt-4 space-y-3 p-4">
+      <div>
+        <h2 className="text-sm font-semibold">Liberar PRO manualmente</h2>
+        <p className="text-xs text-muted-foreground">
+          Use quando o Pix de {brl(9.9)} já caiu na sua conta, mas o lojista não enviou a
+          solicitação pelo app. Libera 30 dias e fica registrado na auditoria.
+        </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div>
+          <Label>Loja</Label>
+          <Select value={storeId} onValueChange={setStoreId}>
+            <SelectTrigger className="mt-1">
+              <SelectValue placeholder="Selecione a loja" />
+            </SelectTrigger>
+            <SelectContent>
+              {(stores ?? []).map((store) => (
+                <SelectItem key={store.id} value={store.id}>
+                  {store.name} · {store.plan === "pro" ? "PRO" : "Free"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Observação (opcional)</Label>
+          <Input
+            className="mt-1"
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder="Ex.: Pix recebido em 27/08 às 21h"
+          />
+        </div>
+      </div>
+
+      <Button
+        className="h-11 w-full sm:w-auto"
+        disabled={!storeId || grantMutation.isPending}
+        onClick={() => grantMutation.mutate()}
+      >
+        {grantMutation.isPending ? "Liberando..." : "Liberar PRO por 30 dias"}
       </Button>
     </section>
   );
