@@ -179,6 +179,15 @@ function ProPixAdmin() {
               <Button size="sm" variant="outline" onClick={() => setSelected(request)}>
                 Ver
               </Button>
+              {request.status === "pending" ? (
+                <Button
+                  size="sm"
+                  onClick={() => approveMutation.mutate(request.id)}
+                  disabled={approveMutation.isPending}
+                >
+                  Liberar PRO
+                </Button>
+              ) : null}
             </div>
           </div>
         ))}
