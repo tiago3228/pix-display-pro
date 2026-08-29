@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Copy, QrCode as QrCodeIcon } from "lucide-react";
+import { Copy, MessageCircle, QrCode as QrCodeIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
   createProPixRequest,
