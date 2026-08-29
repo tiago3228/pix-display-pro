@@ -146,6 +146,7 @@ export const createProPixRequest = createServerFn({ method: "POST" })
       return {
         created: false,
         message: "Você já possui uma solicitação de pagamento via Pix aguardando análise.",
+        requestId: (pending[0].id as string | null) ?? null,
       };
     }
 
