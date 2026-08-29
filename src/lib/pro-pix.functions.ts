@@ -173,7 +173,11 @@ export const createProPixRequest = createServerFn({ method: "POST" })
       metadata: { amount: AMOUNT, method: "pix_manual" },
     });
 
-    return { created: true, message: "Pagamento enviado para análise." };
+    return {
+      created: true,
+      message: "Pagamento enviado para análise.",
+      requestId: inserted.id as string | null,
+    };
   });
 
 /** Lista administrativa das solicitações Pix. */
