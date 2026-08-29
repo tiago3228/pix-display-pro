@@ -120,6 +120,11 @@ export function ProPixCard({ hasPro }: { hasPro: boolean }) {
             Seu pedido foi enviado para análise. O PRO será liberado após o administrador confirmar
             o recebimento do Pix.
           </p>
+          <Button asChild variant="outline" className="mt-2 h-10 w-full">
+            <a href={adminWhatsAppUrl(latest!.id)} target="_blank" rel="noopener noreferrer">
+              <MessageCircle className="mr-2 size-4" /> Avisar o administrador no WhatsApp
+            </a>
+          </Button>
         </div>
       ) : null}
 
