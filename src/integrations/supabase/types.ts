@@ -79,6 +79,63 @@ export type Database = {
           },
         ]
       }
+      campaign_sends: {
+        Row: {
+          audience: string
+          campaign_type: string
+          created_at: string
+          created_by: string | null
+          id: string
+          message: string
+          product_id: string | null
+          recipient_name: string | null
+          recipient_ref: string | null
+          recipient_whatsapp: string
+          store_id: string | null
+        }
+        Insert: {
+          audience?: string
+          campaign_type?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message: string
+          product_id?: string | null
+          recipient_name?: string | null
+          recipient_ref?: string | null
+          recipient_whatsapp: string
+          store_id?: string | null
+        }
+        Update: {
+          audience?: string
+          campaign_type?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          message?: string
+          product_id?: string | null
+          recipient_name?: string | null
+          recipient_ref?: string | null
+          recipient_whatsapp?: string
+          store_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_sends_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_sends_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
