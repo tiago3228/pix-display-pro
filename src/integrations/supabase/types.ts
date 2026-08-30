@@ -297,6 +297,98 @@ export type Database = {
           },
         ]
       }
+      landing_settings: {
+        Row: {
+          badge: string | null
+          created_at: string
+          cta_href: string | null
+          cta_label: string | null
+          id: string
+          image_url: string | null
+          singleton: boolean
+          subtitle: string | null
+          title: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          badge?: string | null
+          created_at?: string
+          cta_href?: string | null
+          cta_label?: string | null
+          id?: string
+          image_url?: string | null
+          singleton?: boolean
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          badge?: string | null
+          created_at?: string
+          cta_href?: string | null
+          cta_label?: string | null
+          id?: string
+          image_url?: string | null
+          singleton?: boolean
+          subtitle?: string | null
+          title?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      manual_sales: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          customer_name: string | null
+          description: string | null
+          id: string
+          method: string
+          note: string | null
+          sold_at: string
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          description?: string | null
+          id?: string
+          method?: string
+          note?: string | null
+          sold_at?: string
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          customer_name?: string | null
+          description?: string | null
+          id?: string
+          method?: string
+          note?: string | null
+          sold_at?: string
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manual_sales_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           id: string
@@ -501,6 +593,95 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      plan_pricing: {
+        Row: {
+          base_price: number
+          created_at: string
+          id: string
+          plan: string
+          promo_active: boolean
+          promo_ends_at: string | null
+          promo_label: string | null
+          promo_price: number | null
+          promo_starts_at: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          base_price?: number
+          created_at?: string
+          id?: string
+          plan?: string
+          promo_active?: boolean
+          promo_ends_at?: string | null
+          promo_label?: string | null
+          promo_price?: number | null
+          promo_starts_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          base_price?: number
+          created_at?: string
+          id?: string
+          plan?: string
+          promo_active?: boolean
+          promo_ends_at?: string | null
+          promo_label?: string | null
+          promo_price?: number | null
+          promo_starts_at?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      platform_sales: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          method: string
+          note: string | null
+          sold_at: string
+          store_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          method?: string
+          note?: string | null
+          sold_at?: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          method?: string
+          note?: string | null
+          sold_at?: string
+          store_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_sales_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pro_pix_requests: {
         Row: {
