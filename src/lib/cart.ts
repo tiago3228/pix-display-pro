@@ -68,12 +68,17 @@ export function useCart(slug: string) {
   const setQuantity = useCallback(
     (key: string, quantity: number) => {
       const next = read(slug)
-        .map((i) => (i.key === key ? { ...i, quantity } : i))
+        .map((i) =>
+          i.key === key
+            ? { ...i, quantity: Math.min(quantity, i.maxQuantity ?? Infinity) as number }
+            : i,
+        )
         .filter((i) => i.quantity > 0);
       persist(next);
     },
     [persist, slug],
   );
+
 
   const remove = useCallback((key: string) => setQuantity(key, 0), [setQuantity]);
   const clear = useCallback(() => persist([]), [persist]);

@@ -207,14 +207,14 @@ export const submitOrder = createServerFn({ method: "POST" })
 
     const { data: products } = await supabaseAdmin
       .from("products")
-      .select("id, name, price, store_id, is_hidden")
+      .select("id, name, price, store_id, is_hidden, stock, track_stock, has_variants")
       .in(
         "id",
         data.items.map((i) => i.productId),
       );
     const { data: variants } = await supabaseAdmin
       .from("product_variants")
-      .select("id, product_id, label, price")
+      .select("id, product_id, label, price, stock")
       .in(
         "id",
         data.items.map((i) => i.variantId).filter((v): v is string => Boolean(v)),
@@ -238,7 +238,46 @@ export const submitOrder = createServerFn({ method: "POST" })
       };
     });
 
+    // Baixa de estoque atômica: só desconta quando ainda há unidades suficientes.
+    const taken: { table: "products" | "product_variants"; id: string; quantity: number }[] = [];
+    const rollback = async () => {
+      for (const entry of taken) {
+        const { data: row } = await supabaseAdmin
+          .from(entry.table)
+          .select("stock")
+          .eq("id", entry.id)
+          .maybeSingle();
+        if (row)
+          await supabaseAdmin
+            .from(entry.table)
+            .update({ stock: row.stock + entry.quantity })
+            .eq("id", entry.id);
+      }
+    };
+
+    for (const item of data.items) {
+      const product = (products ?? []).find((p) => p.id === item.productId);
+      if (!product?.track_stock) continue;
+      const variant = (variants ?? []).find((v) => v.id === item.variantId);
+      const table = variant ? ("product_variants" as const) : ("products" as const);
+      const rowId = variant ? variant.id : product.id;
+      const current = variant ? variant.stock : product.stock;
+      const { data: updated } = await supabaseAdmin
+        .from(table)
+        .update({ stock: current - item.quantity })
+        .eq("id", rowId)
+        .gte("stock", item.quantity)
+        .select("id")
+        .maybeSingle();
+      if (!updated) {
+        await rollback();
+        throw new Error(`Estoque insuficiente para "${product.name}".`);
+      }
+      taken.push({ table, id: rowId, quantity: item.quantity });
+    }
+
     const total = Number(items.reduce((sum, i) => sum + i.subtotal, 0).toFixed(2));
+
 
     let customerId: string | null = null;
     if (data.customerWhatsapp) {
@@ -296,7 +335,10 @@ export const submitOrder = createServerFn({ method: "POST" })
       })
       .select("id, number")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      await rollback();
+      throw new Error(error.message);
+    }
 
     await supabaseAdmin
       .from("order_items")
