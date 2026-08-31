@@ -335,7 +335,10 @@ export const submitOrder = createServerFn({ method: "POST" })
       })
       .select("id, number")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      await rollback();
+      throw new Error(error.message);
+    }
 
     await supabaseAdmin
       .from("order_items")
