@@ -317,13 +317,17 @@ function StorePage() {
                     <p className="line-clamp-2 text-xs text-muted-foreground">
                       {product.description}
                     </p>
-                    <div className="mt-1 flex items-center gap-2">
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
                       <span className="text-base font-bold">{brl(product.price)}</span>
                       {status === "last" ? <Badge variant="secondary">Última unidade</Badge> : null}
+                      {status === "ok" && product.track_stock ? (
+                        <Badge variant="secondary">{stockOf(product)} unidades disponíveis</Badge>
+                      ) : null}
                       {status === "sold_out" || status === "unavailable" ? (
                         <Badge variant="outline">Esgotado</Badge>
                       ) : null}
                     </div>
+
                     <div className="mt-auto pt-2">
                       <Button
                         size="sm"
