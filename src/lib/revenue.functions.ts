@@ -153,29 +153,26 @@ export const getSellerRevenue = createServerFn({ method: "POST" })
     ]);
 
     const entries: RevenueEntry[] = [
-      ...((orders.data ?? []) as Record<string, never>[]).map((row) => ({
-        id: `order-${row["id"]}`,
+      ...(orders.data ?? []).map((row) => ({
+        id: `order-${row.id}`,
         source: "Pedido da vitrine",
-        label: `Pedido #${row["number"]}${row["customer_name"] ? ` · ${row["customer_name"]}` : ""}`,
-        amount: Number(row["total"] ?? 0),
-        date: row["created_at"] as string,
-        method: (row["payment_method"] as string) ?? "pix",
+        label: `Pedido #${row.number}${row.customer_name ? ` · ${row.customer_name}` : ""}`,
+        amount: Number(row.total ?? 0),
+        date: row.created_at,
+        method: row.payment_method ?? "pix",
         manual: false,
       })),
-      ...((manual.data ?? []) as Record<string, never>[]).map((row) => ({
-        id: row["id"] as string,
+      ...(manual.data ?? []).map((row) => ({
+        id: row.id,
         source: "Venda manual",
-        label:
-          (row["description"] as string) ||
-          (row["customer_name"] as string) ||
-          (row["note"] as string) ||
-          "Venda registrada manualmente",
-        amount: Number(row["amount"] ?? 0),
-        date: row["sold_at"] as string,
-        method: (row["method"] as string) ?? "pix",
+        label: row.description || row.customer_name || row.note || "Venda registrada manualmente",
+        amount: Number(row.amount ?? 0),
+        date: row.sold_at,
+        method: row.method ?? "pix",
         manual: true,
       })),
     ].sort((a, b) => b.date.localeCompare(a.date));
+
 
     return { entries, plan: store.plan };
   });
