@@ -261,9 +261,12 @@ function Landing() {
               <div className="surface border-primary/40 p-6 ring-1 ring-primary/20">
                 <p className="text-sm font-semibold text-primary">PRO</p>
                 <p className="mt-2 text-3xl font-bold">
-                  R$ 9,90
+                  {pricing.promoActive ? (
+                    <><span className="mr-2 text-base text-muted-foreground line-through">{brl(pricing.basePrice)}</span>{brl(pricing.price)}</>
+                  ) : brl(pricing.price)}
                   <span className="text-base font-normal text-muted-foreground">/mês</span>
                 </p>
+                {pricing.promoActive && pricing.promoLabel ? <Badge className="mt-2">{pricing.promoLabel}</Badge> : null}
                 <p className="text-sm text-muted-foreground">Sem comissão sobre suas vendas.</p>
                 <ul className="mt-5 space-y-2 text-sm">
                   {[
