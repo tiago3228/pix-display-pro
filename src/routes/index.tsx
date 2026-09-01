@@ -92,6 +92,8 @@ const FAQ: { q: string; a: string }[] = [
 
 function Landing() {
   const { session } = useSession();
+  const { banner, pricing } = Route.useLoaderData();
+
 
   return (
     <div className="min-h-screen bg-background">
