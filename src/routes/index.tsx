@@ -125,29 +125,38 @@ function Landing() {
       </header>
 
       <main>
-        <section className="mx-auto max-w-6xl px-4 pt-14 pb-16 sm:pt-20">
+        <section
+          className="mx-auto max-w-6xl px-4 pt-14 pb-16 sm:pt-20"
+          style={
+            banner.image
+              ? {
+                  backgroundImage: `linear-gradient(to right, hsl(var(--background) / 0.94), hsl(var(--background) / 0.7)), url(${banner.image})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : undefined
+          }
+        >
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-                <Smartphone className="size-3.5" /> Feito para quem vende pelo WhatsApp
+                <Smartphone className="size-3.5" /> {banner.badge}
               </span>
-              <h1 className="mt-5 text-4xl leading-tight font-bold sm:text-5xl">
-                Venda seus produtos de um jeito <span className="text-gradient">mais simples.</span>
-              </h1>
+              <h1 className="mt-5 text-4xl leading-tight font-bold sm:text-5xl">{banner.title}</h1>
               <p className="mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
-                Crie sua vitrine online, compartilhe seu QR Code, receba pedidos pelo WhatsApp e
-                facilite o pagamento via Pix.
+                {banner.subtitle}
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="lg" className="h-12 text-base">
-                  <Link to="/signup">
-                    Criar minha loja grátis <ArrowRight className="ml-1 size-4" />
-                  </Link>
+                  <a href={banner.ctaHref}>
+                    {banner.ctaLabel} <ArrowRight className="ml-1 size-4" />
+                  </a>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="h-12 text-base">
                   <a href="#como-funciona">Ver como funciona</a>
                 </Button>
               </div>
+
               <p className="mt-4 text-sm font-medium text-primary">
                 Sem comissão sobre suas vendas.
               </p>
