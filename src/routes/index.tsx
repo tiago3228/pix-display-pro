@@ -17,8 +17,16 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useSession } from "@/hooks/useAuth";
+import { getLandingBanner } from "@/lib/landing.functions";
+import { getProPricing } from "@/lib/pricing.functions";
+import { brl } from "@/lib/format";
+
 
 export const Route = createFileRoute("/")({
+  loader: async () => {
+    const [banner, pricing] = await Promise.all([getLandingBanner(), getProPricing()]);
+    return { banner, pricing };
+  },
   head: () => ({
     meta: [
       { title: "Vitrini — venda seus produtos de um jeito mais simples" },
@@ -35,8 +43,17 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
+  errorComponent: () => (
+    <div className="p-10 text-center text-sm text-muted-foreground">
+      Não foi possível carregar a página agora. Atualize em instantes.
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="p-10 text-center text-sm text-muted-foreground">Página não encontrada.</div>
+  ),
   component: Landing,
 });
+
 
 const STEPS = [
   { icon: Store, title: "Crie sua loja", text: "Nome, WhatsApp e chave Pix. Leva 2 minutos." },
