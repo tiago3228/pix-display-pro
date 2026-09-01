@@ -17,8 +17,16 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { useSession } from "@/hooks/useAuth";
+import { getLandingBanner } from "@/lib/landing.functions";
+import { getProPricing } from "@/lib/pricing.functions";
+import { brl } from "@/lib/format";
+
 
 export const Route = createFileRoute("/")({
+  loader: async () => {
+    const [banner, pricing] = await Promise.all([getLandingBanner(), getProPricing()]);
+    return { banner, pricing };
+  },
   head: () => ({
     meta: [
       { title: "Vitrini — venda seus produtos de um jeito mais simples" },
@@ -35,8 +43,17 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
+  errorComponent: () => (
+    <div className="p-10 text-center text-sm text-muted-foreground">
+      Não foi possível carregar a página agora. Atualize em instantes.
+    </div>
+  ),
+  notFoundComponent: () => (
+    <div className="p-10 text-center text-sm text-muted-foreground">Página não encontrada.</div>
+  ),
   component: Landing,
 });
+
 
 const STEPS = [
   { icon: Store, title: "Crie sua loja", text: "Nome, WhatsApp e chave Pix. Leva 2 minutos." },
@@ -75,6 +92,8 @@ const FAQ: { q: string; a: string }[] = [
 
 function Landing() {
   const { session } = useSession();
+  const { banner, pricing } = Route.useLoaderData();
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -106,29 +125,38 @@ function Landing() {
       </header>
 
       <main>
-        <section className="mx-auto max-w-6xl px-4 pt-14 pb-16 sm:pt-20">
+        <section
+          className="mx-auto max-w-6xl px-4 pt-14 pb-16 sm:pt-20"
+          style={
+            banner.image
+              ? {
+                  backgroundImage: `linear-gradient(to right, hsl(var(--background) / 0.94), hsl(var(--background) / 0.7)), url(${banner.image})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : undefined
+          }
+        >
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div>
               <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-                <Smartphone className="size-3.5" /> Feito para quem vende pelo WhatsApp
+                <Smartphone className="size-3.5" /> {banner.badge}
               </span>
-              <h1 className="mt-5 text-4xl leading-tight font-bold sm:text-5xl">
-                Venda seus produtos de um jeito <span className="text-gradient">mais simples.</span>
-              </h1>
+              <h1 className="mt-5 text-4xl leading-tight font-bold sm:text-5xl">{banner.title}</h1>
               <p className="mt-4 max-w-xl text-base text-muted-foreground sm:text-lg">
-                Crie sua vitrine online, compartilhe seu QR Code, receba pedidos pelo WhatsApp e
-                facilite o pagamento via Pix.
+                {banner.subtitle}
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="lg" className="h-12 text-base">
-                  <Link to="/signup">
-                    Criar minha loja grátis <ArrowRight className="ml-1 size-4" />
-                  </Link>
+                  <a href={banner.ctaHref}>
+                    {banner.ctaLabel} <ArrowRight className="ml-1 size-4" />
+                  </a>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="h-12 text-base">
                   <a href="#como-funciona">Ver como funciona</a>
                 </Button>
               </div>
+
               <p className="mt-4 text-sm font-medium text-primary">
                 Sem comissão sobre suas vendas.
               </p>
@@ -233,9 +261,12 @@ function Landing() {
               <div className="surface border-primary/40 p-6 ring-1 ring-primary/20">
                 <p className="text-sm font-semibold text-primary">PRO</p>
                 <p className="mt-2 text-3xl font-bold">
-                  R$ 9,90
+                  {pricing.promoActive ? (
+                    <><span className="mr-2 text-base text-muted-foreground line-through">{brl(pricing.basePrice)}</span>{brl(pricing.price)}</>
+                  ) : brl(pricing.price)}
                   <span className="text-base font-normal text-muted-foreground">/mês</span>
                 </p>
+                {pricing.promoActive && pricing.promoLabel ? <Badge className="mt-2">{pricing.promoLabel}</Badge> : null}
                 <p className="text-sm text-muted-foreground">Sem comissão sobre suas vendas.</p>
                 <ul className="mt-5 space-y-2 text-sm">
                   {[

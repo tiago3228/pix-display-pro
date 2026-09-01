@@ -23,7 +23,7 @@ export function resolvePricing(row: Record<string, unknown> | null): ProPricing 
   const active = Boolean(row?.["promo_active"] && promoPrice !== null && promoPrice >= 0 && withinWindow);
   return {
     basePrice,
-    price: active ? promoPrice : basePrice,
+    price: active && promoPrice !== null ? promoPrice : basePrice,
     promoActive: active,
     promoPrice: Number.isNaN(promoPrice ?? NaN) ? null : promoPrice,
     promoLabel: (row?.["promo_label"] as string | null) ?? null,
