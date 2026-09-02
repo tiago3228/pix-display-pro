@@ -152,6 +152,7 @@ export async function createPreapproval(input: {
   payerEmail: string;
   backUrl: string;
   idempotencyKey: string;
+  amount?: number;
 }): Promise<Preapproval> {
   return mpFetch<Preapproval>("/preapproval", {
     method: "POST",
@@ -165,13 +166,14 @@ export async function createPreapproval(input: {
       auto_recurring: {
         frequency: 1,
         frequency_type: "months",
-        transaction_amount: PRO_PLAN_AMOUNT,
+        transaction_amount: input.amount ?? PRO_PLAN_AMOUNT,
         currency_id: PRO_PLAN_CURRENCY,
       },
       status: "pending",
     },
   });
 }
+
 
 export async function getPreapproval(id: string): Promise<Preapproval> {
   return mpFetch<Preapproval>(`/preapproval/${encodeURIComponent(id)}`);
