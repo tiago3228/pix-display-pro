@@ -26,7 +26,10 @@ export type ProPixCheckout = {
   pixKeyType: string | null;
 };
 
-const AMOUNT = 9.9;
+async function currentAmount() {
+  const { getCurrentProPricing } = await import("./pricing.server");
+  return (await getCurrentProPricing()).price;
+}
 const PERIOD_DAYS = 30;
 
 function mapRequest(row: Record<string, unknown>, storeName?: string | null): ProPixRequestView {
@@ -66,7 +69,7 @@ export const getProPixCheckout = createServerFn({ method: "GET" })
     if (!settings || !settings.is_active) {
       return {
         configured: false,
-        amount: AMOUNT,
+        amount: await currentAmount(),
         payload: null,
         receiverName: null,
         pixKey: null,
@@ -77,12 +80,12 @@ export const getProPixCheckout = createServerFn({ method: "GET" })
       key: settings.pix_key,
       receiverName: settings.receiver_name,
       receiverCity: settings.receiver_city,
-      amount: AMOUNT,
+      amount: await currentAmount(),
       txid: "VITRINIPRO",
     });
     return {
       configured: true,
-      amount: AMOUNT,
+      amount: await currentAmount(),
       payload,
       receiverName: settings.receiver_name,
       pixKey: settings.pix_key,
@@ -156,7 +159,7 @@ export const createProPixRequest = createServerFn({ method: "POST" })
       .insert({
         store_id: store.id,
         user_id: context.userId,
-        amount: AMOUNT,
+        amount: await currentAmount(),
         payment_method: "pix_manual",
         status: "pending",
         pix_key_snapshot: settings?.pix_key ? `${settings.pix_key_type}` : null,
@@ -171,7 +174,7 @@ export const createProPixRequest = createServerFn({ method: "POST" })
       action: "pro_pix_request_created",
       resourceType: "pro_pix_request",
       resourceId: inserted.id,
-      metadata: { amount: AMOUNT, method: "pix_manual" },
+      metadata: { amount: await currentAmount(), method: "pix_manual" },
     });
 
     return {
@@ -247,7 +250,7 @@ export const approveProPixRequest = createServerFn({ method: "POST" })
         approved_by: context.userId,
         period_start: start.toISOString(),
         period_end: end.toISOString(),
-        amount: AMOUNT,
+        amount: await currentAmount(),
       })
       .eq("id", data.id)
       .eq("status", "pending")
@@ -377,7 +380,7 @@ export const grantProManually = createServerFn({ method: "POST" })
       .insert({
         store_id: store.id,
         user_id: store.owner_id ?? context.userId,
-        amount: AMOUNT,
+        amount: await currentAmount(),
         payment_method: "pix_manual",
         status: "approved",
         approved_at: start.toISOString(),
