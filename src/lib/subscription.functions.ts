@@ -177,10 +177,14 @@ export const startProSubscription = createServerFn({ method: "POST" })
     const email = (context.claims as { email?: string } | undefined)?.email;
     if (!email) throw new Error("E-mail do usuário indisponível.");
 
+    const { getCurrentProPricing } = await import("./pricing.server");
+    const pricing = await getCurrentProPricing();
+
     const preapproval = await createPreapproval({
       externalReference: store.id,
       payerEmail: email,
       backUrl,
+      amount: pricing.price,
       idempotencyKey: `vitrini-sub-${store.id}-${new Date().toISOString().slice(0, 10)}`,
     });
 
