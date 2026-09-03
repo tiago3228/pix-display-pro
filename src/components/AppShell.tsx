@@ -36,6 +36,7 @@ const NAV = [
   { to: "/pedidos", label: "Pedidos", icon: ShoppingCart },
   { to: "/cobrancas", label: "Cobranças", icon: Wallet },
 
+  { to: "/faturamento", label: "Faturamento", icon: BarChart3 },
   { to: "/minha-loja", label: "Minha Loja", icon: Store },
   { to: "/qrcodes", label: "QR Codes", icon: QrCode },
   { to: "/clientes", label: "Clientes", icon: Users },
@@ -45,6 +46,7 @@ const NAV = [
 
 const MOBILE_NAV = NAV.slice(0, 4);
 const MOBILE_MORE = NAV.slice(4);
+
 
 export function AppShell({
   title,
