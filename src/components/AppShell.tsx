@@ -19,6 +19,9 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin, useMyStore } from "@/hooks/useAuth";
+import { useProPricing } from "@/hooks/usePricing";
+import { brl } from "@/lib/format";
+
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
 import {
@@ -36,6 +39,7 @@ const NAV = [
   { to: "/pedidos", label: "Pedidos", icon: ShoppingCart },
   { to: "/cobrancas", label: "Cobranças", icon: Wallet },
 
+  { to: "/faturamento", label: "Faturamento", icon: BarChart3 },
   { to: "/minha-loja", label: "Minha Loja", icon: Store },
   { to: "/qrcodes", label: "QR Codes", icon: QrCode },
   { to: "/clientes", label: "Clientes", icon: Users },
@@ -45,6 +49,7 @@ const NAV = [
 
 const MOBILE_NAV = NAV.slice(0, 4);
 const MOBILE_MORE = NAV.slice(4);
+
 
 export function AppShell({
   title,
@@ -62,7 +67,9 @@ export function AppShell({
   const queryClient = useQueryClient();
   const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
   const { data: store, isLoading: storeLoading } = useMyStore();
+  const { price: proPrice } = useProPricing();
   const [moreOpen, setMoreOpen] = useState(false);
+
 
   useEffect(() => {
     if (adminLoading || storeLoading) return;
@@ -124,7 +131,7 @@ export function AppShell({
             to="/assinatura"
             className="mb-2 flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
           >
-            <Sparkles className="size-4" /> Assinar PRO — R$ 9,90
+            <Sparkles className="size-4" /> Assinar PRO — {brl(proPrice)}
           </Link>
         ) : null}
         <Button variant="ghost" className="justify-start" onClick={signOut}>
@@ -215,7 +222,7 @@ export function AppShell({
                     onClick={() => setMoreOpen(false)}
                     className="mb-1 flex items-center gap-3 rounded-lg bg-primary px-3 py-3 text-sm font-semibold text-primary-foreground"
                   >
-                    <Sparkles className="size-4" /> Assinar PRO — R$ 9,90/mês
+                    <Sparkles className="size-4" /> Assinar PRO — {brl(proPrice)}/mês
                   </Link>
                 ) : null}
                 {MOBILE_MORE.map((item) => (

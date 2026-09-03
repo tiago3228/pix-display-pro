@@ -8,7 +8,8 @@ import {
   getMyProPixRequests,
   getProPixCheckout,
 } from "@/lib/pro-pix.functions";
-import { brl, formatDate, formatDay, PRO_PLAN_PRICE } from "@/lib/format";
+import { brl, formatDate, formatDay } from "@/lib/format";
+import { useProPricing } from "@/hooks/usePricing";
 import { QrImage } from "@/components/QrCode";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,10 +31,10 @@ export const PIX_STATUS_LABEL: Record<string, string> = {
 /** WhatsApp do administrador master do Vitrini. */
 const ADMIN_WHATSAPP = "5531975414498";
 
-function adminWhatsAppUrl(requestId?: string | null) {
+function adminWhatsAppUrl(amount: number, requestId?: string | null) {
   const text = [
     "Olá! Acabei de pagar o Vitrini PRO via Pix.",
-    `Valor: ${brl(PRO_PLAN_PRICE)}`,
+    `Valor: ${brl(amount)}`,
     requestId ? `Solicitação: ${requestId}` : null,
     "Pode liberar meu PRO, por favor?",
   ]
@@ -44,6 +45,7 @@ function adminWhatsAppUrl(requestId?: string | null) {
 
 export function ProPixCard({ hasPro }: { hasPro: boolean }) {
   const [open, setOpen] = useState(false);
+  const { price: proPrice } = useProPricing();
   const queryClient = useQueryClient();
 
   const fetchCheckout = useServerFn(getProPixCheckout);
@@ -67,7 +69,7 @@ export function ProPixCard({ hasPro }: { hasPro: boolean }) {
       if (result.created) {
         toast.success("Pagamento enviado para análise.");
         setOpen(false);
-        window.open(adminWhatsAppUrl(result.requestId ?? null), "_blank", "noopener");
+        window.open(adminWhatsAppUrl(proPrice, result.requestId ?? null), "_blank", "noopener");
       } else {
         toast.info(result.message);
       }
@@ -100,7 +102,7 @@ export function ProPixCard({ hasPro }: { hasPro: boolean }) {
         <div>
           <p className="text-sm font-semibold">🟢 Pix — pagamento avulso</p>
           <p className="text-xs text-muted-foreground">
-            {brl(PRO_PLAN_PRICE)} · validade de 30 dias · ativação após aprovação administrativa
+            {brl(proPrice)} · validade de 30 dias · ativação após aprovação administrativa
           </p>
         </div>
         {activeUntil ? <Badge>PRO até {formatDay(activeUntil)}</Badge> : null}
@@ -121,7 +123,7 @@ export function ProPixCard({ hasPro }: { hasPro: boolean }) {
             o recebimento do Pix.
           </p>
           <Button asChild variant="outline" className="mt-2 h-10 w-full">
-            <a href={adminWhatsAppUrl(latest!.id)} target="_blank" rel="noopener noreferrer">
+            <a href={adminWhatsAppUrl(latest!.amount, latest!.id)} target="_blank" rel="noopener noreferrer">
               <MessageCircle className="mr-2 size-4" /> Avisar o administrador no WhatsApp
             </a>
           </Button>
@@ -181,7 +183,7 @@ export function ProPixCard({ hasPro }: { hasPro: boolean }) {
           <DialogHeader>
             <DialogTitle>Vitrini PRO via Pix</DialogTitle>
             <DialogDescription>
-              Valor {brl(PRO_PLAN_PRICE)} · validade de 30 dias após aprovação
+              Valor {brl(proPrice)} · validade de 30 dias após aprovação
             </DialogDescription>
           </DialogHeader>
 

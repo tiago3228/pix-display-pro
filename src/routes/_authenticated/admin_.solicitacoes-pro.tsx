@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useIsAdmin } from "@/hooks/useAuth";
+import { useProPricing } from "@/hooks/usePricing";
 import { AppShell } from "@/components/AppShell";
 import { PIX_STATUS_LABEL } from "@/components/ProPixCard";
 import {
@@ -71,6 +72,7 @@ type Filter = (typeof FILTERS)[number]["value"];
 
 function ProPixAdmin() {
   const { data: isAdmin, isLoading } = useIsAdmin();
+  const { price: proPrice } = useProPricing();
   const [filter, setFilter] = useState<Filter>("all");
   const [selected, setSelected] = useState<ProPixRequestView | null>(null);
   const [approveOpen, setApproveOpen] = useState(false);
@@ -141,7 +143,7 @@ function ProPixAdmin() {
       {(data?.pendingCount ?? 0) > 0 ? (
         <div className="mb-4 rounded-lg border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
           🔔 <strong>Nova solicitação PRO via Pix</strong> — {data!.pendingCount} solicitação(ões) de{" "}
-          {brl(9.9)} aguardando confirmação.
+          {brl(proPrice)} aguardando confirmação.
         </div>
       ) : null}
 
@@ -238,9 +240,9 @@ function ProPixAdmin() {
       <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar que o Pix de {brl(9.9)} foi recebido?</DialogTitle>
+            <DialogTitle>Confirmar que o Pix de {brl(selected?.amount ?? proPrice)} foi recebido?</DialogTitle>
             <DialogDescription>
-              Ao aprovar, você confirma que verificou o recebimento do Pix de {brl(9.9)} fora do
+              Ao aprovar, você confirma que verificou o recebimento do Pix de {brl(selected?.amount ?? proPrice)} fora do
               Vitrini. Essa ação libera o plano PRO por 30 dias.
             </DialogDescription>
           </DialogHeader>
@@ -409,6 +411,7 @@ function PixSettingsSection() {
 
 /** Liberação manual: o Pix caiu na conta mas o lojista não registrou a solicitação. */
 function ManualGrantSection() {
+  const { price: proPrice } = useProPricing();
   const fetchStores = useServerFn(listStoresForProGrant);
   const grant = useServerFn(grantProManually);
   const queryClient = useQueryClient();
@@ -438,7 +441,7 @@ function ManualGrantSection() {
       <div>
         <h2 className="text-sm font-semibold">Liberar PRO manualmente</h2>
         <p className="text-xs text-muted-foreground">
-          Use quando o Pix de {brl(9.9)} já caiu na sua conta, mas o lojista não enviou a
+          Use quando o Pix de {brl(proPrice)} já caiu na sua conta, mas o lojista não enviou a
           solicitação pelo app. Libera 30 dias e fica registrado na auditoria.
         </p>
       </div>
