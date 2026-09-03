@@ -19,6 +19,9 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin, useMyStore } from "@/hooks/useAuth";
+import { useProPricing } from "@/hooks/usePricing";
+import { brl } from "@/lib/format";
+
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
 import {
