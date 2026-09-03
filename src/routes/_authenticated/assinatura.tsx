@@ -13,7 +13,8 @@ import {
   getMySubscription,
   startProSubscription,
 } from "@/lib/subscription.functions";
-import { brl, formatDay, FREE_PLAN_PRODUCT_LIMIT, PRO_PLAN_PRICE } from "@/lib/format";
+import { brl, formatDay, FREE_PLAN_PRODUCT_LIMIT } from "@/lib/format";
+import { useProPricing } from "@/hooks/usePricing";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -77,6 +78,7 @@ const PRO_FEATURES = [
 
 function Subscription() {
   const { data: store } = useMyStore();
+  const pricing = useProPricing();
   const queryClient = useQueryClient();
   const [confirmCancel, setConfirmCancel] = useState(false);
 
@@ -214,7 +216,7 @@ function Subscription() {
         />
         <PlanCard
           name="PRO"
-          price={`${brl(PRO_PLAN_PRICE)}/mês`}
+          price={`${brl(pricing.price)}/mês`}
           features={PRO_FEATURES}
           active={isPro}
           footer={
@@ -239,7 +241,7 @@ function Subscription() {
       <ProPixCard hasPro={isPro} />
 
       <p className="mt-4 text-center text-xs text-muted-foreground">
-        Assinatura recorrente de {brl(PRO_PLAN_PRICE)} por mês, cobrada automaticamente pelo Mercado
+        Assinatura recorrente de {brl(pricing.price)} por mês, cobrada automaticamente pelo Mercado
         Pago. Você pode cancelar quando quiser e o acesso permanece até o fim do período já pago. A
         liberação do PRO acontece apenas após a confirmação do Mercado Pago. No Pix, a liberação
         depende da confirmação manual do administrador.
