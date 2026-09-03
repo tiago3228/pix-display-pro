@@ -131,7 +131,7 @@ export function AppShell({
             to="/assinatura"
             className="mb-2 flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground"
           >
-            <Sparkles className="size-4" /> Assinar PRO — R$ 9,90
+            <Sparkles className="size-4" /> Assinar PRO — {brl(proPrice)}
           </Link>
         ) : null}
         <Button variant="ghost" className="justify-start" onClick={signOut}>
@@ -222,7 +222,7 @@ export function AppShell({
                     onClick={() => setMoreOpen(false)}
                     className="mb-1 flex items-center gap-3 rounded-lg bg-primary px-3 py-3 text-sm font-semibold text-primary-foreground"
                   >
-                    <Sparkles className="size-4" /> Assinar PRO — R$ 9,90/mês
+                    <Sparkles className="size-4" /> Assinar PRO — {brl(proPrice)}/mês
                   </Link>
                 ) : null}
                 {MOBILE_MORE.map((item) => (
