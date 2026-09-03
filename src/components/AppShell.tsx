@@ -64,7 +64,9 @@ export function AppShell({
   const queryClient = useQueryClient();
   const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
   const { data: store, isLoading: storeLoading } = useMyStore();
+  const { price: proPrice } = useProPricing();
   const [moreOpen, setMoreOpen] = useState(false);
+
 
   useEffect(() => {
     if (adminLoading || storeLoading) return;
