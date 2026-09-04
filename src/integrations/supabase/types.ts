@@ -14,6 +14,101 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_import_jobs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          pages: number
+          plan: string
+          products_created: number
+          products_found: number
+          status: string
+          store_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          pages?: number
+          plan?: string
+          products_created?: number
+          products_found?: number
+          status?: string
+          store_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          pages?: number
+          plan?: string
+          products_created?: number
+          products_found?: number
+          status?: string
+          store_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_import_jobs_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_page_usage: {
+        Row: {
+          created_at: string
+          id: string
+          job_id: string | null
+          period: string
+          status: string
+          store_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_id?: string | null
+          period: string
+          status?: string
+          store_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_id?: string | null
+          period?: string
+          status?: string
+          store_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_page_usage_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "ai_import_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_page_usage_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       app_settings: {
         Row: {
           created_at: string
@@ -751,6 +846,48 @@ export type Database = {
           },
         ]
       }
+      product_images: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string
+          position: number
+          product_id: string
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url: string
+          position?: number
+          product_id: string
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string
+          position?: number
+          product_id?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_images_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_option_values: {
         Row: {
           id: string
@@ -846,8 +983,10 @@ export type Database = {
       }
       products: {
         Row: {
+          brand: string | null
           category_id: string | null
           created_at: string
+          created_via: string
           description: string
           has_variants: boolean
           id: string
@@ -856,6 +995,7 @@ export type Database = {
           is_featured: boolean
           is_hidden: boolean
           name: string
+          original_price: number | null
           position: number
           price: number
           sku: string | null
@@ -865,8 +1005,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          brand?: string | null
           category_id?: string | null
           created_at?: string
+          created_via?: string
           description?: string
           has_variants?: boolean
           id?: string
@@ -875,6 +1017,7 @@ export type Database = {
           is_featured?: boolean
           is_hidden?: boolean
           name: string
+          original_price?: number | null
           position?: number
           price?: number
           sku?: string | null
@@ -884,8 +1027,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          brand?: string | null
           category_id?: string | null
           created_at?: string
+          created_via?: string
           description?: string
           has_variants?: boolean
           id?: string
@@ -894,6 +1039,7 @@ export type Database = {
           is_featured?: boolean
           is_hidden?: boolean
           name?: string
+          original_price?: number | null
           position?: number
           price?: number
           sku?: string | null
