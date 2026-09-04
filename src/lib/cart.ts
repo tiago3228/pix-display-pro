@@ -4,6 +4,7 @@ export type CartItem = {
   key: string;
   productId: string;
   name: string;
+  description?: string | null;
   variantId?: string | null;
   variantLabel?: string | null;
   unitPrice: number;
@@ -110,6 +111,9 @@ export function buildOrderMessage(opts: {
       currency: "BRL",
     }).format(item.unitPrice * item.quantity);
     lines.push(`• ${item.quantity}x ${item.name}${variant} — ${value}`);
+    if (item.description) {
+      lines.push(`  ${item.description}`);
+    }
   }
   lines.push("");
   lines.push(
