@@ -334,9 +334,16 @@ function Products() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label>Descrição</Label>
+              <div className="flex items-center justify-between">
+                <Label>Descrição</Label>
+                <span className="text-xs text-muted-foreground">
+                  {form.description.length}/300
+                </span>
+              </div>
               <Textarea
-                rows={2}
+                rows={4}
+                maxLength={300}
+                placeholder="Ex.: Anel de prata 925 com zircônia, tamanho ajustável"
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
               />
