@@ -26,6 +26,7 @@ import { Route as AuthenticatedMinhaLojaRouteImport } from './routes/_authentica
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedPedidosRouteImport } from './routes/_authenticated/pedidos'
 import { Route as AuthenticatedProdutosRouteImport } from './routes/_authenticated/produtos'
+import { Route as AuthenticatedProdutosIaRouteImport } from './routes/_authenticated/produtos-ia'
 import { Route as AuthenticatedQrcodesRouteImport } from './routes/_authenticated/qrcodes'
 import { Route as CobrancaTokenRouteImport } from './routes/cobranca.$token'
 import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
@@ -122,6 +123,11 @@ const AuthenticatedProdutosRoute = AuthenticatedProdutosRouteImport.update({
   path: '/produtos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProdutosIaRoute = AuthenticatedProdutosIaRouteImport.update({
+  id: '/produtos-ia',
+  path: '/produtos-ia',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedQrcodesRoute = AuthenticatedQrcodesRouteImport.update({
   id: '/qrcodes',
   path: '/qrcodes',
@@ -190,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pedidos': typeof AuthenticatedPedidosRoute
   '/produtos': typeof AuthenticatedProdutosRoute
+  '/produtos-ia': typeof AuthenticatedProdutosIaRoute
   '/qrcodes': typeof AuthenticatedQrcodesRoute
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
@@ -217,6 +224,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pedidos': typeof AuthenticatedPedidosRoute
   '/produtos': typeof AuthenticatedProdutosRoute
+  '/produtos-ia': typeof AuthenticatedProdutosIaRoute
   '/qrcodes': typeof AuthenticatedQrcodesRoute
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
@@ -246,6 +254,7 @@ export interface FileRoutesById {
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/pedidos': typeof AuthenticatedPedidosRoute
   '/_authenticated/produtos': typeof AuthenticatedProdutosRoute
+  '/_authenticated/produtos-ia': typeof AuthenticatedProdutosIaRoute
   '/_authenticated/qrcodes': typeof AuthenticatedQrcodesRoute
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
@@ -275,6 +284,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/pedidos'
     | '/produtos'
+    | '/produtos-ia'
     | '/qrcodes'
     | '/cobranca/$token'
     | '/loja/$slug'
@@ -302,6 +312,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/pedidos'
     | '/produtos'
+    | '/produtos-ia'
     | '/qrcodes'
     | '/cobranca/$token'
     | '/loja/$slug'
@@ -330,6 +341,7 @@ export interface FileRouteTypes {
     | '/_authenticated/onboarding'
     | '/_authenticated/pedidos'
     | '/_authenticated/produtos'
+    | '/_authenticated/produtos-ia'
     | '/_authenticated/qrcodes'
     | '/cobranca/$token'
     | '/loja/$slug'
@@ -474,6 +486,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedProdutosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/produtos-ia': {
+      id: '/_authenticated/produtos-ia'
+      path: '/produtos-ia'
+      fullPath: '/produtos-ia'
+      preLoaderRoute: typeof AuthenticatedProdutosIaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/qrcodes': {
       id: '/_authenticated/qrcodes'
       path: '/qrcodes'
@@ -569,6 +588,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPedidosRoute: typeof AuthenticatedPedidosRoute
   AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRoute
+  AuthenticatedProdutosIaRoute: typeof AuthenticatedProdutosIaRoute
   AuthenticatedQrcodesRoute: typeof AuthenticatedQrcodesRoute
   AuthenticatedAdminSolicitacoesProRoute: typeof AuthenticatedAdminSolicitacoesProRoute
 }
@@ -585,6 +605,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPedidosRoute: AuthenticatedPedidosRoute,
   AuthenticatedProdutosRoute: AuthenticatedProdutosRoute,
+  AuthenticatedProdutosIaRoute: AuthenticatedProdutosIaRoute,
   AuthenticatedQrcodesRoute: AuthenticatedQrcodesRoute,
   AuthenticatedAdminSolicitacoesProRoute:
     AuthenticatedAdminSolicitacoesProRoute,
