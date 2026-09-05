@@ -53,9 +53,9 @@ export async function compressImage(
   return { dataUrl, blob };
 }
 
-/** Envia uma página de catálogo para a pasta privada da loja. */
-export async function uploadAiPage(storeId: string, blob: Blob) {
-  const path = `${storeId}/ai-imports/${crypto.randomUUID()}.jpg`;
+/** Envia uma página de catálogo para a pasta privada do vendedor. */
+export async function uploadAiPage(userId: string, blob: Blob) {
+  const path = `${userId}/ai-imports/${crypto.randomUUID()}.jpg`;
   const { error } = await supabase.storage
     .from(ASSET_BUCKET)
     .upload(path, blob, { contentType: "image/jpeg", upsert: false });
