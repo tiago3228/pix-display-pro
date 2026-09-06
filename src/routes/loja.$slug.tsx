@@ -690,6 +690,19 @@ function VariantDialog({
         </DialogHeader>
         {product ? (
           <div className="space-y-4">
+            {product.images.length > 1 ? (
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {product.images.map((url, index) => (
+                  <img
+                    key={url}
+                    src={url}
+                    alt={`${product.name} — foto ${index + 1}`}
+                    loading="lazy"
+                    className="size-24 shrink-0 rounded-lg object-cover"
+                  />
+                ))}
+              </div>
+            ) : null}
             {product.options.map((option) => (
               <div key={option.id}>
                 <p className="mb-2 text-sm font-medium">{option.name}</p>
