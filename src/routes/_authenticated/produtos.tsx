@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Eye, EyeOff, ImageIcon, Pencil, Plus, Star, Trash2 } from "lucide-react";
+import { Camera, Eye, EyeOff, ImageIcon, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyStore } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
-import { resolveAsset, uploadAsset } from "@/lib/images";
+import { resolveAsset } from "@/lib/images";
+import { ProductPhotos } from "@/components/ProductPhotos";
 import { FREE_PLAN_PRODUCT_LIMIT, brl } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,7 +70,7 @@ function Products() {
   const [form, setForm] = useState(emptyForm);
   const [variants, setVariants] = useState<VariantDraft[]>([]);
   const [optionName, setOptionName] = useState("Tamanho");
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [photos, setPhotos] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [newCategory, setNewCategory] = useState("");
 
@@ -115,7 +116,7 @@ function Products() {
     setEditing(null);
     setForm(emptyForm);
     setVariants([]);
-    setImageFile(null);
+    setPhotos([]);
     setOpen(true);
   }
 
@@ -139,7 +140,16 @@ function Products() {
         stock: String(v.stock),
       })),
     );
-    setImageFile(null);
+    setPhotos(product.image_url ? [product.image_url] : []);
+    supabase
+      .from("product_images")
+      .select("image_url, position")
+      .eq("product_id", product.id)
+      .order("position")
+      .then(({ data }) => {
+        const list = (data ?? []).map((row) => row.image_url as string);
+        if (list.length) setPhotos(list);
+      });
     setOpen(true);
   }
 
@@ -153,15 +163,7 @@ function Products() {
       return;
     }
     setSaving(true);
-    let imagePath: string | null | undefined;
-    if (imageFile) {
-      const { data: userData } = await supabase.auth.getUser();
-      try {
-        imagePath = await uploadAsset(userData.user!.id, imageFile);
-      } catch {
-        toast.error("Não foi possível enviar a imagem. O produto será salvo sem foto.");
-      }
-    }
+    const imagePath = photos[0] ?? null;
 
     const cleanVariants = variants.filter((v) => v.label.trim());
     const payload = {
@@ -175,7 +177,7 @@ function Products() {
       is_featured: form.is_featured,
       has_variants: cleanVariants.length > 0,
       category_id: form.category_id === "none" ? null : form.category_id,
-      ...(imagePath ? { image_url: imagePath } : {}),
+      ...(photos.length || editing ? { image_url: imagePath } : {}),
       updated_at: new Date().toISOString(),
     };
 
@@ -189,6 +191,18 @@ function Products() {
       return;
     }
 
+
+    await supabase.from("product_images").delete().eq("product_id", saved.id);
+    if (photos.length) {
+      await supabase.from("product_images").insert(
+        photos.map((path, position) => ({
+          product_id: saved.id,
+          store_id: store.id,
+          image_url: path,
+          position,
+        })),
+      );
+    }
 
     await supabase.from("product_variants").delete().eq("product_id", saved.id);
     await supabase.from("product_options").delete().eq("product_id", saved.id);
@@ -262,9 +276,16 @@ function Products() {
       title="Produtos"
       description={`${products?.length ?? 0} produto(s) na sua vitrine`}
       action={
-        <Button size="sm" onClick={openNew}>
-          <Plus className="mr-1.5 size-4" /> Novo
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/produtos-ia">
+              <Camera className="mr-1.5 size-4" /> Cadastrar com IA
+            </Link>
+          </Button>
+          <Button size="sm" onClick={openNew}>
+            <Plus className="mr-1.5 size-4" /> Manual
+          </Button>
+        </div>
       }
     >
       {limitReached ? (
@@ -385,14 +406,7 @@ function Products() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label>Foto do produto</Label>
-              <Input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
-              />
-            </div>
+            <ProductPhotos paths={photos} onChange={setPhotos} />
 
             <div className="space-y-3 rounded-lg border border-border p-3">
               <div className="flex items-center justify-between">
