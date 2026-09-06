@@ -89,6 +89,7 @@ function StorePage() {
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [selected, setSelected] = useState<StorefrontProduct | null>(null);
+  const [gallery, setGallery] = useState<StorefrontProduct | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [step, setStep] = useState<Step>("cart");
   const [paid, setPaid] = useState(false);
@@ -299,7 +300,12 @@ function StorePage() {
               const status = statusOf(product);
               return (
                 <article key={product.id} className="surface flex gap-3 p-3">
-                  <div className="size-24 shrink-0 overflow-hidden rounded-lg bg-muted">
+                  <button
+                    type="button"
+                    aria-label={`Ver fotos de ${product.name}`}
+                    className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-muted"
+                    onClick={() => product.images.length > 0 && setGallery(product)}
+                  >
                     {product.image ? (
                       <img
                         src={product.image}
@@ -312,7 +318,12 @@ function StorePage() {
                         <ShoppingBag className="size-6" />
                       </div>
                     )}
-                  </div>
+                    {product.images.length > 1 ? (
+                      <span className="absolute bottom-1 right-1 rounded bg-background/90 px-1 text-[10px] font-semibold">
+                        {product.images.length} fotos
+                      </span>
+                    ) : null}
+                  </button>
                   <div className="flex min-w-0 flex-1 flex-col">
                     <h2 className="font-semibold">{product.name}</h2>
                     <p className="line-clamp-2 text-xs text-muted-foreground">
@@ -376,6 +387,28 @@ function StorePage() {
           </div>
         </div>
       ) : null}
+
+      <Dialog open={Boolean(gallery)} onOpenChange={(open) => !open && setGallery(null)}>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{gallery?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {(gallery?.images ?? []).map((url, index) => (
+              <img
+                key={url}
+                src={url}
+                alt={`${gallery?.name} — foto ${index + 1}`}
+                loading="lazy"
+                className="w-full rounded-lg object-cover"
+              />
+            ))}
+            {gallery?.description ? (
+              <p className="text-sm text-muted-foreground">{gallery.description}</p>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <VariantDialog
         product={selected}
