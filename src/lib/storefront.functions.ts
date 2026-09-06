@@ -16,6 +16,7 @@ export type StorefrontProduct = {
   description: string;
   price: number;
   image: string | null;
+  images: string[];
   stock: number;
   track_stock: boolean;
   is_available: boolean;
@@ -79,6 +80,13 @@ export const getStorefront = createServerFn({ method: "GET" })
     ]);
 
     const productIds = (products ?? []).map((p) => p.id);
+    const { data: gallery } = productIds.length
+      ? await supabase
+          .from("product_images")
+          .select("product_id, image_url, position")
+          .in("product_id", productIds)
+          .order("position")
+      : { data: [] as { product_id: string; image_url: string; position: number }[] };
     const [{ data: options }, { data: variants }] = await Promise.all([
       productIds.length
         ? supabase
@@ -99,6 +107,7 @@ export const getStorefront = createServerFn({ method: "GET" })
       store.logo_url,
       store.banner_url,
       ...(products ?? []).map((p) => p.image_url),
+      ...(gallery ?? []).map((g) => g.image_url),
     ].filter((p): p is string => Boolean(p) && !p!.startsWith("http"));
     const signed = new Map<string, string>();
     if (paths.length) {
@@ -142,6 +151,15 @@ export const getStorefront = createServerFn({ method: "GET" })
         description: p.description,
         price: Number(p.price),
         image: resolve(p.image_url),
+        images: (() => {
+          const list = (gallery ?? [])
+            .filter((g) => g.product_id === p.id)
+            .map((g) => resolve(g.image_url))
+            .filter((u): u is string => Boolean(u));
+          const main = resolve(p.image_url);
+          if (main && !list.includes(main)) list.unshift(main);
+          return list;
+        })(),
         stock: p.stock,
         track_stock: p.track_stock,
         is_available: p.is_available,
