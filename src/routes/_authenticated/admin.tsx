@@ -102,7 +102,7 @@ function Admin() {
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{store.name}</p>
               <p className="text-xs text-muted-foreground">
-                /loja/{store.slug} · {formatDate(store.created_at)}
+                /s/{store.slug} · {formatDate(store.created_at)}
               </p>
             </div>
             <div className="flex shrink-0 gap-2">
