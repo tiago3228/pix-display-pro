@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useLoaderData, useParams } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
@@ -81,8 +81,8 @@ export function EmptyState({ title, text }: { title: string; text: string }) {
 type Step = "cart" | "checkout";
 
 export function StorePage() {
-  const data = Route.useLoaderData();
-  const params = Route.useParams();
+  const data = useLoaderData({ strict: false }) as Awaited<ReturnType<typeof getStorefront>>;
+  const params = useParams({ strict: false }) as { slug: string };
   const cart = useCart(params.slug);
   const track = useServerFn(trackStoreEvent);
   const sendOrder = useServerFn(submitOrder);
