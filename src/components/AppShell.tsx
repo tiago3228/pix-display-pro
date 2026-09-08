@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  Camera,
   Package,
   QrCode,
   Settings,
@@ -36,6 +37,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/produtos", label: "Produtos", icon: Package },
+  { to: "/produtos-ia", label: "Cadastro por foto (IA)", icon: Camera },
   { to: "/pedidos", label: "Pedidos", icon: ShoppingCart },
   { to: "/cobrancas", label: "Cobranças", icon: Wallet },
 
