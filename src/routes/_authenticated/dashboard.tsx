@@ -69,7 +69,7 @@ function Dashboard() {
   });
 
   const storeUrl =
-    typeof window !== "undefined" && store ? `${window.location.origin}/loja/${store.slug}` : "";
+    typeof window !== "undefined" && store ? `${window.location.origin}/s/${store.slug}` : "";
 
   return (
     <AppShell

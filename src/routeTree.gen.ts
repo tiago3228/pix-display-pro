@@ -30,6 +30,7 @@ import { Route as AuthenticatedProdutosIaRouteImport } from './routes/_authentic
 import { Route as AuthenticatedQrcodesRouteImport } from './routes/_authenticated/qrcodes'
 import { Route as CobrancaTokenRouteImport } from './routes/cobranca.$token'
 import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
+import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as AuthenticatedAdminFaturamentoRouteImport } from './routes/_authenticated/admin.faturamento'
 import { Route as AuthenticatedAdminLandingRouteImport } from './routes/_authenticated/admin.landing'
 import { Route as AuthenticatedAdminLojasRouteImport } from './routes/_authenticated/admin.lojas'
@@ -143,6 +144,11 @@ const LojaSlugRoute = LojaSlugRouteImport.update({
   path: '/loja/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SSlugRoute = SSlugRouteImport.update({
+  id: '/s/$slug',
+  path: '/s/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAdminFaturamentoRoute =
   AuthenticatedAdminFaturamentoRouteImport.update({
     id: '/faturamento',
@@ -200,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/qrcodes': typeof AuthenticatedQrcodesRoute
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
+  '/s/$slug': typeof SSlugRoute
   '/admin/faturamento': typeof AuthenticatedAdminFaturamentoRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/admin/lojas': typeof AuthenticatedAdminLojasRoute
@@ -228,6 +235,7 @@ export interface FileRoutesByTo {
   '/qrcodes': typeof AuthenticatedQrcodesRoute
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
+  '/s/$slug': typeof SSlugRoute
   '/admin/faturamento': typeof AuthenticatedAdminFaturamentoRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/admin/lojas': typeof AuthenticatedAdminLojasRoute
@@ -258,6 +266,7 @@ export interface FileRoutesById {
   '/_authenticated/qrcodes': typeof AuthenticatedQrcodesRoute
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
+  '/s/$slug': typeof SSlugRoute
   '/_authenticated/admin/faturamento': typeof AuthenticatedAdminFaturamentoRoute
   '/_authenticated/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/_authenticated/admin/lojas': typeof AuthenticatedAdminLojasRoute
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
     | '/qrcodes'
     | '/cobranca/$token'
     | '/loja/$slug'
+    | '/s/$slug'
     | '/admin/faturamento'
     | '/admin/landing'
     | '/admin/lojas'
@@ -316,6 +326,7 @@ export interface FileRouteTypes {
     | '/qrcodes'
     | '/cobranca/$token'
     | '/loja/$slug'
+    | '/s/$slug'
     | '/admin/faturamento'
     | '/admin/landing'
     | '/admin/lojas'
@@ -345,6 +356,7 @@ export interface FileRouteTypes {
     | '/_authenticated/qrcodes'
     | '/cobranca/$token'
     | '/loja/$slug'
+    | '/s/$slug'
     | '/_authenticated/admin/faturamento'
     | '/_authenticated/admin/landing'
     | '/_authenticated/admin/lojas'
@@ -362,6 +374,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   CobrancaTokenRoute: typeof CobrancaTokenRoute
   LojaSlugRoute: typeof LojaSlugRoute
+  SSlugRoute: typeof SSlugRoute
   ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
 }
 
@@ -514,6 +527,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LojaSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/s/$slug': {
+      id: '/s/$slug'
+      path: '/s/$slug'
+      fullPath: '/s/$slug'
+      preLoaderRoute: typeof SSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/admin/faturamento': {
       id: '/_authenticated/admin/faturamento'
       path: '/faturamento'
@@ -623,6 +643,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   CobrancaTokenRoute: CobrancaTokenRoute,
   LojaSlugRoute: LojaSlugRoute,
+  SSlugRoute: SSlugRoute,
   ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
 }
 export const routeTree = rootRouteImport
