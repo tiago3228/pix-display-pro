@@ -65,7 +65,7 @@ export const Route = createFileRoute("/loja/$slug")({
   component: StorePage,
 });
 
-function EmptyState({ title, text }: { title: string; text: string }) {
+export function EmptyState({ title, text }: { title: string; text: string }) {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-3 px-6 text-center">
       <StoreIcon className="size-8 text-muted-foreground" />
@@ -80,7 +80,7 @@ function EmptyState({ title, text }: { title: string; text: string }) {
 
 type Step = "cart" | "checkout";
 
-function StorePage() {
+export function StorePage() {
   const data = Route.useLoaderData();
   const params = Route.useParams();
   const cart = useCart(params.slug);

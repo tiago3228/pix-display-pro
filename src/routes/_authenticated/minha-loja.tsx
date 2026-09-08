@@ -179,9 +179,15 @@ function MyStore() {
         <div className="space-y-1.5">
           <Label>Endereço da vitrine</Label>
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
-            <span>/loja/</span>
+            <span>/s/</span>
             <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} />
           </div>
+          <p className="text-xs text-muted-foreground">
+            Link curto:{" "}
+            {typeof window !== "undefined"
+              ? `${window.location.origin}/s/${form.slug || slugify(form.name)}`
+              : ""}
+          </p>
         </div>
 
         <div className="space-y-1.5">

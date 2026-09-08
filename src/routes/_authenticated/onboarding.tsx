@@ -163,7 +163,7 @@ function Onboarding() {
   }
 
   const storeUrl =
-    typeof window !== "undefined" ? `${window.location.origin}/loja/${slug}` : `/loja/${slug}`;
+    typeof window !== "undefined" ? `${window.location.origin}/s/${slug}` : `/s/${slug}`;
 
   if (isLoading) {
     return <div className="p-10 text-center text-sm text-muted-foreground">Carregando...</div>;

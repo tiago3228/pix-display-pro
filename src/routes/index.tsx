@@ -314,7 +314,7 @@ function Landing() {
                 <Link to="/signup">Criar minha loja grátis</Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link to="/loja/$slug" params={{ slug: "atena-joias" }}>
+                <Link to="/s/$slug" params={{ slug: "atena-joias" }}>
                   Ver loja de exemplo
                 </Link>
               </Button>

@@ -31,7 +31,7 @@ function QrCodes() {
   });
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const storeUrl = store ? `${origin}/loja/${store.slug}` : "";
+  const storeUrl = store ? `${origin}/s/${store.slug}` : "";
 
   async function download(url: string, filename: string) {
     const dataUrl = await QRCode.toDataURL(url, { width: 1024, margin: 2 });
