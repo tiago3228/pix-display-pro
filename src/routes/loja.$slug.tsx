@@ -81,8 +81,8 @@ export function EmptyState({ title, text }: { title: string; text: string }) {
 type Step = "cart" | "checkout";
 
 export function StorePage() {
-  const data = Route.useLoaderData();
-  const params = Route.useParams();
+  const data = useLoaderData({ strict: false }) as ReturnType<typeof Route.useLoaderData>;
+  const params = useParams({ strict: false }) as { slug: string };
   const cart = useCart(params.slug);
   const track = useServerFn(trackStoreEvent);
   const sendOrder = useServerFn(submitOrder);
