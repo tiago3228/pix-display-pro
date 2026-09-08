@@ -21,7 +21,8 @@ export async function countPagesUsed(storeId: string, period = currentPeriod()) 
     .from("ai_page_usage")
     .select("id", { count: "exact", head: true })
     .eq("store_id", storeId)
-    .eq("period", period);
+    .eq("period", period)
+    .eq("status", "success");
   return count ?? 0;
 }
 

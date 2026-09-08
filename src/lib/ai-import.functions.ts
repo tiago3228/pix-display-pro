@@ -299,6 +299,9 @@ export const createProductsFromAi = createServerFn({ method: "POST" })
           }
         }
 
+        // Multi-tenancy: só aceita caminhos dentro da pasta privada do próprio usuário.
+        const safePaths = item.imagePaths.filter((path) => path.startsWith(`${ctx.userId}/`));
+
         const payload = {
           store_id: store.id,
           name: item.name,
@@ -308,11 +311,11 @@ export const createProductsFromAi = createServerFn({ method: "POST" })
           sku: item.sku,
           brand: item.brand,
           stock: item.stock,
-          track_stock: item.stock > 0,
+          track_stock: true,
           has_variants: item.variants.length > 0,
           category_id: categoryId,
           created_via: "ai",
-          image_url: item.imagePaths[0] ?? null,
+          image_url: safePaths[0] ?? null,
           updated_at: new Date().toISOString(),
         };
 
@@ -364,10 +367,10 @@ export const createProductsFromAi = createServerFn({ method: "POST" })
           );
         }
 
-        if (item.imagePaths.length && productId) {
+        if (safePaths.length && productId) {
           await ctx.supabase.from("product_images").delete().eq("product_id", productId);
           await ctx.supabase.from("product_images").insert(
-            item.imagePaths.slice(0, MAX_PRODUCT_IMAGES).map((path, position) => ({
+            safePaths.slice(0, MAX_PRODUCT_IMAGES).map((path, position) => ({
               product_id: productId,
               store_id: store.id,
               image_url: path,
