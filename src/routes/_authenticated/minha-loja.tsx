@@ -183,7 +183,10 @@ function MyStore() {
             <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} />
           </div>
           <p className="text-xs text-muted-foreground">
-            Link curto: {window.location.origin}/s/{form.slug || slugify(form.name)}
+            Link curto:{" "}
+            {typeof window !== "undefined"
+              ? `${window.location.origin}/s/${form.slug || slugify(form.name)}`
+              : ""}
           </p>
         </div>
 
