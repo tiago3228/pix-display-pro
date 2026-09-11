@@ -35,18 +35,18 @@ import {
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/produtos", label: "Produtos", icon: Package },
-  { to: "/produtos-ia", label: "Cadastro por foto (IA)", icon: Camera },
-  { to: "/pedidos", label: "Pedidos", icon: ShoppingCart },
-  { to: "/cobrancas", label: "Cobranças", icon: Wallet },
+  { to: "/dashboard", label: "Dashboard", short: "Início", icon: LayoutDashboard },
+  { to: "/produtos", label: "Produtos", short: "Produtos", icon: Package },
+  { to: "/produtos-ia", label: "Cadastro por foto (IA)", short: "Foto IA", icon: Camera },
+  { to: "/pedidos", label: "Pedidos", short: "Pedidos", icon: ShoppingCart },
+  { to: "/cobrancas", label: "Cobranças", short: "Cobranças", icon: Wallet },
 
-  { to: "/faturamento", label: "Faturamento", icon: BarChart3 },
-  { to: "/minha-loja", label: "Minha Loja", icon: Store },
-  { to: "/qrcodes", label: "QR Codes", icon: QrCode },
-  { to: "/clientes", label: "Clientes", icon: Users },
-  { to: "/configuracoes", label: "Configurações", icon: Settings },
-  { to: "/assinatura", label: "Assinatura", icon: CreditCard },
+  { to: "/faturamento", label: "Faturamento", short: "Faturamento", icon: BarChart3 },
+  { to: "/minha-loja", label: "Minha Loja", short: "Loja", icon: Store },
+  { to: "/qrcodes", label: "QR Codes", short: "QR Codes", icon: QrCode },
+  { to: "/clientes", label: "Clientes", short: "Clientes", icon: Users },
+  { to: "/configuracoes", label: "Configurações", short: "Ajustes", icon: Settings },
+  { to: "/assinatura", label: "Assinatura", short: "PRO", icon: CreditCard },
 ] as const;
 
 const MOBILE_NAV = NAV.slice(0, 4);
@@ -142,8 +142,8 @@ export function AppShell({
       </aside>
 
       <div className="lg:pl-60">
-        <header className="sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur">
-          <div className="flex items-center justify-between gap-3 px-4 py-3">
+        <header className="sticky top-0 z-20 border-b border-border bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur">
+          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 py-3 sm:gap-3 sm:px-4">
             <div className="flex min-w-0 items-center gap-2">
               {pathname === "/dashboard" ? null : (
                 <BackButton fallbackTo="/dashboard" iconOnly className="-ml-1 shrink-0" />
@@ -180,40 +180,44 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="mx-auto max-w-5xl px-4 py-5 pb-24 lg:pb-8">
+        <main className="mx-auto max-w-5xl px-3 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-4 lg:pb-8">
           {children}
           <p className="mt-8 text-center text-xs text-muted-foreground/70">By: Tiago Cardoso</p>
         </main>
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur lg:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
         <div className="grid grid-cols-5">
           {MOBILE_NAV.map((item) => (
             <Link
               key={item.to}
               to={item.to}
               className={cn(
-                "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
+                "flex min-h-[3.25rem] flex-col items-center justify-center gap-1 px-1 py-2 text-[10.5px] font-medium",
                 pathname === item.to ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <item.icon className="size-5" />
-              {item.label}
+              <item.icon className="size-5 shrink-0" />
+              <span className="w-full truncate text-center">{item.short}</span>
             </Link>
           ))}
           <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
             <SheetTrigger
+              aria-label="Abrir mais opções do menu"
               className={cn(
-                "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
+                "flex min-h-[3.25rem] flex-col items-center justify-center gap-1 px-1 py-2 text-[10.5px] font-medium",
                 MOBILE_MORE.some((item) => item.to === pathname) || pathname === "/admin"
                   ? "text-primary"
                   : "text-muted-foreground",
               )}
             >
-              <Menu className="size-5" />
+              <Menu className="size-5 shrink-0" />
               Mais
             </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-2xl">
+            <SheetContent
+              side="bottom"
+              className="max-h-[85vh] overflow-y-auto rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+            >
               <SheetHeader className="text-left">
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>

@@ -1,0 +1,21 @@
+{
+  "name": "Vitrini — sua vitrine online",
+  "short_name": "Vitrini",
+  "description": "Crie sua vitrine online, compartilhe seu QR Code, receba pedidos pelo WhatsApp e facilite o pagamento via Pix.",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "theme_color": "#0FA08A",
+  "background_color": "#FCFBF8",
+  "categories": ["business", "shopping", "productivity"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}
