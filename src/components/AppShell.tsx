@@ -203,17 +203,21 @@ export function AppShell({
           ))}
           <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
             <SheetTrigger
+              aria-label="Abrir mais opções do menu"
               className={cn(
-                "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
+                "flex min-h-[3.25rem] flex-col items-center justify-center gap-1 px-1 py-2 text-[10.5px] font-medium",
                 MOBILE_MORE.some((item) => item.to === pathname) || pathname === "/admin"
                   ? "text-primary"
                   : "text-muted-foreground",
               )}
             >
-              <Menu className="size-5" />
+              <Menu className="size-5 shrink-0" />
               Mais
             </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-2xl">
+            <SheetContent
+              side="bottom"
+              className="max-h-[85vh] overflow-y-auto rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+            >
               <SheetHeader className="text-left">
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
