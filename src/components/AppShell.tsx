@@ -180,7 +180,7 @@ export function AppShell({
           </div>
         </header>
 
-        <main className="mx-auto max-w-5xl px-4 py-5 pb-24 lg:pb-8">
+        <main className="mx-auto max-w-5xl px-3 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-4 lg:pb-8">
           {children}
           <p className="mt-8 text-center text-xs text-muted-foreground/70">By: Tiago Cardoso</p>
         </main>
