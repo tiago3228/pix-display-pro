@@ -193,12 +193,12 @@ export function AppShell({
               key={item.to}
               to={item.to}
               className={cn(
-                "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium",
+                "flex min-h-[3.25rem] flex-col items-center justify-center gap-1 px-1 py-2 text-[10.5px] font-medium",
                 pathname === item.to ? "text-primary" : "text-muted-foreground",
               )}
             >
-              <item.icon className="size-5" />
-              {item.label}
+              <item.icon className="size-5 shrink-0" />
+              <span className="w-full truncate text-center">{item.short}</span>
             </Link>
           ))}
           <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
