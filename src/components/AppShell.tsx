@@ -35,18 +35,18 @@ import {
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/produtos", label: "Produtos", icon: Package },
-  { to: "/produtos-ia", label: "Cadastro por foto (IA)", icon: Camera },
-  { to: "/pedidos", label: "Pedidos", icon: ShoppingCart },
-  { to: "/cobrancas", label: "Cobranças", icon: Wallet },
+  { to: "/dashboard", label: "Dashboard", short: "Início", icon: LayoutDashboard },
+  { to: "/produtos", label: "Produtos", short: "Produtos", icon: Package },
+  { to: "/produtos-ia", label: "Cadastro por foto (IA)", short: "Foto IA", icon: Camera },
+  { to: "/pedidos", label: "Pedidos", short: "Pedidos", icon: ShoppingCart },
+  { to: "/cobrancas", label: "Cobranças", short: "Cobranças", icon: Wallet },
 
-  { to: "/faturamento", label: "Faturamento", icon: BarChart3 },
-  { to: "/minha-loja", label: "Minha Loja", icon: Store },
-  { to: "/qrcodes", label: "QR Codes", icon: QrCode },
-  { to: "/clientes", label: "Clientes", icon: Users },
-  { to: "/configuracoes", label: "Configurações", icon: Settings },
-  { to: "/assinatura", label: "Assinatura", icon: CreditCard },
+  { to: "/faturamento", label: "Faturamento", short: "Faturamento", icon: BarChart3 },
+  { to: "/minha-loja", label: "Minha Loja", short: "Loja", icon: Store },
+  { to: "/qrcodes", label: "QR Codes", short: "QR Codes", icon: QrCode },
+  { to: "/clientes", label: "Clientes", short: "Clientes", icon: Users },
+  { to: "/configuracoes", label: "Configurações", short: "Ajustes", icon: Settings },
+  { to: "/assinatura", label: "Assinatura", short: "PRO", icon: CreditCard },
 ] as const;
 
 const MOBILE_NAV = NAV.slice(0, 4);
