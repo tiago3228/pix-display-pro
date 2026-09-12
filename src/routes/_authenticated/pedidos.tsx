@@ -35,7 +35,7 @@ function Orders() {
       const { data, error } = await supabase
         .from("orders")
         .select(
-          "id, number, customer_name, customer_whatsapp, total, status, note, payment_declared, created_at, order_items(id, product_name, variant_label, quantity, unit_price, subtotal)",
+          "id, number, customer_name, customer_whatsapp, total, status, note, payment_declared, receipt_path, created_at, order_items(id, product_name, variant_label, quantity, unit_price, subtotal)",
         )
         .eq("store_id", store!.id)
         .order("created_at", { ascending: false });
