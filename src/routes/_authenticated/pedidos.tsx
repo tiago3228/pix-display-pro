@@ -29,6 +29,7 @@ function Orders() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("todos");
+  const receiptUrl = useServerFn(getOrderReceiptUrl);
 
   const { data: orders } = useQuery({
     queryKey: ["orders", store?.id],
