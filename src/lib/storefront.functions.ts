@@ -426,3 +426,71 @@ export const trackStoreEvent = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+const RECEIPT_TYPES = {
+  "application/pdf": "pdf",
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+} as const;
+
+const MAX_RECEIPT_BYTES = 8 * 1024 * 1024;
+
+/**
+ * Comprovante enviado pelo comprador (sem conta). O arquivo é validado e
+ * gravado no bucket privado; só o vendedor dono da loja consegue visualizar.
+ */
+export const uploadOrderReceipt = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        storeId: z.string().uuid(),
+        contentType: z.enum(["application/pdf", "image/jpeg", "image/png", "image/webp"]),
+        base64: z.string().min(16).max(14_000_000),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: store } = await supabaseAdmin
+      .from("stores")
+      .select("id, is_active")
+      .eq("id", data.storeId)
+      .maybeSingle();
+    if (!store || !store.is_active) throw new Error("Loja indisponível");
+
+    const bytes = Buffer.from(data.base64, "base64");
+    if (!bytes.length || bytes.length > MAX_RECEIPT_BYTES) {
+      throw new Error("Arquivo inválido ou maior que 8 MB.");
+    }
+
+    const ext = RECEIPT_TYPES[data.contentType];
+    const path = `receipts/${store.id}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabaseAdmin.storage
+      .from("store-assets")
+      .upload(path, bytes, { contentType: data.contentType, upsert: false });
+    if (error) throw new Error("Não foi possível enviar o comprovante.");
+
+    return { path };
+  });
+
+/** O vendedor autenticado obtém um link temporário do comprovante do seu pedido. */
+export const getOrderReceiptUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ orderId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    // RLS garante que o pedido pertence a uma loja do usuário autenticado.
+    const { data: order } = await context.supabase
+      .from("orders")
+      .select("id, receipt_path")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (!order?.receipt_path) return { url: null };
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: signed } = await supabaseAdmin.storage
+      .from("store-assets")
+      .createSignedUrl(order.receipt_path, 60 * 10);
+    return { url: signed?.signedUrl ?? null };
+  });
