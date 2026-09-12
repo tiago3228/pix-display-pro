@@ -612,7 +612,7 @@ export function StorePage() {
                         onCheckedChange={(value) => setPaid(value === true)}
                         className="mt-0.5"
                       />
-                      <span>Já fiz o pagamento (opcional)</span>
+                      <span>Já fiz o pagamento</span>
                     </label>
                   ) : (
                     <p className="mt-3 text-xs text-muted-foreground">
