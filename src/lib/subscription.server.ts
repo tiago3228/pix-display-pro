@@ -18,6 +18,22 @@ async function admin() {
   return supabaseAdmin;
 }
 
+function requireDatabaseResult<T>(
+  result: { data: T; error: { code?: string; message: string; details?: string | null } | null },
+  operation: string,
+): T {
+  if (result.error) {
+    const error = new Error(`SUPABASE_${operation}_FAILED: ${result.error.message}`);
+    Object.assign(error, {
+      cause: result.error,
+      code: result.error.code,
+      details: result.error.details,
+    });
+    throw error;
+  }
+  return result.data;
+}
+
 export async function logAudit(entry: {
   storeId: string | null;
   userId?: string | null;
@@ -66,10 +82,21 @@ export async function applyPlanToStore(storeId: string, status: string, graceUnt
     const { activePixGrant } = await import("./pro-pix.server");
     if (await activePixGrant(storeId)) plan = "pro";
   }
-  await db.from("stores").update({ plan }).eq("id", storeId);
+  const updated = await db
+    .from("stores")
+    .update({ plan })
+    .eq("id", storeId)
+    .select("id, plan")
+    .maybeSingle();
+  const row = requireDatabaseResult(updated, "STORE_PLAN_UPDATE");
+  if (!row || row.id !== storeId || row.plan !== plan) {
+    throw new Error(
+      `SUPABASE_STORE_PLAN_UPDATE_FAILED: store ${storeId} was not updated to ${plan}`,
+    );
+  }
+  console.info("[subscription] store plan updated", { storeId, status, plan });
   return plan;
 }
-
 
 /**
  * Fonte da verdade: aplica no banco o estado devolvido pela API do Mercado Pago.
@@ -78,12 +105,13 @@ export async function applyPlanToStore(storeId: string, status: string, graceUnt
 export async function syncFromPreapproval(preapproval: Preapproval) {
   const db = await admin();
 
-  const { data: existing } = await db
+  const existingResult = await db
     .from("subscriptions")
     .select("*")
     .eq("provider", "mercadopago")
     .eq("provider_subscription_id", preapproval.id)
     .maybeSingle();
+  const existing = requireDatabaseResult(existingResult, "SUBSCRIPTION_LOOKUP");
 
   const storeId = existing?.store_id ?? preapproval.external_reference ?? null;
   if (!storeId) return null;
@@ -121,15 +149,18 @@ export async function syncFromPreapproval(preapproval: Preapproval) {
   };
 
   if (existing) {
-    await db.from("subscriptions").update(patch).eq("id", existing.id);
+    const result = await db.from("subscriptions").update(patch).eq("id", existing.id);
+    requireDatabaseResult(result, "SUBSCRIPTION_UPDATE");
   } else {
     // Encerra qualquer assinatura "viva" órfã da loja antes de inserir (índice único).
-    await db
+    const expireResult = await db
       .from("subscriptions")
       .update({ status: "expired" })
       .eq("store_id", storeId)
       .in("status", LIVE_STATUSES as unknown as string[]);
-    await db.from("subscriptions").insert(patch);
+    requireDatabaseResult(expireResult, "ORPHAN_SUBSCRIPTIONS_EXPIRE");
+    const insertResult = await db.from("subscriptions").insert(patch);
+    requireDatabaseResult(insertResult, "SUBSCRIPTION_INSERT");
   }
 
   const plan = await applyPlanToStore(storeId, status, graceUntil);
@@ -147,11 +178,12 @@ export async function syncFromPreapproval(preapproval: Preapproval) {
 /** Marca a assinatura como inadimplente e inicia o período de tolerância. */
 export async function markPastDue(subscriptionId: string, storeId: string) {
   const db = await admin();
-  const { data: current } = await db
+  const currentResult = await db
     .from("subscriptions")
     .select("past_due_since, grace_until, status")
     .eq("id", subscriptionId)
     .maybeSingle();
+  const current = requireDatabaseResult(currentResult, "SUBSCRIPTION_LOOKUP");
 
   if (current?.status === "canceled") return;
 
@@ -160,10 +192,11 @@ export async function markPastDue(subscriptionId: string, storeId: string) {
     current?.grace_until ??
     new Date(Date.now() + GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000).toISOString();
 
-  await db
+  const result = await db
     .from("subscriptions")
     .update({ status: "past_due", past_due_since: since, grace_until: grace })
     .eq("id", subscriptionId);
+  requireDatabaseResult(result, "SUBSCRIPTION_PAST_DUE_UPDATE");
 
   await applyPlanToStore(storeId, "past_due", grace);
   await logAudit({
@@ -238,4 +271,3 @@ export async function storeHasPro(storeId: string): Promise<boolean> {
   }
   return false;
 }
-

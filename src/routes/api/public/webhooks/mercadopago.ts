@@ -15,6 +15,19 @@ const REPLAY_WINDOW_SECONDS = 300;
 
 type SignatureResult = "ok" | "invalid" | "missing-secret" | "stale";
 
+function databaseError(operation: string, error: { code?: string; message: string }) {
+  const wrapped = new Error(`SUPABASE_${operation}_FAILED: ${error.message}`);
+  Object.assign(wrapped, { cause: error, code: error.code });
+  return wrapped;
+}
+
+function assertDatabaseOperation(
+  operation: string,
+  result: { error: { code?: string; message: string } | null },
+) {
+  if (result.error) throw databaseError(operation, result.error);
+}
+
 function verifySignature(request: Request, dataId: string | null): SignatureResult {
   // Em produção o segredo pode ser específico; cai para o segredo único quando não houver.
   const secret =
@@ -97,8 +110,14 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
         });
         if (insertError) {
           if (insertError.code === "23505") return new Response("ok (duplicate)");
-          console.error("[mercadopago-webhook] falha ao registrar evento", insertError.message);
-          return new Response("ok");
+          console.error("[mercadopago-webhook] falha ao registrar evento", {
+            eventId,
+            eventType,
+            resourceId,
+            code: insertError.code,
+            message: insertError.message,
+          });
+          return new Response("event persistence failed", { status: 500 });
         }
 
         try {
@@ -116,11 +135,12 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
               const synced = await svc.syncFromPreapproval(remote);
               storeId = synced?.storeId ?? null;
 
-              const { data: sub } = await supabaseAdmin
+              const { data: sub, error: subError } = await supabaseAdmin
                 .from("subscriptions")
                 .select("id, store_id")
                 .eq("provider_subscription_id", preapprovalId)
                 .maybeSingle();
+              assertDatabaseOperation("SUBSCRIPTION_LOOKUP", { error: subError });
 
               if (sub) {
                 storeId = sub.store_id;
@@ -130,26 +150,29 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
                   ""
                 ).toLowerCase();
                 const approved = paymentStatus === "approved" || authorized.status === "processed";
-                await supabaseAdmin.from("subscription_payments").upsert(
-                  {
-                    store_id: sub.store_id,
-                    subscription_id: sub.id,
-                    provider: "mercadopago",
-                    provider_payment_id: String(authorized.payment?.id ?? authorized.id),
-                    amount: Number(authorized.transaction_amount ?? 0),
-                    currency: authorized.currency_id ?? "BRL",
-                    status: approved ? "approved" : paymentStatus || "pending",
-                    external_status: authorized.status ?? null,
-                    paid_at: approved
-                      ? (authorized.date_created ?? new Date().toISOString())
-                      : null,
-                    due_at: authorized.debit_date ?? null,
-                  },
-                  { onConflict: "provider,provider_payment_id" },
-                );
+                const { error: paymentError } = await supabaseAdmin
+                  .from("subscription_payments")
+                  .upsert(
+                    {
+                      store_id: sub.store_id,
+                      subscription_id: sub.id,
+                      provider: "mercadopago",
+                      provider_payment_id: String(authorized.payment?.id ?? authorized.id),
+                      amount: Number(authorized.transaction_amount ?? 0),
+                      currency: authorized.currency_id ?? "BRL",
+                      status: approved ? "approved" : paymentStatus || "pending",
+                      external_status: authorized.status ?? null,
+                      paid_at: approved
+                        ? (authorized.date_created ?? new Date().toISOString())
+                        : null,
+                      due_at: authorized.debit_date ?? null,
+                    },
+                    { onConflict: "provider,provider_payment_id" },
+                  );
+                assertDatabaseOperation("SUBSCRIPTION_PAYMENT_UPSERT", { error: paymentError });
 
                 if (approved) {
-                  await supabaseAdmin
+                  const { error: subscriptionError } = await supabaseAdmin
                     .from("subscriptions")
                     .update({
                       last_payment_at: new Date().toISOString(),
@@ -157,6 +180,9 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
                       grace_until: null,
                     })
                     .eq("id", sub.id);
+                  assertDatabaseOperation("SUBSCRIPTION_PAYMENT_UPDATE", {
+                    error: subscriptionError,
+                  });
                   await svc.applyPlanToStore(sub.store_id, "active", null);
                 } else if (["rejected", "cancelled", "recycling"].includes(paymentStatus)) {
                   await svc.markPastDue(sub.id, sub.store_id);
@@ -182,44 +208,49 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
             if (preapprovalId) {
               const remote = await mp.getPreapproval(preapprovalId);
               await svc.syncFromPreapproval(remote);
-              const { data } = await supabaseAdmin
+              const { data, error: subscriptionError } = await supabaseAdmin
                 .from("subscriptions")
                 .select("id, store_id")
                 .eq("provider_subscription_id", preapprovalId)
                 .maybeSingle();
+              assertDatabaseOperation("SUBSCRIPTION_LOOKUP", { error: subscriptionError });
               sub = data ?? null;
             }
 
             if (!sub && payment.external_reference) {
-              const { data } = await supabaseAdmin
+              const { data, error: subscriptionError } = await supabaseAdmin
                 .from("subscriptions")
                 .select("id, store_id")
                 .eq("external_reference", payment.external_reference)
                 .order("created_at", { ascending: false })
                 .limit(1)
                 .maybeSingle();
+              assertDatabaseOperation("SUBSCRIPTION_LOOKUP", { error: subscriptionError });
               sub = data ?? null;
             }
 
             if (sub) {
               storeId = sub.store_id;
               const approved = payment.status === "approved";
-              await supabaseAdmin.from("subscription_payments").upsert(
-                {
-                  store_id: sub.store_id,
-                  subscription_id: sub.id,
-                  provider: "mercadopago",
-                  provider_payment_id: String(payment.id),
-                  amount: Number(payment.transaction_amount ?? 0),
-                  currency: payment.currency_id ?? "BRL",
-                  status: payment.status ?? "pending",
-                  external_status: payment.status_detail ?? null,
-                  paid_at: approved ? (payment.date_approved ?? null) : null,
-                },
-                { onConflict: "provider,provider_payment_id" },
-              );
+              const { error: paymentError } = await supabaseAdmin
+                .from("subscription_payments")
+                .upsert(
+                  {
+                    store_id: sub.store_id,
+                    subscription_id: sub.id,
+                    provider: "mercadopago",
+                    provider_payment_id: String(payment.id),
+                    amount: Number(payment.transaction_amount ?? 0),
+                    currency: payment.currency_id ?? "BRL",
+                    status: payment.status ?? "pending",
+                    external_status: payment.status_detail ?? null,
+                    paid_at: approved ? (payment.date_approved ?? null) : null,
+                  },
+                  { onConflict: "provider,provider_payment_id" },
+                );
+              assertDatabaseOperation("SUBSCRIPTION_PAYMENT_UPSERT", { error: paymentError });
               if (approved) {
-                await supabaseAdmin
+                const { error: subscriptionError } = await supabaseAdmin
                   .from("subscriptions")
                   .update({
                     last_payment_at: payment.date_approved ?? new Date().toISOString(),
@@ -227,6 +258,9 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
                     grace_until: null,
                   })
                   .eq("id", sub.id);
+                assertDatabaseOperation("SUBSCRIPTION_PAYMENT_UPDATE", {
+                  error: subscriptionError,
+                });
                 await svc.applyPlanToStore(sub.store_id, "active", null);
               } else if (payment.status === "rejected" || payment.status === "cancelled") {
                 await svc.markPastDue(sub.id, sub.store_id);
@@ -234,7 +268,7 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
             }
           }
 
-          await supabaseAdmin
+          const { error: processedError } = await supabaseAdmin
             .from("subscription_events")
             .update({
               status: "processed",
@@ -243,14 +277,31 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
             })
             .eq("provider", "mercadopago")
             .eq("event_id", eventId);
+          assertDatabaseOperation("EVENT_PROCESSED_UPDATE", { error: processedError });
         } catch (error) {
-          const message = (error as Error).message?.slice(0, 300) ?? "erro desconhecido";
-          console.error("[mercadopago-webhook] falha no processamento", { eventType, message });
-          await supabaseAdmin
+          const message =
+            error instanceof Error ? error.message.slice(0, 300) : "erro desconhecido";
+          console.error("[mercadopago-webhook] falha no processamento", {
+            eventId,
+            eventType,
+            resourceId,
+            message,
+            stack: error instanceof Error ? error.stack : undefined,
+          });
+          const { error: eventError } = await supabaseAdmin
             .from("subscription_events")
             .update({ status: "error", error_message: message })
             .eq("provider", "mercadopago")
             .eq("event_id", eventId);
+          if (eventError) {
+            console.error("[mercadopago-webhook] falha ao registrar erro do evento", {
+              eventId,
+              code: eventError.code,
+              message: eventError.message,
+            });
+          }
+          // Não confirmar ao Mercado Pago que uma atualização incompleta foi processada.
+          return new Response("processing failed", { status: 500 });
         }
 
         return new Response("ok");
