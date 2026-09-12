@@ -9,20 +9,43 @@ export async function resolveAsset(path?: string | null): Promise<string | null>
   if (!path) return null;
   if (path.startsWith("http")) return path;
   if (cache.has(path)) return cache.get(path)!;
-  const { data } = await supabase.storage.from(ASSET_BUCKET).createSignedUrl(path, 60 * 60);
+  const { data, error } = await supabase.storage.from(ASSET_BUCKET).createSignedUrl(path, 60 * 60);
+  if (error) {
+    console.error("[images] falha ao gerar URL assinada", {
+      bucket: ASSET_BUCKET,
+      path,
+      message: error.message,
+    });
+    return null;
+  }
   if (!data?.signedUrl) return null;
   cache.set(path, data.signedUrl);
   return data.signedUrl;
 }
 
 export async function uploadAsset(userId: string, file: File) {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Selecione um arquivo de imagem válido.");
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    throw new Error("A imagem deve ter no máximo 10 MB.");
+  }
   const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const path = `${userId}/${crypto.randomUUID()}.${ext}`;
   const { error } = await supabase.storage.from(ASSET_BUCKET).upload(path, file, {
     upsert: true,
     contentType: file.type,
   });
-  if (error) throw error;
+  if (error) {
+    console.error("[images] falha no upload", {
+      bucket: ASSET_BUCKET,
+      path,
+      type: file.type,
+      size: file.size,
+      message: error.message,
+    });
+    throw error;
+  }
   return path;
 }
 

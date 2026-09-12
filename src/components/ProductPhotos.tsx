@@ -34,8 +34,9 @@ export function ProductPhotos({
       for (const file of Array.from(files).slice(0, room)) {
         try {
           next.push(await uploadAsset(userId, file));
-        } catch {
-          toast.error(`Não foi possível enviar "${file.name}".`);
+        } catch (error) {
+          const message = error instanceof Error ? ` ${error.message}` : "";
+          toast.error(`Não foi possível enviar "${file.name}".${message}`);
         }
       }
       onChange(next);
