@@ -13,9 +13,11 @@ import { MAX_PRODUCT_IMAGES } from "@/lib/ai-import.config";
 export function ProductPhotos({
   paths,
   onChange,
+  onUploadingChange,
 }: {
   paths: string[];
   onChange: (next: string[]) => void;
+  onUploadingChange?: (uploading: boolean) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -28,6 +30,7 @@ export function ProductPhotos({
       return;
     }
     setUploading(true);
+    onUploadingChange?.(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
       const userId = userData.user?.id;
@@ -44,6 +47,7 @@ export function ProductPhotos({
       onChange(next);
     } finally {
       setUploading(false);
+      onUploadingChange?.(false);
     }
   }
 

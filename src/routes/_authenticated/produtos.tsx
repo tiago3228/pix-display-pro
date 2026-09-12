@@ -72,6 +72,7 @@ function Products() {
   const [variants, setVariants] = useState<VariantDraft[]>([]);
   const [optionName, setOptionName] = useState("Tamanho");
   const [photos, setPhotos] = useState<string[]>([]);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newCategory, setNewCategory] = useState("");
 
@@ -192,9 +193,17 @@ function Products() {
       return;
     }
 
-    await supabase.from("product_images").delete().eq("product_id", saved.id);
+    const { error: deleteImagesError } = await supabase
+      .from("product_images")
+      .delete()
+      .eq("product_id", saved.id);
+    if (deleteImagesError) {
+      setSaving(false);
+      toast.error(`Não foi possível atualizar as fotos: ${deleteImagesError.message}`);
+      return;
+    }
     if (photos.length) {
-      await supabase.from("product_images").insert(
+      const { error: insertImagesError } = await supabase.from("product_images").insert(
         photos.map((path, position) => ({
           product_id: saved.id,
           store_id: store.id,
@@ -202,6 +211,11 @@ function Products() {
           position,
         })),
       );
+      if (insertImagesError) {
+        setSaving(false);
+        toast.error(`Não foi possível salvar as fotos: ${insertImagesError.message}`);
+        return;
+      }
     }
 
     await supabase.from("product_variants").delete().eq("product_id", saved.id);
@@ -406,7 +420,11 @@ function Products() {
                 </SelectContent>
               </Select>
             </div>
-            <ProductPhotos paths={photos} onChange={setPhotos} />
+            <ProductPhotos
+              paths={photos}
+              onChange={setPhotos}
+              onUploadingChange={setUploadingPhoto}
+            />
 
             <div className="space-y-3 rounded-lg border border-border p-3">
               <div className="flex items-center justify-between">
@@ -495,8 +513,8 @@ function Products() {
           </div>
 
           <DialogFooter>
-            <Button className="w-full" disabled={saving} onClick={save}>
-              {saving ? "Salvando..." : "Salvar produto"}
+            <Button className="w-full" disabled={saving || uploadingPhoto} onClick={save}>
+              {saving ? "Salvando..." : uploadingPhoto ? "Aguardando foto..." : "Salvar produto"}
             </Button>
           </DialogFooter>
         </DialogContent>
