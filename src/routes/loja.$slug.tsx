@@ -90,6 +90,7 @@ export function StorePage() {
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [selected, setSelected] = useState<StorefrontProduct | null>(null);
+  const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
   const [gallery, setGallery] = useState<StorefrontProduct | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [step, setStep] = useState<Step>("cart");
@@ -143,16 +144,20 @@ export function StorePage() {
     return "ok" as const;
   }
 
-  function addSimple(product: StorefrontProduct) {
-    cart.add({
-      key: product.id,
-      productId: product.id,
-      name: product.name,
-      description: product.description,
-      unitPrice: product.price,
-      imageUrl: product.image,
-      maxQuantity: product.track_stock ? product.stock : null,
-    });
+  function addSimple(product: StorefrontProduct, quantity = 1) {
+    cart.add(
+      {
+        key: product.id,
+        productId: product.id,
+        name: product.name,
+        description: product.description,
+        unitPrice: product.price,
+        imageUrl: product.image,
+        maxQuantity: product.track_stock ? product.stock : null,
+      },
+      quantity,
+    );
+    setProductQuantities((current) => ({ ...current, [product.id]: 1 }));
     void track({ data: { storeId: store.id, type: "add_to_cart", productId: product.id } });
     toast.success(`${product.name} adicionado!`);
   }
@@ -382,17 +387,54 @@ export function StorePage() {
                     </div>
 
                     <div className="mt-auto pt-2">
-                      <Button
-                        size="sm"
-                        className="w-full"
-                        style={{ backgroundColor: store.primary_color }}
-                        disabled={status === "sold_out" || status === "unavailable"}
-                        onClick={() =>
-                          product.has_variants ? setSelected(product) : addSimple(product)
-                        }
-                      >
-                        {product.has_variants ? "Escolher opções" : "Adicionar"}
-                      </Button>
+                      {product.has_variants ? (
+                        <Button
+                          size="sm"
+                          className="w-full"
+                          style={{ backgroundColor: store.primary_color }}
+                          disabled={status === "sold_out" || status === "unavailable"}
+                          onClick={() => setSelected(product)}
+                        >
+                          Escolher opções
+                        </Button>
+                      ) : (
+                        <div className="flex gap-2">
+                          <label className="sr-only" htmlFor={`quantity-${product.id}`}>
+                            Quantidade de {product.name}
+                          </label>
+                          <select
+                            id={`quantity-${product.id}`}
+                            aria-label={`Quantidade de ${product.name}`}
+                            value={productQuantities[product.id] ?? 1}
+                            onChange={(event) =>
+                              setProductQuantities((current) => ({
+                                ...current,
+                                [product.id]: Number(event.target.value),
+                              }))
+                            }
+                            className="h-9 w-20 rounded-md border border-input bg-background px-2 text-sm font-medium"
+                            disabled={status === "sold_out" || status === "unavailable"}
+                          >
+                            {Array.from(
+                              { length: product.track_stock ? Math.min(stockOf(product), 20) : 20 },
+                              (_, index) => index + 1,
+                            ).map((quantity) => (
+                              <option key={quantity} value={quantity}>
+                                {quantity}x
+                              </option>
+                            ))}
+                          </select>
+                          <Button
+                            size="sm"
+                            className="min-w-0 flex-1"
+                            style={{ backgroundColor: store.primary_color }}
+                            disabled={status === "sold_out" || status === "unavailable"}
+                            onClick={() => addSimple(product, productQuantities[product.id] ?? 1)}
+                          >
+                            Adicionar
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </article>
@@ -772,6 +814,7 @@ function VariantDialog({
   onAdd: (item: Omit<CartItem, "quantity">) => void;
 }) {
   const [choices, setChoices] = useState<Record<string, string>>({});
+  const [quantity, setQuantity] = useState(1);
 
   const label = product
     ? product.options
@@ -789,6 +832,7 @@ function VariantDialog({
       onOpenChange={(open) => {
         if (!open) {
           setChoices({});
+          setQuantity(1);
           onClose();
         }
       }}
@@ -850,24 +894,62 @@ function VariantDialog({
                 )
               ) : null}
             </div>
+            {complete && !outOfStock ? (
+              <div className="flex items-center justify-between rounded-lg border p-3">
+                <span className="text-sm font-medium">Quantidade</span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="size-9"
+                    aria-label="Diminuir quantidade"
+                    disabled={quantity <= 1}
+                    onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+                  >
+                    <Minus className="size-4" />
+                  </Button>
+                  <span className="w-8 text-center font-semibold" aria-live="polite">
+                    {quantity}
+                  </span>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="outline"
+                    className="size-9"
+                    aria-label="Aumentar quantidade"
+                    disabled={!variant || quantity >= variant.stock}
+                    onClick={() =>
+                      setQuantity((current) => Math.min(variant?.stock ?? current, current + 1))
+                    }
+                  >
+                    <Plus className="size-4" />
+                  </Button>
+                </div>
+              </div>
+            ) : null}
             <Button
               className="h-12 w-full"
               style={{ backgroundColor: color }}
               disabled={!complete || outOfStock}
               onClick={() => {
                 if (!variant) return;
-                onAdd({
-                  key: `${product.id}:${variant.id}`,
-                  productId: product.id,
-                  variantId: variant.id,
-                  variantLabel: variant.label,
-                  name: product.name,
-                  description: product.description,
-                  unitPrice: variant.price ?? product.price,
-                  imageUrl: product.image,
-                  maxQuantity: variant.stock,
-                });
+                onAdd(
+                  {
+                    key: `${product.id}:${variant.id}`,
+                    productId: product.id,
+                    variantId: variant.id,
+                    variantLabel: variant.label,
+                    name: product.name,
+                    description: product.description,
+                    unitPrice: variant.price ?? product.price,
+                    imageUrl: product.image,
+                    maxQuantity: variant.stock,
+                  },
+                  quantity,
+                );
                 setChoices({});
+                setQuantity(1);
               }}
             >
               {complete ? "Adicionar ao carrinho" : "Escolha as opções"}
