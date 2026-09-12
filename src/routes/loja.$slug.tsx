@@ -96,6 +96,9 @@ export function StorePage() {
   const [installments, setInstallments] = useState(1);
   const [customer, setCustomer] = useState({ name: "", whatsapp: "", note: "" });
   const [sending, setSending] = useState(false);
+  const uploadReceipt = useServerFn(uploadOrderReceipt);
+  const [receipt, setReceipt] = useState<{ name: string; path: string } | null>(null);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
 
   const products = useMemo(() => {
     if (!data) return [];
