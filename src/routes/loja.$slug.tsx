@@ -707,11 +707,15 @@ export function StorePage() {
                 <>
                   <Button
                     className="h-12 bg-[var(--whatsapp)] text-[var(--whatsapp-foreground)] hover:bg-[var(--whatsapp)]/90"
-                    disabled={sending}
+                    disabled={sending || uploadingReceipt || (paid && !receipt)}
                     onClick={handleSend}
                   >
                     <MessageCircle className="mr-2 size-4" />
-                    {sending ? "Enviando..." : "Pedir pelo WhatsApp"}
+                    {sending
+                      ? "Enviando..."
+                      : paid && !receipt
+                        ? "Anexe o comprovante"
+                        : "Pedir pelo WhatsApp"}
                   </Button>
                   <Button variant="ghost" onClick={() => setStep("cart")}>
                     <ArrowLeft className="mr-2 size-4" /> Voltar ao carrinho
