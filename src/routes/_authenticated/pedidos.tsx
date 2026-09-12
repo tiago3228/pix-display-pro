@@ -154,6 +154,11 @@ function Orders() {
                   <MessageCircle className="mr-1.5 size-4" /> Falar no WhatsApp
                 </a>
               </Button>
+              {order.receipt_path ? (
+                <Button variant="outline" size="sm" onClick={() => openReceipt(order.id)}>
+                  <FileText className="mr-1.5 size-4" /> Ver comprovante
+                </Button>
+              ) : null}
             </div>
           </div>
         ))}
