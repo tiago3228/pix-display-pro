@@ -197,6 +197,12 @@ const orderSchema = z.object({
   paymentDeclared: z.boolean().default(false),
   paymentMethod: z.enum(["pix_avista", "parcelado"]).default("pix_avista"),
   installments: z.number().int().min(1).max(12).default(1),
+  receiptPath: z
+    .string()
+    .max(300)
+    .regex(/^receipts\/[0-9a-f-]{36}\/[0-9a-zA-Z._-]+$/)
+    .nullable()
+    .optional(),
   items: z
     .array(
       z.object({
