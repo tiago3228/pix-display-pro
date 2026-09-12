@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera, Eye, EyeOff, ImageIcon, Pencil, Plus, Star, Trash2 } from "lucide-react";
@@ -6,8 +7,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyStore } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
-import { resolveAsset } from "@/lib/images";
 import { ProductPhotos } from "@/components/ProductPhotos";
+import { getSignedAssetUrl } from "@/lib/images.functions";
 import { FREE_PLAN_PRODUCT_LIMIT, brl } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -191,7 +192,6 @@ function Products() {
       return;
     }
 
-
     await supabase.from("product_images").delete().eq("product_id", saved.id);
     if (photos.length) {
       await supabase.from("product_images").insert(
@@ -359,9 +359,7 @@ function Products() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <Label>Descrição</Label>
-                <span className="text-xs text-muted-foreground">
-                  {form.description.length}/300
-                </span>
+                <span className="text-xs text-muted-foreground">{form.description.length}/300</span>
               </div>
               <Textarea
                 rows={4}
@@ -536,9 +534,20 @@ function ProductCard({
   onToggle: (field: "is_hidden" | "is_featured") => void;
 }) {
   const [image, setImage] = useState<string | null>(null);
+  const signAsset = useServerFn(getSignedAssetUrl);
   useEffect(() => {
-    resolveAsset(product.image_url).then(setImage);
-  }, [product.image_url]);
+    if (!product.image_url) {
+      setImage(null);
+      return;
+    }
+    if (product.image_url.startsWith("http")) {
+      setImage(product.image_url);
+      return;
+    }
+    void signAsset({ data: { path: product.image_url } })
+      .then((result) => setImage(result.url))
+      .catch(() => setImage(null));
+  }, [product.image_url, signAsset]);
 
   return (
     <div className="surface flex items-center gap-3 p-3">

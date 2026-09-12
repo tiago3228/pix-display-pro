@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { ImagePlus, Loader2, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { resolveAsset, uploadAsset } from "@/lib/images";
+import { uploadAsset } from "@/lib/images";
+import { getSignedAssetUrl } from "@/lib/images.functions";
 import { MAX_PRODUCT_IMAGES } from "@/lib/ai-import.config";
 
 /** Galeria de fotos do produto — usada no cadastro manual e na revisão da IA. */
@@ -107,9 +109,16 @@ function Thumb({
   onRemove: () => void;
 }) {
   const [url, setUrl] = useState<string | null>(null);
+  const signAsset = useServerFn(getSignedAssetUrl);
   useEffect(() => {
-    resolveAsset(path).then(setUrl);
-  }, [path]);
+    if (path.startsWith("http")) {
+      setUrl(path);
+      return;
+    }
+    void signAsset({ data: { path } })
+      .then((result) => setUrl(result.url))
+      .catch(() => setUrl(null));
+  }, [path, signAsset]);
 
   return (
     <div className="relative size-20 overflow-hidden rounded-lg bg-muted">

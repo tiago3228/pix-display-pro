@@ -112,9 +112,20 @@ export const getStorefront = createServerFn({ method: "GET" })
     ].filter((p): p is string => Boolean(p) && !p!.startsWith("http"));
     const signed = new Map<string, string>();
     if (paths.length) {
-      const { data: urls } = await supabase.storage
+      // A vitrine é pública e não possui sessão autenticada. Use o cliente
+      // administrativo somente para assinar os caminhos já retornados pelas
+      // consultas públicas; nunca exponha a chave de serviço ao navegador.
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: urls, error: signingError } = await supabaseAdmin.storage
         .from("store-assets")
         .createSignedUrls(paths, 60 * 60);
+      if (signingError) {
+        console.error("[storefront] falha ao assinar imagens", {
+          bucket: "store-assets",
+          count: paths.length,
+          message: signingError.message,
+        });
+      }
       for (const entry of urls ?? []) {
         if (entry.path && entry.signedUrl) signed.set(entry.path, entry.signedUrl);
       }
@@ -302,7 +313,6 @@ export const submitOrder = createServerFn({ method: "POST" })
     }
 
     const total = Number(items.reduce((sum, i) => sum + i.subtotal, 0).toFixed(2));
-
 
     let customerId: string | null = null;
     if (data.customerWhatsapp) {
