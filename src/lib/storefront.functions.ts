@@ -353,6 +353,7 @@ export const submitOrder = createServerFn({ method: "POST" })
         note: data.note,
         total,
         payment_declared: data.paymentDeclared,
+        receipt_path: data.receiptPath ?? null,
         payment_method: paymentMethod,
         installments_count: installmentCount,
         status: data.paymentDeclared ? "pagamento_informado" : "novo",
