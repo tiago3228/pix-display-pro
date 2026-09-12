@@ -623,6 +623,37 @@ export function StorePage() {
                     O pagamento é feito diretamente para o vendedor. O Vitrini não recebe nem guarda
                     esse valor.
                   </p>
+
+                  <div className="mt-4 border-t pt-3">
+                    <p className="text-sm font-semibold">Comprovante de pagamento</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {paid
+                        ? "Anexe o comprovante (PDF, JPG, PNG ou WEBP) para enviar o pedido."
+                        : "Se já pagou, marque a opção acima e anexe o comprovante."}
+                    </p>
+                    <Label htmlFor="receipt" className="sr-only">
+                      Anexar comprovante
+                    </Label>
+                    <Input
+                      id="receipt"
+                      type="file"
+                      accept="application/pdf,image/jpeg,image/png,image/webp"
+                      disabled={uploadingReceipt}
+                      className="mt-2 h-11 py-2.5 file:mr-3 file:text-xs"
+                      onChange={(e) => {
+                        void handleReceiptChange(e.target.files?.[0] ?? null);
+                      }}
+                    />
+                    {uploadingReceipt ? (
+                      <p className="mt-2 text-xs text-muted-foreground">Enviando comprovante...</p>
+                    ) : null}
+                    {receipt ? (
+                      <p className="mt-2 flex items-center gap-2 text-xs font-medium text-primary">
+                        <Check className="size-4 shrink-0" />
+                        <span className="truncate">{receipt.name}</span>
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
 
                 <div className="space-y-3">
