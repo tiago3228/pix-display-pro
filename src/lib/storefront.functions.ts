@@ -112,11 +112,9 @@ export const getStorefront = createServerFn({ method: "GET" })
     ].filter((p): p is string => Boolean(p) && !p!.startsWith("http"));
     const signed = new Map<string, string>();
     if (paths.length) {
-      // A vitrine é pública e não possui sessão autenticada. Use o cliente
-      // administrativo somente para assinar os caminhos já retornados pelas
-      // consultas públicas; nunca exponha a chave de serviço ao navegador.
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-      const { data: urls, error: signingError } = await supabaseAdmin.storage
+      // A vitrine não deve depender de uma secret administrativa. O bucket
+      // possui política de leitura para anon, permitindo URLs assinadas aqui.
+      const { data: urls, error: signingError } = await supabase.storage
         .from("store-assets")
         .createSignedUrls(paths, 60 * 60);
       if (signingError) {
