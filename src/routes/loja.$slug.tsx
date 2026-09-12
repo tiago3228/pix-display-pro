@@ -235,6 +235,7 @@ export function StorePage() {
     setCartOpen(false);
     setStep("cart");
     setPaid(false);
+    setReceipt(null);
     setInstallments(1);
     toast.success("Pedido enviado para o WhatsApp da loja!");
   }
