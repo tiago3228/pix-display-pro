@@ -215,6 +215,7 @@ export function StorePage() {
           paymentDeclared: count > 1 ? false : paid,
           paymentMethod: count > 1 ? "parcelado" : "pix_avista",
           installments: count,
+          receiptPath: receipt?.path ?? null,
           items: cart.items.map((i) => ({
             productId: i.productId,
             variantId: i.variantId ?? null,
