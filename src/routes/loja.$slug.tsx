@@ -18,6 +18,7 @@ import {
   getStorefront,
   submitOrder,
   trackStoreEvent,
+  uploadOrderReceipt,
   type StorefrontProduct,
 } from "@/lib/storefront.functions";
 import { useCart, buildOrderMessage, type CartItem } from "@/lib/cart";
