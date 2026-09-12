@@ -276,14 +276,16 @@ function Products() {
       title="Produtos"
       description={`${products?.length ?? 0} produto(s) na sua vitrine`}
       action={
-        <div className="flex gap-2">
+        <div className="flex shrink-0 gap-1.5">
           <Button size="sm" variant="outline" asChild>
-            <Link to="/produtos-ia">
-              <Camera className="mr-1.5 size-4" /> Cadastrar com IA
+            <Link to="/produtos-ia" aria-label="Cadastrar com IA">
+              <Camera className="size-4 sm:mr-1.5" />
+              <span className="hidden sm:inline">Cadastrar com IA</span>
             </Link>
           </Button>
-          <Button size="sm" onClick={openNew}>
-            <Plus className="mr-1.5 size-4" /> Manual
+          <Button size="sm" onClick={openNew} aria-label="Cadastrar produto manualmente">
+            <Plus className="size-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Manual</span>
           </Button>
         </div>
       }
