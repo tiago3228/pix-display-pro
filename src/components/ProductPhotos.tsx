@@ -2,11 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { ImagePlus, Loader2, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { uploadAsset } from "@/lib/images";
-import { getSignedAssetUrl } from "@/lib/images.functions";
+import { getSignedAssetUrl, uploadAssetServer } from "@/lib/images.functions";
 import { MAX_PRODUCT_IMAGES } from "@/lib/ai-import.config";
 
 /** Galeria de fotos do produto — usada no cadastro manual e na revisão da IA. */
@@ -21,6 +19,7 @@ export function ProductPhotos({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const uploadServer = useServerFn(uploadAssetServer);
 
   async function addFiles(files: FileList | null) {
     if (!files?.length) return;
@@ -32,13 +31,26 @@ export function ProductPhotos({
     setUploading(true);
     onUploadingChange?.(true);
     try {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-      if (!userId) throw new Error("sem sessão");
       const next = [...paths];
       for (const file of Array.from(files).slice(0, room)) {
         try {
-          next.push(await uploadAsset(userId, file));
+          if (!file.type.startsWith("image/")) {
+            throw new Error("Selecione um arquivo de imagem válido.");
+          }
+          if (file.size > 10 * 1024 * 1024) {
+            throw new Error("A imagem deve ter no máximo 10 MB.");
+          }
+          const bytes = new Uint8Array(await file.arrayBuffer());
+          let binary = "";
+          const chunkSize = 0x8000;
+          for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+            binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+          }
+          const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+          const result = await uploadServer({
+            data: { contentType: file.type, extension, base64: btoa(binary) },
+          });
+          next.push(result.path);
         } catch (error) {
           const message = error instanceof Error ? ` ${error.message}` : "";
           toast.error(`Não foi possível enviar "${file.name}".${message}`);
