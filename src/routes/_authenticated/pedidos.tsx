@@ -46,6 +46,19 @@ function Orders() {
     },
   });
 
+  async function openReceipt(orderId: string) {
+    try {
+      const { url } = await receiptUrl({ data: { orderId } });
+      if (!url) {
+        toast.error("Comprovante indisponível.");
+        return;
+      }
+      window.open(url, "_blank", "noopener");
+    } catch {
+      toast.error("Não foi possível abrir o comprovante.");
+    }
+  }
+
   async function updateStatus(id: string, next: string) {
     const { error } = await supabase
       .from("orders")
