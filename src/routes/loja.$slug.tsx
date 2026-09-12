@@ -157,6 +157,41 @@ export function StorePage() {
     toast.success(`${product.name} adicionado!`);
   }
 
+  async function handleReceiptChange(file: File | null) {
+    if (!file) return;
+    const allowed = ["application/pdf", "image/jpeg", "image/png", "image/webp"] as const;
+    type Allowed = (typeof allowed)[number];
+    if (!allowed.includes(file.type as Allowed)) {
+      toast.error("Envie o comprovante em PDF, JPG, PNG ou WEBP.");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      toast.error("O comprovante deve ter no máximo 8 MB.");
+      return;
+    }
+    setUploadingReceipt(true);
+    try {
+      const buffer = await file.arrayBuffer();
+      let binary = "";
+      const view = new Uint8Array(buffer);
+      for (let i = 0; i < view.length; i += 8192) {
+        binary += String.fromCharCode(...view.subarray(i, i + 8192));
+      }
+      const result = await uploadReceipt({
+        data: {
+          storeId: store.id,
+          contentType: file.type as Allowed,
+          base64: btoa(binary),
+        },
+      });
+      setReceipt({ name: file.name, path: result.path });
+      toast.success("Comprovante anexado!");
+    } catch {
+      toast.error("Não foi possível anexar o comprovante. Tente novamente.");
+    }
+    setUploadingReceipt(false);
+  }
+
   async function handleSend() {
     if (!cart.items.length) return;
     setSending(true);
