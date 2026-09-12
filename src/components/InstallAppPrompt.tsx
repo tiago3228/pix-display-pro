@@ -97,8 +97,7 @@ export function InstallAppPrompt() {
           <div className="min-w-0">
             <p className="text-sm font-semibold">Instalar o Vitrini</p>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Instale o Vitrini no seu aparelho para abrir sua loja mais rápido, direto da tela
-              inicial.
+              Instale o Vitrini no seu dispositivo para acessar sua loja mais rapidamente.
             </p>
           </div>
           <button

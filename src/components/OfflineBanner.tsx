@@ -25,7 +25,8 @@ export function OfflineBanner() {
       style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.5rem)" }}
     >
       <WifiOff className="size-4 shrink-0" />
-      Você está offline. Suas alterações só serão salvas quando a conexão voltar.
+      Você está offline. Operações que dependem do servidor ficarão indisponíveis até a conexão
+      voltar.
     </div>
   );
 }
