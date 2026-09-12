@@ -22,8 +22,7 @@ export const getSignedAssetUrl = createServerFn({ method: "POST" })
     if (firstSegment !== context.userId) {
       throw new Error("Você não tem acesso a este arquivo.");
     }
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: signed, error } = await supabaseAdmin.storage
+    const { data: signed, error } = await context.supabase.storage
       .from("store-assets")
       .createSignedUrl(data.path, 60 * 60);
     if (error || !signed?.signedUrl) {
@@ -46,8 +45,7 @@ export const uploadAssetServer = createServerFn({ method: "POST" })
       throw new Error("A imagem deve ter no máximo 10 MB.");
     }
     const path = `${context.userId}/${crypto.randomUUID()}.${data.extension}`;
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { error } = await supabaseAdmin.storage
+    const { error } = await context.supabase.storage
       .from("store-assets")
       .upload(path, bytes, { contentType: data.contentType, upsert: false });
     if (error) {
