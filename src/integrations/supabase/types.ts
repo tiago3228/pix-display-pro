@@ -544,6 +544,7 @@ export type Database = {
           number: number
           payment_declared: boolean
           payment_method: string
+          receipt_path: string | null
           status: string
           store_id: string
           total: number
@@ -560,6 +561,7 @@ export type Database = {
           number?: number
           payment_declared?: boolean
           payment_method?: string
+          receipt_path?: string | null
           status?: string
           store_id: string
           total?: number
@@ -576,6 +578,7 @@ export type Database = {
           number?: number
           payment_declared?: boolean
           payment_method?: string
+          receipt_path?: string | null
           status?: string
           store_id?: string
           total?: number

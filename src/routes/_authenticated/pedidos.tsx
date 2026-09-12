@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MessageCircle, Search } from "lucide-react";
+import { FileText, MessageCircle, Search } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { getOrderReceiptUrl } from "@/lib/storefront.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyStore } from "@/hooks/useAuth";
@@ -27,6 +29,7 @@ function Orders() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("todos");
+  const receiptUrl = useServerFn(getOrderReceiptUrl);
 
   const { data: orders } = useQuery({
     queryKey: ["orders", store?.id],
@@ -35,7 +38,7 @@ function Orders() {
       const { data, error } = await supabase
         .from("orders")
         .select(
-          "id, number, customer_name, customer_whatsapp, total, status, note, payment_declared, created_at, order_items(id, product_name, variant_label, quantity, unit_price, subtotal)",
+          "id, number, customer_name, customer_whatsapp, total, status, note, payment_declared, receipt_path, created_at, order_items(id, product_name, variant_label, quantity, unit_price, subtotal)",
         )
         .eq("store_id", store!.id)
         .order("created_at", { ascending: false });
@@ -43,6 +46,19 @@ function Orders() {
       return data;
     },
   });
+
+  async function openReceipt(orderId: string) {
+    try {
+      const { url } = await receiptUrl({ data: { orderId } });
+      if (!url) {
+        toast.error("Comprovante indisponível.");
+        return;
+      }
+      window.open(url, "_blank", "noopener");
+    } catch {
+      toast.error("Não foi possível abrir o comprovante.");
+    }
+  }
 
   async function updateStatus(id: string, next: string) {
     const { error } = await supabase
@@ -154,6 +170,11 @@ function Orders() {
                   <MessageCircle className="mr-1.5 size-4" /> Falar no WhatsApp
                 </a>
               </Button>
+              {order.receipt_path ? (
+                <Button variant="outline" size="sm" onClick={() => openReceipt(order.id)}>
+                  <FileText className="mr-1.5 size-4" /> Ver comprovante
+                </Button>
+              ) : null}
             </div>
           </div>
         ))}
