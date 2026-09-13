@@ -813,7 +813,7 @@ function VariantDialog({
   product: StorefrontProduct | null;
   color: string;
   onClose: () => void;
-  onAdd: (item: Omit<CartItem, "quantity">) => void;
+  onAdd: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
 }) {
   const [choices, setChoices] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);

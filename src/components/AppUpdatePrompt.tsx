@@ -59,6 +59,7 @@ export function AppUpdatePrompt() {
   if (!visible || !registration) return null;
 
   function updateNow() {
+    if (!registration) return;
     registration.waiting?.postMessage({ type: "SKIP_WAITING" });
     setVisible(false);
   }
