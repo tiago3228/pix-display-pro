@@ -6,10 +6,12 @@ import {
   ArrowLeft,
   Check,
   Copy,
+  ExternalLink,
   Instagram,
   Minus,
   MessageCircle,
   Plus,
+  Share2,
   ShoppingBag,
   Store as StoreIcon,
   Trash2,
@@ -442,7 +444,43 @@ export function StorePage() {
             })}
           </div>
         )}
-        <p className="mt-8 text-center text-xs text-muted-foreground">
+        <div className="surface mx-auto mt-8 max-w-md p-4 text-center">
+          <p className="text-sm font-medium">Quer ter uma lojinha online como esta?</p>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <Button asChild variant="outline" className="h-11 flex-1 gap-2">
+              <a
+                href="https://vitrini-br.lovable.app"
+                target="_blank"
+                rel="noopener"
+                aria-label="Conheça o Vitrini"
+              >
+                <ExternalLink className="size-4" /> Conheça o Vitrini
+              </a>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-11 flex-1 gap-2"
+              onClick={async () => {
+                const url = "https://vitrini-br.lovable.app";
+                const text = "Conhece alguém que tem lojinha ou vende algo e ainda não está automatizada? Indique o Vitrini:";
+                try {
+                  if (navigator.share) {
+                    await navigator.share({ title: "Vitrini", text, url });
+                  } else {
+                    await navigator.clipboard.writeText(`${text} ${url}`);
+                    toast.success("Link copiado! Cole no WhatsApp ou rede social.");
+                  }
+                } catch {
+                  // Usuário cancelou ou share falhou silenciosamente.
+                }
+              }}
+            >
+              <Share2 className="size-4" /> Compartilhar
+            </Button>
+          </div>
+        </div>
+
+        <p className="mt-6 text-center text-xs text-muted-foreground">
           Pagamento realizado diretamente para o vendedor via Pix.
         </p>
       </main>
@@ -811,7 +849,7 @@ function VariantDialog({
   product: StorefrontProduct | null;
   color: string;
   onClose: () => void;
-  onAdd: (item: Omit<CartItem, "quantity">) => void;
+  onAdd: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
 }) {
   const [choices, setChoices] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
