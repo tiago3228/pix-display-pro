@@ -444,22 +444,23 @@ export function StorePage() {
             })}
           </div>
         )}
-        <div className="surface mx-auto mt-8 max-w-md p-4 text-center">
-          <p className="text-sm font-medium">Quer ter uma lojinha online como esta?</p>
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-            <Button asChild variant="outline" className="h-11 flex-1 gap-2">
+        <div className="mx-auto mt-8 flex max-w-sm flex-col items-center gap-2 rounded-2xl border border-border bg-card/60 p-3 text-center shadow-sm">
+          <p className="text-xs font-medium text-muted-foreground">Quer ter uma lojinha online como esta?</p>
+          <div className="flex w-full gap-2">
+            <Button asChild variant="secondary" size="sm" className="h-8 flex-1 gap-1.5 rounded-full text-xs">
               <a
                 href="https://vitrini-br.lovable.app"
                 target="_blank"
                 rel="noopener"
                 aria-label="Conheça o Vitrini"
               >
-                <ExternalLink className="size-4" /> Conheça o Vitrini
+                <ExternalLink className="size-3.5" /> Conheça o Vitrini
               </a>
             </Button>
             <Button
               variant="outline"
-              className="h-11 flex-1 gap-2"
+              size="sm"
+              className="h-8 flex-1 gap-1.5 rounded-full text-xs"
               onClick={async () => {
                 const url = "https://vitrini-br.lovable.app";
                 const text = "Conhece alguém que tem lojinha ou vende algo e ainda não está automatizada? Indique o Vitrini:";
@@ -475,7 +476,7 @@ export function StorePage() {
                 }
               }}
             >
-              <Share2 className="size-4" /> Compartilhar
+              <Share2 className="size-3.5" /> Compartilhar
             </Button>
           </div>
         </div>
