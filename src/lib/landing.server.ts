@@ -10,8 +10,9 @@ export type LandingBanner = {
 export const DEFAULT_BANNER: LandingBanner = {
   badge: "Feito para quem vende pelo WhatsApp",
   title: "Venda seus produtos de um jeito mais simples.",
-  subtitle: "Crie sua vitrine online, compartilhe seu QR Code, receba pedidos pelo WhatsApp e facilite o pagamento via Pix.",
-  ctaLabel: "Criar minha loja grátis",
+  subtitle:
+    "Comece na Básica por R$ 9,90/mês e ganhe 30 dias de PRO. Depois, escolha o PRO por R$ 19,90/mês para liberar todos os recursos.",
+  ctaLabel: "Começar na Básica",
   ctaHref: "/signup",
   image: null,
 };
