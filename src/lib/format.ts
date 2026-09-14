@@ -59,11 +59,16 @@ export const ORDER_STATUS = [
 export const statusLabel = (value: string) =>
   ORDER_STATUS.find((s) => s.value === value)?.label ?? value;
 
-export const FREE_PLAN_PRODUCT_LIMIT = 5;
+export const BASIC_PLAN_PRODUCT_LIMIT = 5;
+/** @deprecated use BASIC_PLAN_PRODUCT_LIMIT */
+export const FREE_PLAN_PRODUCT_LIMIT = BASIC_PLAN_PRODUCT_LIMIT;
 
 // ------------------------------------------------------------- Parcelamento
 
-export const PRO_PLAN_PRICE = 9.9;
+export const PRO_PLAN_PRICE = 19.9;
+export const BASIC_PLAN_PRICE = 9.9;
+/** Dias de PRO grátis ao assinar o plano Básica. */
+export const PRO_TRIAL_DAYS = 30;
 
 export const formatDay = (iso: string) =>
   new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "UTC" }).format(

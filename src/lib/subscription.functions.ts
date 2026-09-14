@@ -3,10 +3,11 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export type SubscriptionView = {
-  plan: "free" | "pro";
+  plan: "basica" | "pro";
   hasProAccess: boolean;
-  proSource: "mercadopago" | "pix_manual" | null;
+  proSource: "mercadopago" | "pix_manual" | "trial" | null;
   pixActiveUntil: string | null;
+  trialEndsAt: string | null;
   environment: "test" | "live";
   subscription: {
     id: string;
@@ -45,10 +46,11 @@ export const getMySubscription = createServerFn({ method: "GET" })
       .maybeSingle();
 
     const empty: SubscriptionView = {
-      plan: "free",
+      plan: "basica",
       hasProAccess: false,
       proSource: null,
       pixActiveUntil: null,
+      trialEndsAt: null,
       environment: mpEnvironment(),
       subscription: null,
       payments: [],
@@ -98,14 +100,23 @@ export const getMySubscription = createServerFn({ method: "GET" })
     const mpPro = sub ? statusGrantsPro(sub.status, sub.grace_until) : false;
 
     const { activePixGrant } = await import("./pro-pix.server");
+    const { activeProTrial } = await import("./subscription.server");
     const pixGrant = await activePixGrant(store.id);
-    const hasProAccess = mpPro || Boolean(pixGrant);
+    const trialEndsAt = await activeProTrial(store.id);
+    const hasProAccess = mpPro || Boolean(pixGrant) || Boolean(trialEndsAt);
 
     return {
-      plan: hasProAccess ? "pro" : "free",
+      plan: hasProAccess ? "pro" : "basica",
       hasProAccess,
-      proSource: mpPro ? "mercadopago" : pixGrant ? "pix_manual" : null,
+      proSource: mpPro
+        ? "mercadopago"
+        : pixGrant
+          ? "pix_manual"
+          : trialEndsAt
+            ? "trial"
+            : null,
       pixActiveUntil: pixGrant?.periodEnd ?? null,
+      trialEndsAt,
       environment: mpEnvironment(),
       subscription: sub
         ? {

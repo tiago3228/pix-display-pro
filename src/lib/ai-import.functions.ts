@@ -125,7 +125,7 @@ export const analyseCatalogPages = createServerFn({ method: "POST" })
       .insert({
         store_id: store.id,
         user_id: ctx.userId,
-        plan: status.isPro ? "pro" : "free",
+        plan: status.isPro ? "pro" : "basica",
         pages: 0,
         status: "processing",
       })

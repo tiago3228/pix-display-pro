@@ -792,6 +792,7 @@ export type Database = {
           period_end: string | null
           period_start: string | null
           pix_key_snapshot: string | null
+          plan: string
           rejected_at: string | null
           rejected_by: string | null
           rejection_reason: string | null
@@ -811,6 +812,7 @@ export type Database = {
           period_end?: string | null
           period_start?: string | null
           pix_key_snapshot?: string | null
+          plan?: string
           rejected_at?: string | null
           rejected_by?: string | null
           rejection_reason?: string | null
@@ -830,6 +832,7 @@ export type Database = {
           period_end?: string | null
           period_start?: string | null
           pix_key_snapshot?: string | null
+          plan?: string
           rejected_at?: string | null
           rejected_by?: string | null
           rejection_reason?: string | null
@@ -1152,6 +1155,8 @@ export type Database = {
           pix_key_type: string
           plan: string
           primary_color: string
+          pro_trial_ends_at: string | null
+          pro_trial_used: boolean
           seller_name: string
           slug: string
           updated_at: string
@@ -1178,6 +1183,8 @@ export type Database = {
           pix_key_type?: string
           plan?: string
           primary_color?: string
+          pro_trial_ends_at?: string | null
+          pro_trial_used?: boolean
           seller_name?: string
           slug: string
           updated_at?: string
@@ -1204,6 +1211,8 @@ export type Database = {
           pix_key_type?: string
           plan?: string
           primary_color?: string
+          pro_trial_ends_at?: string | null
+          pro_trial_used?: boolean
           seller_name?: string
           slug?: string
           updated_at?: string

@@ -1,6 +1,12 @@
 import { createPublicClient } from "./supabase-public.server";
 
-export const DEFAULT_PRO_PRICE = 9.9;
+export const DEFAULT_PRO_PRICE = 19.9;
+export const DEFAULT_BASIC_PRICE = 9.9;
+
+export type PlanKey = "basica" | "pro";
+
+export const defaultPlanPrice = (plan: PlanKey) =>
+  plan === "pro" ? DEFAULT_PRO_PRICE : DEFAULT_BASIC_PRICE;
 
 export type ProPricing = {
   basePrice: number;
@@ -12,8 +18,12 @@ export type ProPricing = {
   promoEndsAt: string | null;
 };
 
-export function resolvePricing(row: Record<string, unknown> | null): ProPricing {
-  const basePrice = Number(row?.["base_price"] ?? DEFAULT_PRO_PRICE) || DEFAULT_PRO_PRICE;
+export function resolvePricing(
+  row: Record<string, unknown> | null,
+  plan: PlanKey = "pro",
+): ProPricing {
+  const fallback = defaultPlanPrice(plan);
+  const basePrice = Number(row?.["base_price"] ?? fallback) || fallback;
   const rawPromo = row?.["promo_price"];
   const promoPrice = rawPromo === null || rawPromo === undefined ? null : Number(rawPromo);
   const startsAt = (row?.["promo_starts_at"] as string | null) ?? null;
@@ -32,8 +42,16 @@ export function resolvePricing(row: Record<string, unknown> | null): ProPricing 
   };
 }
 
-export async function getCurrentProPricing() {
+export async function getCurrentPlanPricing(plan: PlanKey) {
   const supabase = createPublicClient();
-  const { data } = await supabase.from("plan_pricing").select("base_price, promo_price, promo_label, promo_starts_at, promo_ends_at, promo_active").eq("plan", "pro").maybeSingle();
-  return resolvePricing((data as Record<string, unknown> | null) ?? null);
+  const { data } = await supabase
+    .from("plan_pricing")
+    .select("base_price, promo_price, promo_label, promo_starts_at, promo_ends_at, promo_active")
+    .eq("plan", plan)
+    .maybeSingle();
+  return resolvePricing((data as Record<string, unknown> | null) ?? null, plan);
+}
+
+export async function getCurrentProPricing() {
+  return getCurrentPlanPricing("pro");
 }

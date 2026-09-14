@@ -77,8 +77,8 @@ export async function ensureProPlanId(backUrl: string): Promise<string> {
 /** Mantém `stores.plan` coerente com o status real da assinatura (e com o Pix manual aprovado). */
 export async function applyPlanToStore(storeId: string, status: string, graceUntil: string | null) {
   const db = await admin();
-  let plan = statusGrantsPro(status, graceUntil) ? "pro" : "free";
-  if (plan === "free") {
+  let plan = statusGrantsPro(status, graceUntil) ? "pro" : "basica";
+  if (plan === "basica") {
     const { activePixGrant } = await import("./pro-pix.server");
     if (await activePixGrant(storeId)) plan = "pro";
   }
@@ -238,8 +238,48 @@ export async function enforceGracePeriod(subscription: {
  * PRO é válido se houver assinatura Mercado Pago viva (inclusive tolerância)
  * OU um pagamento Pix manual aprovado dentro do período de 30 dias.
  */
+/** Teste grátis de PRO ainda vigente (concedido ao assinar o plano Básica). */
+export async function activeProTrial(storeId: string): Promise<string | null> {
+  const db = await admin();
+  const { data } = await db
+    .from("stores")
+    .select("pro_trial_ends_at")
+    .eq("id", storeId)
+    .maybeSingle();
+  const ends = data?.pro_trial_ends_at ?? null;
+  if (!ends || new Date(ends).getTime() <= Date.now()) return null;
+  return ends;
+}
+
+/** Liga o teste de 30 dias de PRO uma única vez por loja. */
+export async function startProTrial(storeId: string, days = 30): Promise<string | null> {
+  const db = await admin();
+  const { data: store } = await db
+    .from("stores")
+    .select("pro_trial_used, pro_trial_ends_at")
+    .eq("id", storeId)
+    .maybeSingle();
+  if (!store || store.pro_trial_used) return store?.pro_trial_ends_at ?? null;
+
+  const endsAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+  await db
+    .from("stores")
+    .update({ pro_trial_ends_at: endsAt, pro_trial_used: true })
+    .eq("id", storeId);
+  await logAudit({
+    storeId,
+    action: "pro_trial_started",
+    resourceType: "store",
+    resourceId: storeId,
+    metadata: { ends_at: endsAt, days },
+  });
+  return endsAt;
+}
+
 export async function storeHasPro(storeId: string): Promise<boolean> {
   const db = await admin();
+
+  if (await activeProTrial(storeId)) return true;
 
   const { activePixGrant } = await import("./pro-pix.server");
   if (await activePixGrant(storeId)) return true;
@@ -260,14 +300,14 @@ export async function storeHasPro(storeId: string): Promise<boolean> {
       grace_until: sub.grace_until,
     });
     if (statusGrantsPro(status, sub.grace_until)) return true;
-    await db.from("stores").update({ plan: "free" }).eq("id", storeId);
+    await db.from("stores").update({ plan: "basica" }).eq("id", storeId);
     return false;
   }
 
   const { data: store } = await db.from("stores").select("plan").eq("id", storeId).maybeSingle();
   if (store?.plan === "pro") {
     // Sem assinatura e sem Pix válido: o plano gravado está obsoleto.
-    await db.from("stores").update({ plan: "free" }).eq("id", storeId);
+    await db.from("stores").update({ plan: "basica" }).eq("id", storeId);
   }
   return false;
 }

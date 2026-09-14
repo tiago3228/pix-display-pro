@@ -29,6 +29,8 @@ export async function countPagesUsed(storeId: string, period = currentPeriod()) 
 /** A loja tem PRO ativo (plano da assinatura ou liberação via Pix). */
 export async function storeIsPro(storeId: string, plan: string | null) {
   if (plan === "pro") return true;
+  const { activeProTrial } = await import("./subscription.server");
+  if (await activeProTrial(storeId)) return true;
   const { activePixGrant } = await import("./pro-pix.server");
   return Boolean(await activePixGrant(storeId));
 }
