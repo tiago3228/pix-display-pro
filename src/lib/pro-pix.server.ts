@@ -1,6 +1,6 @@
 /** Regras do PRO via Pix com aprovação manual — server-only. */
 
-export const PRO_PIX_AMOUNT = 9.9;
+export const PRO_PIX_AMOUNT = 19.9;
 export const PRO_PIX_PERIOD_DAYS = 30;
 
 async function admin() {
