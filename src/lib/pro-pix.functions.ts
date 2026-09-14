@@ -2,8 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+export type PlanKey = "basica" | "pro";
+
 export type ProPixRequestView = {
   id: string;
+  plan: PlanKey;
   storeId: string;
   storeName: string | null;
   userId: string;
@@ -26,15 +29,19 @@ export type ProPixCheckout = {
   pixKeyType: string | null;
 };
 
-async function currentAmount() {
-  const { getCurrentProPricing } = await import("./pricing.server");
-  return (await getCurrentProPricing()).price;
+async function currentAmount(plan: PlanKey = "pro") {
+  const { getCurrentPlanPricing } = await import("./pricing.server");
+  return (await getCurrentPlanPricing(plan)).price;
 }
+
+const planInput = (data: unknown) =>
+  z.object({ plan: z.enum(["basica", "pro"]).default("pro") }).parse(data ?? {});
 const PERIOD_DAYS = 30;
 
 function mapRequest(row: Record<string, unknown>, storeName?: string | null): ProPixRequestView {
   return {
     id: row["id"] as string,
+    plan: ((row["plan"] as string) === "basica" ? "basica" : "pro") as PlanKey,
     storeId: row["store_id"] as string,
     storeName: storeName ?? null,
     userId: row["user_id"] as string,
@@ -62,14 +69,16 @@ async function requireAdmin(context: { supabase: { rpc: Function }; userId: stri
 /** Dados para exibir o QR Code / Copia e Cola do PRO via Pix. */
 export const getProPixCheckout = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<ProPixCheckout> => {
+  .inputValidator(planInput)
+  .handler(async ({ data }): Promise<ProPixCheckout> => {
+    const plan = data.plan;
     const { getPixSettings } = await import("./pro-pix.server");
     const { buildPixPayload } = await import("./pix-brcode");
     const settings = await getPixSettings();
     if (!settings || !settings.is_active) {
       return {
         configured: false,
-        amount: await currentAmount(),
+        amount: await currentAmount(plan),
         payload: null,
         receiverName: null,
         pixKey: null,
@@ -80,12 +89,12 @@ export const getProPixCheckout = createServerFn({ method: "GET" })
       key: settings.pix_key,
       receiverName: settings.receiver_name,
       receiverCity: settings.receiver_city,
-      amount: await currentAmount(),
-      txid: "VITRINIPRO",
+      amount: await currentAmount(plan),
+      txid: plan === "pro" ? "VITRINIPRO" : "VITRINIBASICA",
     });
     return {
       configured: true,
-      amount: await currentAmount(),
+      amount: await currentAmount(plan),
       payload,
       receiverName: settings.receiver_name,
       pixKey: settings.pix_key,
@@ -125,7 +134,9 @@ export const getMyProPixRequests = createServerFn({ method: "GET" })
 /** Registra "já fiz o pagamento". Nunca libera o PRO — apenas cria a solicitação. */
 export const createProPixRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator(planInput)
+  .handler(async ({ data: input, context }) => {
+    const plan = input.plan;
     const { data: stores } = await context.supabase
       .from("stores")
       .select("id")
@@ -133,7 +144,7 @@ export const createProPixRequest = createServerFn({ method: "POST" })
       .order("created_at", { ascending: true })
       .limit(1);
     const store = stores?.[0] ?? null;
-    if (!store) throw new Error("Crie sua loja em “Minha Loja” antes de assinar o PRO.");
+    if (!store) throw new Error("Crie sua loja em “Minha Loja” antes de assinar.");
 
     const { getPixSettings } = await import("./pro-pix.server");
     const { logAudit } = await import("./subscription.server");
@@ -159,7 +170,8 @@ export const createProPixRequest = createServerFn({ method: "POST" })
       .insert({
         store_id: store.id,
         user_id: context.userId,
-        amount: await currentAmount(),
+        amount: await currentAmount(plan),
+        plan,
         payment_method: "pix_manual",
         status: "pending",
         pix_key_snapshot: settings?.pix_key ? `${settings.pix_key_type}` : null,
@@ -174,7 +186,7 @@ export const createProPixRequest = createServerFn({ method: "POST" })
       action: "pro_pix_request_created",
       resourceType: "pro_pix_request",
       resourceId: inserted.id,
-      metadata: { amount: await currentAmount(), method: "pix_manual" },
+      metadata: { amount: await currentAmount(plan), method: "pix_manual", plan },
     });
 
     return {
@@ -242,6 +254,13 @@ export const approveProPixRequest = createServerFn({ method: "POST" })
     const start = new Date();
     const end = new Date(start.getTime() + PERIOD_DAYS * 24 * 60 * 60 * 1000);
 
+    const { data: request } = await supabaseAdmin
+      .from("pro_pix_requests")
+      .select("plan")
+      .eq("id", data.id)
+      .maybeSingle();
+    const plan: PlanKey = (request?.plan as string) === "basica" ? "basica" : "pro";
+
     const { data: updated } = await supabaseAdmin
       .from("pro_pix_requests")
       .update({
@@ -250,7 +269,7 @@ export const approveProPixRequest = createServerFn({ method: "POST" })
         approved_by: context.userId,
         period_start: start.toISOString(),
         period_end: end.toISOString(),
-        amount: await currentAmount(),
+        amount: await currentAmount(plan),
       })
       .eq("id", data.id)
       .eq("status", "pending")
@@ -259,7 +278,14 @@ export const approveProPixRequest = createServerFn({ method: "POST" })
 
     if (!updated) throw new Error("Solicitação já foi processada por outro administrador.");
 
-    await supabaseAdmin.from("stores").update({ plan: "pro" }).eq("id", updated.store_id);
+    await supabaseAdmin.from("stores").update({ plan }).eq("id", updated.store_id);
+
+    // Assinou a Básica: ganha 30 dias de PRO grátis (uma vez por loja).
+    let trialEndsAt: string | null = null;
+    if (plan === "basica") {
+      const { startProTrial } = await import("./subscription.server");
+      trialEndsAt = await startProTrial(updated.store_id);
+    }
 
     await logAudit({
       storeId: updated.store_id,
@@ -273,10 +299,12 @@ export const approveProPixRequest = createServerFn({ method: "POST" })
         approved_by: context.userId,
         approved_at: start.toISOString(),
         period_end: end.toISOString(),
+        plan,
+        trial_ends_at: trialEndsAt,
       },
     });
 
-    return { ok: true, periodEnd: end.toISOString() };
+    return { ok: true, periodEnd: end.toISOString(), plan, trialEndsAt };
   });
 
 /** Recusa com motivo obrigatório. Nunca libera o PRO. */
@@ -351,7 +379,13 @@ export const listStoresForProGrant = createServerFn({ method: "GET" })
 export const grantProManually = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z.object({ storeId: z.string().uuid(), note: z.string().trim().max(300).optional() }).parse(data),
+    z
+      .object({
+        storeId: z.string().uuid(),
+        plan: z.enum(["basica", "pro"]).default("pro"),
+        note: z.string().trim().max(300).optional(),
+      })
+      .parse(data),
   )
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
@@ -380,7 +414,8 @@ export const grantProManually = createServerFn({ method: "POST" })
       .insert({
         store_id: store.id,
         user_id: store.owner_id ?? context.userId,
-        amount: await currentAmount(),
+        amount: await currentAmount(data.plan),
+        plan: data.plan,
         payment_method: "pix_manual",
         status: "approved",
         approved_at: start.toISOString(),
@@ -390,9 +425,15 @@ export const grantProManually = createServerFn({ method: "POST" })
       })
       .select("id")
       .single();
-    if (error) throw new Error("Não foi possível liberar o PRO agora.");
+    if (error) throw new Error("Não foi possível liberar o plano agora.");
 
-    await supabaseAdmin.from("stores").update({ plan: "pro" }).eq("id", store.id);
+    await supabaseAdmin.from("stores").update({ plan: data.plan }).eq("id", store.id);
+
+    let trialEndsAt: string | null = null;
+    if (data.plan === "basica") {
+      const { startProTrial } = await import("./subscription.server");
+      trialEndsAt = await startProTrial(store.id);
+    }
 
     await logAudit({
       storeId: store.id,
@@ -403,11 +444,13 @@ export const grantProManually = createServerFn({ method: "POST" })
       metadata: {
         granted_by: context.userId,
         period_end: end.toISOString(),
+        plan: data.plan,
+        trial_ends_at: trialEndsAt,
         note: data.note ?? null,
       },
     });
 
-    return { ok: true, periodEnd: end.toISOString() };
+    return { ok: true, periodEnd: end.toISOString(), trialEndsAt };
   });
 
 /** Configuração administrativa da chave Pix (visível apenas para administradores). */
