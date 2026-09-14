@@ -234,7 +234,7 @@ export const submitOrder = createServerFn({ method: "POST" })
 
     const { data: store } = await supabaseAdmin
       .from("stores")
-      .select("id, is_active, plan, allow_installments, max_installments, min_installment_amount")
+      .select("id, is_active, plan, pro_trial_ends_at, allow_installments, max_installments, min_installment_amount")
       .eq("id", data.storeId)
       .maybeSingle();
     if (!store || !store.is_active) throw new Error("Loja indisponível");
@@ -341,7 +341,11 @@ export const submitOrder = createServerFn({ method: "POST" })
 
     // O parcelamento é validado no servidor contra as regras reais do vendedor.
     const installmentsAllowed =
-      store.plan === "pro" && store.allow_installments && data.paymentMethod === "parcelado";
+      (store.plan === "pro" ||
+        (store.pro_trial_ends_at !== null &&
+          new Date(store.pro_trial_ends_at).getTime() > Date.now())) &&
+      store.allow_installments &&
+      data.paymentMethod === "parcelado";
     let installmentCount = 1;
     if (installmentsAllowed) {
       const maxByRules = Math.min(store.max_installments, 12);
