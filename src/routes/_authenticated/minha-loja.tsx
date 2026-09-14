@@ -6,7 +6,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMyStore } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
 import { uploadAsset } from "@/lib/images";
-import { PIX_KEY_TYPES, STORE_CATEGORIES, slugify } from "@/lib/format";
+import {
+  buildStoreShareMessage,
+  DEFAULT_STORE_SHARE_MESSAGE,
+  PIX_KEY_TYPES,
+  STORE_CATEGORIES,
+  slugify,
+} from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +49,7 @@ function MyStore() {
     whatsapp: "",
     instagram: "",
     welcome_message: "",
+    share_message: "",
     primary_color: "#0f766e",
     pix_key_type: "email",
     pix_key: "",
@@ -64,6 +71,7 @@ function MyStore() {
       whatsapp: store.whatsapp,
       instagram: store.instagram ?? "",
       welcome_message: store.welcome_message,
+      share_message: store.share_message ?? "",
       primary_color: store.primary_color,
       pix_key_type: store.pix_key_type,
       pix_key: store.pix_key,
@@ -157,7 +165,27 @@ function MyStore() {
     queryClient.invalidateQueries({ queryKey: ["my-store"] });
   }
 
+  const storeUrl =
+    typeof window !== "undefined" && store
+      ? `${window.location.origin}/s/${form.slug || store.slug}`
+      : `/s/${form.slug || "sua-loja"}`;
+  const sharePreview = buildStoreShareMessage(form.share_message, storeUrl);
 
+  async function saveShareMessage() {
+    if (!store) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("stores")
+      .update({ share_message: form.share_message.trim() || null })
+      .eq("id", store.id);
+    setSaving(false);
+    if (error) {
+      toast.error("Não foi possível salvar a mensagem de divulgação.");
+      return;
+    }
+    toast.success("Mensagem de divulgação salva!");
+    queryClient.invalidateQueries({ queryKey: ["my-store"] });
+  }
 
   return (
     <AppShell title="Minha loja" description="Personalize sua vitrine">
@@ -207,6 +235,41 @@ function MyStore() {
             onChange={(e) => setForm({ ...form, welcome_message: e.target.value })}
           />
         </div>
+
+        <section className="space-y-3 rounded-lg border border-border p-3">
+          <div>
+            <p className="text-sm font-semibold">Divulgação</p>
+            <p className="text-xs text-muted-foreground">
+              Personalize a mensagem usada ao compartilhar sua loja pelo WhatsApp.
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="share-message">Mensagem para compartilhar no WhatsApp</Label>
+            <Textarea
+              id="share-message"
+              rows={4}
+              value={form.share_message}
+              placeholder={DEFAULT_STORE_SHARE_MESSAGE}
+              onChange={(e) => setForm({ ...form, share_message: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">
+              Essa mensagem será usada quando você compartilhar sua loja pelo WhatsApp. Você pode
+              personalizá-la como quiser.
+            </p>
+          </div>
+          <div className="rounded-md bg-muted/50 p-3 text-sm">
+            <p className="mb-1 font-medium">Prévia do compartilhamento</p>
+            <p className="whitespace-pre-wrap break-words text-muted-foreground">{sharePreview}</p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={saveShareMessage}
+            disabled={saving || !store}
+          >
+            {saving ? "Salvando..." : "Salvar mensagem"}
+          </Button>
+        </section>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">

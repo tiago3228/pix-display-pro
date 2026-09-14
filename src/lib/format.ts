@@ -28,6 +28,18 @@ export function whatsappLink(phone: string, message: string) {
   return `https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent(message)}`;
 }
 
+export const DEFAULT_STORE_SHARE_MESSAGE =
+  "Olá! Confira nossa loja online e conheça nossos produtos e serviços. Acesse o link abaixo 👇";
+
+export function buildStoreShareMessage(message: string | null | undefined, storeUrl: string) {
+  const text = message?.trim() || DEFAULT_STORE_SHARE_MESSAGE;
+  return text.includes(storeUrl) ? text : `${text}\n\n${storeUrl}`;
+}
+
+export function whatsappShareLink(message: string) {
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
+}
+
 export const PIX_KEY_TYPES = [
   { value: "cpf", label: "CPF" },
   { value: "cnpj", label: "CNPJ" },
