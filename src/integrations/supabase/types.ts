@@ -1158,6 +1158,7 @@ export type Database = {
           pro_trial_ends_at: string | null
           pro_trial_used: boolean
           seller_name: string
+          share_message: string | null
           slug: string
           updated_at: string
           welcome_message: string
@@ -1186,6 +1187,7 @@ export type Database = {
           pro_trial_ends_at?: string | null
           pro_trial_used?: boolean
           seller_name?: string
+          share_message?: string | null
           slug: string
           updated_at?: string
           welcome_message?: string
@@ -1214,6 +1216,7 @@ export type Database = {
           pro_trial_ends_at?: string | null
           pro_trial_used?: boolean
           seller_name?: string
+          share_message?: string | null
           slug?: string
           updated_at?: string
           welcome_message?: string
