@@ -75,9 +75,14 @@ export async function ensureProPlanId(backUrl: string): Promise<string> {
 }
 
 /** Mantém `stores.plan` coerente com o status real da assinatura (e com o Pix manual aprovado). */
-export async function applyPlanToStore(storeId: string, status: string, graceUntil: string | null) {
+export async function applyPlanToStore(
+  storeId: string,
+  status: string,
+  graceUntil: string | null,
+  subscriptionPlan: "basica" | "pro" = "pro",
+) {
   const db = await admin();
-  let plan = statusGrantsPro(status, graceUntil) ? "pro" : "basica";
+  let plan = subscriptionPlan === "pro" && statusGrantsPro(status, graceUntil) ? "pro" : "basica";
   if (plan === "basica") {
     const { activePixGrant } = await import("./pro-pix.server");
     if (await activePixGrant(storeId)) plan = "pro";
@@ -102,7 +107,10 @@ export async function applyPlanToStore(storeId: string, status: string, graceUnt
  * Fonte da verdade: aplica no banco o estado devolvido pela API do Mercado Pago.
  * Idempotente — pode ser chamada quantas vezes for necessário.
  */
-export async function syncFromPreapproval(preapproval: Preapproval) {
+export async function syncFromPreapproval(
+  preapproval: Preapproval,
+  requestedPlan?: "basica" | "pro",
+) {
   const db = await admin();
 
   const existingResult = await db
@@ -127,9 +135,10 @@ export async function syncFromPreapproval(preapproval: Preapproval) {
     pastDueSince = null;
   }
 
+  const subscriptionPlan = requestedPlan ?? existing?.plan ?? "pro";
   const patch = {
     store_id: storeId,
-    plan: "pro",
+    plan: subscriptionPlan,
     provider: "mercadopago",
     provider_plan_id: preapproval.preapproval_plan_id ?? existing?.provider_plan_id ?? null,
     provider_subscription_id: preapproval.id,
@@ -163,7 +172,7 @@ export async function syncFromPreapproval(preapproval: Preapproval) {
     requireDatabaseResult(insertResult, "SUBSCRIPTION_INSERT");
   }
 
-  const plan = await applyPlanToStore(storeId, status, graceUntil);
+  const plan = await applyPlanToStore(storeId, status, graceUntil, subscriptionPlan);
   await logAudit({
     storeId,
     action: `subscription_${status}`,

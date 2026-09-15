@@ -19,14 +19,13 @@ import {
 } from "@/components/ui/accordion";
 import { useSession } from "@/hooks/useAuth";
 import { getLandingBanner } from "@/lib/landing.functions";
-import { getProPricing } from "@/lib/pricing.functions";
+import { getPlansPricing } from "@/lib/pricing.functions";
 import { brl } from "@/lib/format";
-
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    const [banner, pricing] = await Promise.all([getLandingBanner(), getProPricing()]);
-    return { banner, pricing };
+    const [banner, plans] = await Promise.all([getLandingBanner(), getPlansPricing()]);
+    return { banner, pricing: plans.pro, basicPrice: plans.basica.price };
   },
   head: () => ({
     meta: [
@@ -34,13 +33,13 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Crie sua vitrine online grátis, compartilhe seu QR Code, receba pedidos pelo WhatsApp e receba via Pix. Sem comissão sobre suas vendas.",
+          "Comece com 30 dias grátis na Básica, compartilhe seu QR Code, receba pedidos pelo WhatsApp e receba via Pix. Sem comissão sobre suas vendas.",
       },
       { property: "og:title", content: "Vitrini — sua vitrine online em minutos" },
       {
         property: "og:description",
         content:
-          "Vitrine online, QR Code, pedidos pelo WhatsApp e pagamento via Pix. Comece grátis.",
+          "Vitrine online, QR Code, pedidos pelo WhatsApp e pagamento via Pix. 30 dias grátis para começar.",
       },
     ],
   }),
@@ -54,7 +53,6 @@ export const Route = createFileRoute("/")({
   ),
   component: Landing,
 });
-
 
 const STEPS = [
   { icon: Store, title: "Crie sua loja", text: "Nome, WhatsApp e chave Pix. Leva 2 minutos." },
@@ -93,8 +91,7 @@ const FAQ: { q: string; a: string }[] = [
 
 function Landing() {
   const { session } = useSession();
-  const { banner, pricing } = Route.useLoaderData();
-
+  const { banner, pricing, basicPrice } = Route.useLoaderData();
 
   return (
     <div className="min-h-screen bg-background">
@@ -117,7 +114,7 @@ function Landing() {
                   <Link to="/login">Entrar</Link>
                 </Button>
                 <Button asChild size="sm">
-                  <Link to="/signup">Criar loja grátis</Link>
+                  <Link to="/signup">Começar 30 dias grátis</Link>
                 </Button>
               </>
             )}
@@ -240,9 +237,14 @@ function Landing() {
             <p className="mt-2 text-muted-foreground">Sem comissão sobre suas vendas. Nunca.</p>
             <div className="mt-8 grid gap-4 md:grid-cols-2">
               <div className="surface p-6">
-                <p className="text-sm font-semibold text-muted-foreground">GRÁTIS</p>
-                <p className="mt-2 text-3xl font-bold">R$ 0</p>
-                <p className="text-sm text-muted-foreground">Comece sem pagar.</p>
+                <p className="text-sm font-semibold text-muted-foreground">BÁSICA</p>
+                <p className="mt-2 text-3xl font-bold">
+                  {brl(basicPrice)}
+                  <span className="text-base font-normal text-muted-foreground">/mês</span>
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  30 dias grátis, depois cartão ou Pix.
+                </p>
                 <ul className="mt-5 space-y-2 text-sm">
                   {[
                     "Vitrine online com link próprio",
@@ -256,18 +258,27 @@ function Landing() {
                   ))}
                 </ul>
                 <Button asChild variant="outline" className="mt-6 w-full">
-                  <Link to="/signup">Criar minha loja grátis</Link>
+                  <Link to="/signup">Começar 30 dias grátis</Link>
                 </Button>
               </div>
               <div className="surface border-primary/40 p-6 ring-1 ring-primary/20">
                 <p className="text-sm font-semibold text-primary">PRO</p>
                 <p className="mt-2 text-3xl font-bold">
                   {pricing.promoActive ? (
-                    <><span className="mr-2 text-base text-muted-foreground line-through">{brl(pricing.basePrice)}</span>{brl(pricing.price)}</>
-                  ) : brl(pricing.price)}
+                    <>
+                      <span className="mr-2 text-base text-muted-foreground line-through">
+                        {brl(pricing.basePrice)}
+                      </span>
+                      {brl(pricing.price)}
+                    </>
+                  ) : (
+                    brl(pricing.price)
+                  )}
                   <span className="text-base font-normal text-muted-foreground">/mês</span>
                 </p>
-                {pricing.promoActive && pricing.promoLabel ? <Badge className="mt-2">{pricing.promoLabel}</Badge> : null}
+                {pricing.promoActive && pricing.promoLabel ? (
+                  <Badge className="mt-2">{pricing.promoLabel}</Badge>
+                ) : null}
                 <p className="text-sm text-muted-foreground">Sem comissão sobre suas vendas.</p>
                 <ul className="mt-5 space-y-2 text-sm">
                   {[
@@ -283,7 +294,7 @@ function Landing() {
                   ))}
                 </ul>
                 <Button asChild className="mt-6 w-full">
-                  <Link to="/signup">Começar agora</Link>
+                  <Link to="/signup">Começar 30 dias grátis</Link>
                 </Button>
               </div>
             </div>
@@ -311,7 +322,7 @@ function Landing() {
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Button asChild size="lg">
-                <Link to="/signup">Criar minha loja grátis</Link>
+                <Link to="/signup">Começar 30 dias grátis</Link>
               </Button>
               <Button asChild size="lg" variant="outline">
                 <Link to="/s/$slug" params={{ slug: "atena-joias" }}>

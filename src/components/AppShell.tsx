@@ -78,7 +78,7 @@ export function AppShell({
 
   useEffect(() => {
     const saved = window.localStorage.getItem("vitrini-theme");
-    const isClean = saved === "clean";
+    const isClean = saved !== "dark";
     setCleanMode(isClean);
     document.documentElement.classList.toggle("clean", isClean);
     document

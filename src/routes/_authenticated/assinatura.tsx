@@ -31,16 +31,15 @@ import {
 export const Route = createFileRoute("/_authenticated/assinatura")({
   head: () => ({
     meta: [
-      { title: "Assinatura Vitrini PRO | Vitrini" },
+      { title: "Planos Vitrini | Vitrini" },
       {
         name: "description",
-        content:
-          "Assine o Vitrini PRO por R$ 9,90/mês e libere produtos ilimitados, parcelamento e cobranças.",
+        content: "Escolha a Básica por R$ 9,90/mês ou a PRO por R$ 19,90/mês.",
       },
-      { property: "og:title", content: "Assinatura Vitrini PRO" },
+      { property: "og:title", content: "Planos Vitrini" },
       {
         property: "og:description",
-        content: "Produtos ilimitados, parcelamento e cobranças por R$ 9,90/mês.",
+        content: "Planos Básica e PRO para sua vitrine online.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -94,10 +93,11 @@ function Subscription() {
   });
 
   const startMutation = useMutation({
-    mutationFn: () => start({ data: { origin: window.location.origin } }),
+    mutationFn: (plan: "basica" | "pro") =>
+      start({ data: { origin: window.location.origin, plan } }),
     onSuccess: (result) => {
       if (result.alreadyActive) {
-        toast.info("Sua assinatura PRO já está ativa.");
+        toast.info("Sua assinatura já está ativa.");
         queryClient.invalidateQueries({ queryKey: ["my-subscription"] });
         return;
       }
@@ -127,7 +127,7 @@ function Subscription() {
   const isPro = data?.hasProAccess ?? false;
 
   return (
-    <AppShell title="Assinatura" description="Plano Vitrini PRO">
+    <AppShell title="Assinatura" description="Escolha seu plano Vitrini">
       {data?.environment === "test" ? (
         <div className="mb-4 space-y-1 rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
           <p>Ambiente de testes do Mercado Pago. Nenhuma cobrança real é feita.</p>
@@ -146,17 +146,13 @@ function Subscription() {
         </div>
       ) : null}
 
-
-
       {data?.proSource === "trial" && data.trialEndsAt ? (
         <div className="mb-4 rounded-lg border border-primary/40 bg-primary/5 p-4 text-sm">
-          <p className="font-semibold">
-            Você está nos {PRO_TRIAL_DAYS} dias grátis do PRO
-          </p>
+          <p className="font-semibold">Você está nos {PRO_TRIAL_DAYS} dias grátis do PRO</p>
           <p className="mt-1 text-muted-foreground">
-            O teste termina em {formatDay(data.trialEndsAt)}. Depois dessa data sua loja volta ao
-            plano Básica ({brl(plans.basicPrice)}/mês), a menos que você assine o PRO. Você pode
-            cancelar a qualquer momento.
+            O teste termina em {formatDay(data.trialEndsAt)}. Depois dessa data, será necessário
+            assinar a Básica por {brl(plans.basicPrice)}/mês ou a PRO por {brl(pricing.price)}/mês
+            para continuar usando os recursos pagos.
           </p>
         </div>
       ) : null}
@@ -223,9 +219,22 @@ function Subscription() {
           features={BASIC_FEATURES}
           active={!isPro}
           footer={
-            <Button className="mt-5 h-11 w-full" variant="outline" disabled>
-              {isPro ? "Disponível ao cancelar o PRO" : "Plano atual"}
-            </Button>
+            isPro ? (
+              <Button className="mt-5 h-11 w-full" variant="outline" disabled>
+                Disponível ao cancelar o PRO
+              </Button>
+            ) : (
+              <Button
+                className="mt-5 h-11 w-full"
+                variant="outline"
+                onClick={() => startMutation.mutate("basica")}
+                disabled={startMutation.isPending || isLoading}
+              >
+                {startMutation.isPending
+                  ? "Abrindo o Mercado Pago..."
+                  : "Assinar Básica com cartão"}
+              </Button>
+            )
           }
         />
         <PlanCard
@@ -241,7 +250,7 @@ function Subscription() {
             ) : (
               <Button
                 className="mt-5 h-11 w-full"
-                onClick={() => startMutation.mutate()}
+                onClick={() => startMutation.mutate("pro")}
                 disabled={startMutation.isPending || isLoading}
               >
                 <Sparkles className="mr-2 size-4" />
@@ -252,15 +261,14 @@ function Subscription() {
         />
       </div>
 
-      <ProPixCard hasPro={isPro} />
+      {!isPro ? <ProPixCard hasPro={false} plan="basica" /> : null}
+      <ProPixCard hasPro={isPro} plan="pro" />
 
       <p className="mt-4 text-center text-xs text-muted-foreground">
-        Assinatura recorrente de {brl(pricing.price)} por mês, cobrada automaticamente pelo Mercado
-        Pago. Você pode cancelar quando quiser e o acesso permanece até o fim do período já pago. A
-        liberação do PRO acontece apenas após a confirmação do Mercado Pago. No Pix, a liberação
-        depende da confirmação manual do administrador.
+        A Básica custa {brl(plans.basicPrice)}/mês e a PRO custa {brl(pricing.price)}/mês. O cartão
+        é processado pelo Mercado Pago; no Pix, a ativação depende da confirmação manual do
+        administrador. Você pode cancelar quando quiser.
       </p>
-
 
       {isError ? (
         <p className="mt-3 text-center text-xs text-destructive">

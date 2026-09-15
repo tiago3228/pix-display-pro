@@ -261,7 +261,7 @@ function AiProductImport() {
               {status.used} de {status.limit} páginas analisadas neste mês
             </p>
             <p className="text-xs text-muted-foreground">
-              Plano {status.isPro ? "PRO" : "gratuito"} · o limite renova todo mês
+              Plano {status.isPro ? "PRO" : "Básica"} · o limite renova todo mês
             </p>
           </div>
           <Badge variant="secondary">{status.remaining} restantes</Badge>
@@ -475,7 +475,9 @@ function AiProductImport() {
                           <Button
                             size="sm"
                             variant={draft.action === "skip" ? "default" : "outline"}
-                            onClick={() => update(draft.tempId, { action: "skip", selected: false })}
+                            onClick={() =>
+                              update(draft.tempId, { action: "skip", selected: false })
+                            }
                           >
                             Ignorar
                           </Button>

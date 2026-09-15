@@ -97,7 +97,7 @@ export const getMySubscription = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(12);
 
-    const mpPro = sub ? statusGrantsPro(sub.status, sub.grace_until) : false;
+    const mpPro = sub?.plan === "pro" ? statusGrantsPro(sub.status, sub.grace_until) : false;
 
     const { activePixGrant } = await import("./pro-pix.server");
     const { activeProTrial } = await import("./subscription.server");
@@ -108,13 +108,7 @@ export const getMySubscription = createServerFn({ method: "GET" })
     return {
       plan: hasProAccess ? "pro" : "basica",
       hasProAccess,
-      proSource: mpPro
-        ? "mercadopago"
-        : pixGrant
-          ? "pix_manual"
-          : trialEndsAt
-            ? "trial"
-            : null,
+      proSource: mpPro ? "mercadopago" : pixGrant ? "pix_manual" : trialEndsAt ? "trial" : null,
       pixActiveUntil: pixGrant?.periodEnd ?? null,
       trialEndsAt,
       environment: mpEnvironment(),
@@ -148,7 +142,12 @@ export const getMySubscription = createServerFn({ method: "GET" })
 export const startProSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z.object({ origin: z.string().max(200).optional() }).parse(data ?? {}),
+    z
+      .object({
+        origin: z.string().max(200).optional(),
+        plan: z.enum(["basica", "pro"]).default("pro"),
+      })
+      .parse(data ?? {}),
   )
   .handler(async ({ data, context }) => {
     const { createPreapproval, resolveBaseUrl } = await import("./mercadopago.server");
@@ -161,10 +160,7 @@ export const startProSubscription = createServerFn({ method: "POST" })
       .order("created_at", { ascending: true })
       .limit(1);
     const store = stores?.[0] ?? null;
-    if (!store)
-      throw new Error(
-        "Crie sua loja em “Minha Loja” antes de assinar o PRO.",
-      );
+    if (!store) throw new Error("Crie sua loja em “Minha Loja” antes de assinar um plano.");
 
     // Idempotência: nunca criar duas assinaturas vivas para a mesma loja.
     const { data: liveRows } = await context.supabase
@@ -188,8 +184,8 @@ export const startProSubscription = createServerFn({ method: "POST" })
     const email = (context.claims as { email?: string } | undefined)?.email;
     if (!email) throw new Error("E-mail do usuário indisponível.");
 
-    const { getCurrentProPricing } = await import("./pricing.server");
-    const pricing = await getCurrentProPricing();
+    const { getCurrentPlanPricing } = await import("./pricing.server");
+    const pricing = await getCurrentPlanPricing(data.plan);
 
     const preapproval = await createPreapproval({
       externalReference: store.id,
@@ -199,7 +195,7 @@ export const startProSubscription = createServerFn({ method: "POST" })
       idempotencyKey: `vitrini-sub-${store.id}-${new Date().toISOString().slice(0, 10)}`,
     });
 
-    await syncFromPreapproval(preapproval);
+    await syncFromPreapproval(preapproval, data.plan);
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     await supabaseAdmin

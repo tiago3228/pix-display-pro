@@ -9,7 +9,7 @@ import {
   getProPixCheckout,
 } from "@/lib/pro-pix.functions";
 import { brl, formatDate, formatDay } from "@/lib/format";
-import { useProPricing } from "@/hooks/usePricing";
+import { usePlansPricing } from "@/hooks/usePricing";
 import { QrImage } from "@/components/QrCode";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,8 @@ export const PIX_STATUS_LABEL: Record<string, string> = {
   canceled: "⚪ Cancelado",
 };
 
+type PlanKey = "basica" | "pro";
+
 /** WhatsApp do administrador master do Vitrini. */
 const ADMIN_WHATSAPP = "5531975414498";
 
@@ -43,14 +45,16 @@ function adminWhatsAppUrl(amount: number, requestId?: string | null) {
   return `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(text)}`;
 }
 
-export function ProPixCard({ hasPro }: { hasPro: boolean }) {
+export function ProPixCard({ hasPro, plan = "pro" }: { hasPro: boolean; plan?: PlanKey }) {
   const [open, setOpen] = useState(false);
-  const { price: proPrice } = useProPricing();
+  const plans = usePlansPricing();
+  const planPrice = plan === "basica" ? plans.basicPrice : plans.proPrice;
   const queryClient = useQueryClient();
 
   const fetchCheckout = useServerFn(getProPixCheckout);
   const fetchRequests = useServerFn(getMyProPixRequests);
   const createRequest = useServerFn(createProPixRequest);
+  const planLabel = plan === "basica" ? "Básica" : "PRO";
 
   const { data: mine } = useQuery({
     queryKey: ["pro-pix-requests"],
@@ -60,16 +64,16 @@ export function ProPixCard({ hasPro }: { hasPro: boolean }) {
   const { data: checkout, isLoading: checkoutLoading } = useQuery({
     queryKey: ["pro-pix-checkout"],
     enabled: open,
-    queryFn: () => fetchCheckout(),
+    queryFn: () => fetchCheckout({ data: { plan } }),
   });
 
   const requestMutation = useMutation({
-    mutationFn: () => createRequest(),
+    mutationFn: () => createRequest({ data: { plan } }),
     onSuccess: (result) => {
       if (result.created) {
         toast.success("Pagamento enviado para análise.");
         setOpen(false);
-        window.open(adminWhatsAppUrl(proPrice, result.requestId ?? null), "_blank", "noopener");
+        window.open(adminWhatsAppUrl(planPrice, result.requestId ?? null), "_blank", "noopener");
       } else {
         toast.info(result.message);
       }
@@ -100,9 +104,9 @@ export function ProPixCard({ hasPro }: { hasPro: boolean }) {
     <section className="surface mt-5 space-y-3 p-5">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold">🟢 Pix — pagamento avulso</p>
+          <p className="text-sm font-semibold">🟢 Pix — plano {planLabel}</p>
           <p className="text-xs text-muted-foreground">
-            {brl(proPrice)} · validade de 30 dias · ativação após aprovação administrativa
+            {brl(planPrice)} · validade de 30 dias · ativação após aprovação administrativa
           </p>
         </div>
         {activeUntil ? <Badge>PRO até {formatDay(activeUntil)}</Badge> : null}
@@ -110,9 +114,9 @@ export function ProPixCard({ hasPro }: { hasPro: boolean }) {
 
       {pending ? (
         <div className="rounded-lg border border-dashed p-3 text-sm">
-          <p className="font-semibold">Pagamento enviado para análise</p>
+          <p className="font-semibold">Pagamento do plano {planLabel} enviado para análise</p>
           <dl className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-            <div>Plano: Vitrini PRO</div>
+            <div>Plano: Vitrini {planLabel}</div>
             <div>Valor: {brl(latest!.amount)}</div>
             <div>Forma: Pix</div>
             <div>Status: {PIX_STATUS_LABEL[latest!.status]}</div>
@@ -123,7 +127,11 @@ export function ProPixCard({ hasPro }: { hasPro: boolean }) {
             o recebimento do Pix.
           </p>
           <Button asChild variant="outline" className="mt-2 h-10 w-full">
-            <a href={adminWhatsAppUrl(latest!.amount, latest!.id)} target="_blank" rel="noopener noreferrer">
+            <a
+              href={adminWhatsAppUrl(latest!.amount, latest!.id)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               <MessageCircle className="mr-2 size-4" /> Avisar o administrador no WhatsApp
             </a>
           </Button>
@@ -148,7 +156,11 @@ export function ProPixCard({ hasPro }: { hasPro: boolean }) {
       ) : null}
 
       {!pending ? (
-        <Button className="h-11 w-full" variant={hasPro ? "outline" : "default"} onClick={() => setOpen(true)}>
+        <Button
+          className="h-11 w-full"
+          variant={hasPro ? "outline" : "default"}
+          onClick={() => setOpen(true)}
+        >
           <QrCodeIcon className="mr-2 size-4" />
           {activeUntil
             ? "Renovar via Pix"
@@ -181,9 +193,9 @@ export function ProPixCard({ hasPro }: { hasPro: boolean }) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Vitrini PRO via Pix</DialogTitle>
+            <DialogTitle>Vitrini {planLabel} via Pix</DialogTitle>
             <DialogDescription>
-              Valor {brl(proPrice)} · validade de 30 dias após aprovação
+              Valor {brl(planPrice)} · validade de 30 dias após aprovação
             </DialogDescription>
           </DialogHeader>
 
@@ -204,9 +216,7 @@ export function ProPixCard({ hasPro }: { hasPro: boolean }) {
                 </Button>
               </div>
               {checkout.receiverName ? (
-                <p className="text-xs text-muted-foreground">
-                  Recebedor: {checkout.receiverName}
-                </p>
+                <p className="text-xs text-muted-foreground">Recebedor: {checkout.receiverName}</p>
               ) : null}
               <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
                 <strong>Importante:</strong> o pagamento via Pix não é confirmado automaticamente
