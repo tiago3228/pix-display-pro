@@ -14,7 +14,7 @@ import {
   startProSubscription,
 } from "@/lib/subscription.functions";
 import { brl, formatDay, FREE_PLAN_PRODUCT_LIMIT } from "@/lib/format";
-import { usePlansPricing } from "@/hooks/usePricing";
+import { useProPricing } from "@/hooks/usePricing";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -35,12 +35,12 @@ export const Route = createFileRoute("/_authenticated/assinatura")({
       {
         name: "description",
         content:
-          "Assine a Básica por R$ 9,90/mês e ganhe 30 dias de PRO, ou escolha o PRO por R$ 19,90/mês.",
+          "Assine o Vitrini PRO por R$ 9,90/mês e libere produtos ilimitados, parcelamento e cobranças.",
       },
       { property: "og:title", content: "Assinatura Vitrini PRO" },
       {
         property: "og:description",
-        content: "Básica por R$ 9,90/mês com 30 dias de PRO ou PRO por R$ 19,90/mês.",
+        content: "Produtos ilimitados, parcelamento e cobranças por R$ 9,90/mês.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -59,7 +59,7 @@ const STATUS_LABEL: Record<string, string> = {
   expired: "Expirado",
 };
 
-const BASIC_FEATURES = [
+const FREE_FEATURES = [
   `Até ${FREE_PLAN_PRODUCT_LIMIT} produtos`,
   "Vitrine pública com link e QR Code",
   "Pedidos pelo WhatsApp",
@@ -78,7 +78,7 @@ const PRO_FEATURES = [
 
 function Subscription() {
   const { data: store } = useMyStore();
-  const pricing = usePlansPricing();
+  const pricing = useProPricing();
   const queryClient = useQueryClient();
   const [confirmCancel, setConfirmCancel] = useState(false);
 
@@ -145,6 +145,8 @@ function Subscription() {
         </div>
       ) : null}
 
+
+
       {subscription ? (
         <section className="surface mb-5 space-y-2 p-5">
           <div className="flex items-center justify-between">
@@ -202,9 +204,9 @@ function Subscription() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <PlanCard
-          name="Básica"
-          price={`${brl(pricing.basicPrice)}/mês`}
-          features={BASIC_FEATURES}
+          name="Gratuito"
+          price="R$ 0"
+          features={FREE_FEATURES}
           active={!isPro}
           footer={
             <Button className="mt-5 h-11 w-full" variant="outline" disabled>
@@ -214,7 +216,7 @@ function Subscription() {
         />
         <PlanCard
           name="PRO"
-          price={`${brl(pricing.proPrice)}/mês`}
+          price={`${brl(pricing.price)}/mês`}
           features={PRO_FEATURES}
           active={isPro}
           footer={
@@ -239,12 +241,12 @@ function Subscription() {
       <ProPixCard hasPro={isPro} />
 
       <p className="mt-4 text-center text-xs text-muted-foreground">
-        A Básica custa {brl(pricing.basicPrice)}/mês e inclui 30 dias de PRO. Depois, o PRO custa{" "}
-        {brl(pricing.proPrice)}/mês, cobrado pelo Mercado Pago. Você pode cancelar quando quiser e o
-        acesso permanece até o fim do período já pago. A liberação do PRO acontece apenas após a
-        confirmação do Mercado Pago. No Pix, a liberação depende da confirmação manual do
-        administrador.
+        Assinatura recorrente de {brl(pricing.price)} por mês, cobrada automaticamente pelo Mercado
+        Pago. Você pode cancelar quando quiser e o acesso permanece até o fim do período já pago. A
+        liberação do PRO acontece apenas após a confirmação do Mercado Pago. No Pix, a liberação
+        depende da confirmação manual do administrador.
       </p>
+
 
       {isError ? (
         <p className="mt-3 text-center text-xs text-destructive">
@@ -277,7 +279,7 @@ function Subscription() {
             <AlertDialogTitle>Tem certeza que deseja cancelar o PRO?</AlertDialogTitle>
             <AlertDialogDescription>
               O cancelamento é enviado ao Mercado Pago e novas cobranças deixam de ser feitas. Seu
-              histórico é preservado e sua loja volta ao plano Básica.
+              histórico é preservado e sua loja volta ao plano gratuito.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

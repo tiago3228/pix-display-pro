@@ -8,13 +8,7 @@ import { BackButton } from "@/components/BackButton";
 
 import { useMyStore } from "@/hooks/useAuth";
 import { uploadAsset } from "@/lib/images";
-import {
-  buildStoreShareMessage,
-  PIX_KEY_TYPES,
-  STORE_CATEGORIES,
-  slugify,
-  whatsappShareLink,
-} from "@/lib/format";
+import { PIX_KEY_TYPES, STORE_CATEGORIES, slugify, whatsappLink } from "@/lib/format";
 import { QrImage } from "@/components/QrCode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -180,12 +174,7 @@ function Onboarding() {
       <div className="mx-auto max-w-lg">
         <div className="mb-4 flex items-center justify-between">
           {step > 1 && step < 4 ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5 px-2"
-              onClick={() => setStep(step - 1)}
-            >
+            <Button variant="ghost" size="sm" className="gap-1.5 px-2" onClick={() => setStep(step - 1)}>
               <ArrowLeft className="size-4" /> Voltar
             </Button>
           ) : (
@@ -201,6 +190,7 @@ function Onboarding() {
           </span>
           <span className="font-[family-name:var(--font-display)]">Vitrini</span>
         </div>
+
 
         <div className="mb-5 flex items-center gap-2">
           {[1, 2, 3].map((n) => (
@@ -388,7 +378,10 @@ function Onboarding() {
                 </Button>
                 <Button asChild variant="outline">
                   <a
-                    href={whatsappShareLink(buildStoreShareMessage(null, storeUrl))}
+                    href={whatsappLink(
+                      form.whatsapp,
+                      `Oi! 😊\n\nConfira minha loja online:\n\n${storeUrl}\n\nVocê pode escolher os produtos e fazer seu pedido pelo WhatsApp.`,
+                    )}
                     target="_blank"
                     rel="noopener"
                   >

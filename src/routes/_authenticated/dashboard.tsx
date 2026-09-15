@@ -4,7 +4,6 @@ import {
   Copy,
   Eye,
   ExternalLink,
-  MessageCircle,
   Package,
   Plus,
   ShoppingBag,
@@ -15,13 +14,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyStore } from "@/hooks/useAuth";
 import { AppShell, StatCard } from "@/components/AppShell";
-import {
-  brl,
-  buildStoreShareMessage,
-  formatDate,
-  statusLabel,
-  whatsappShareLink,
-} from "@/lib/format";
+import { brl, formatDate, statusLabel } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -77,9 +70,6 @@ function Dashboard() {
 
   const storeUrl =
     typeof window !== "undefined" && store ? `${window.location.origin}/s/${store.slug}` : "";
-  const whatsappUrl = storeUrl
-    ? whatsappShareLink(buildStoreShareMessage(store?.share_message, storeUrl))
-    : "#";
 
   return (
     <AppShell
@@ -125,11 +115,6 @@ function Dashboard() {
           </Button>
           <Button size="sm" variant="ghost" asChild>
             <Link to="/qrcodes">QR Codes</Link>
-          </Button>
-          <Button size="sm" className="bg-[#25D366] text-white hover:bg-[#20bd5a]" asChild>
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-              <MessageCircle className="mr-1.5 size-4" /> Compartilhar no WhatsApp
-            </a>
           </Button>
         </div>
       </div>
