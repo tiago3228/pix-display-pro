@@ -111,7 +111,7 @@ function Products() {
   function openNew() {
     if (limitReached) {
       toast.error(
-        `O plano gratuito permite até ${FREE_PLAN_PRODUCT_LIMIT} produtos. Assine o Pro para adicionar mais.`,
+        `O plano Básica permite até ${FREE_PLAN_PRODUCT_LIMIT} produtos. Assine o PRO para adicionar mais.`,
       );
       return;
     }
@@ -307,7 +307,7 @@ function Products() {
       {limitReached ? (
         <div className="surface mb-4 flex flex-wrap items-center justify-between gap-3 p-4">
           <p className="text-sm">
-            Você atingiu o limite de {FREE_PLAN_PRODUCT_LIMIT} produtos do plano gratuito.
+            Você atingiu o limite de {FREE_PLAN_PRODUCT_LIMIT} produtos do plano Básica.
           </p>
           <Button size="sm" asChild>
             <Link to="/assinatura">Assinar o Pro</Link>

@@ -293,7 +293,7 @@ function Subscription() {
             <AlertDialogTitle>Tem certeza que deseja cancelar o PRO?</AlertDialogTitle>
             <AlertDialogDescription>
               O cancelamento é enviado ao Mercado Pago e novas cobranças deixam de ser feitas. Seu
-              histórico é preservado e sua loja volta ao plano gratuito.
+              histórico é preservado e sua loja volta ao plano Básica.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
