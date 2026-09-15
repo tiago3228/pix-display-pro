@@ -282,6 +282,11 @@ function MyStore() {
                 if (file) uploadImage("banner_url", file);
               }}
             />
+            <p className="text-xs text-muted-foreground">
+              Tamanho ideal: <span className="font-medium">1920 x 400 pixels</span> (proporção
+              larga). Use JPG ou PNG de até 5 MB. A imagem é centralizada e cobre toda a largura da
+              página; mantenha o conteúdo importante no meio.
+            </p>
           </div>
         </div>
 
