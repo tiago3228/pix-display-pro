@@ -6,6 +6,7 @@ import {
   CreditCard,
   LayoutDashboard,
   LogOut,
+  Moon,
   Menu,
   Camera,
   Package,
@@ -15,6 +16,7 @@ import {
   ShoppingCart,
   Sparkles,
   Store,
+  Sun,
   Users,
   Wallet,
 } from "lucide-react";
@@ -25,13 +27,7 @@ import { brl } from "@/lib/format";
 
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -52,7 +48,6 @@ const NAV = [
 const MOBILE_NAV = NAV.slice(0, 4);
 const MOBILE_MORE = NAV.slice(4);
 
-
 export function AppShell({
   title,
   description,
@@ -71,7 +66,7 @@ export function AppShell({
   const { data: store, isLoading: storeLoading } = useMyStore();
   const { price: proPrice } = useProPricing();
   const [moreOpen, setMoreOpen] = useState(false);
-
+  const [cleanMode, setCleanMode] = useState(false);
 
   useEffect(() => {
     if (adminLoading || storeLoading) return;
@@ -81,6 +76,25 @@ export function AppShell({
     }
   }, [store, storeLoading, isAdmin, adminLoading, navigate]);
 
+  useEffect(() => {
+    const saved = window.localStorage.getItem("vitrini-theme");
+    const isClean = saved === "clean";
+    setCleanMode(isClean);
+    document.documentElement.classList.toggle("clean", isClean);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", isClean ? "#f8f8f6" : "#21140f");
+  }, []);
+
+  function toggleTheme() {
+    const nextIsClean = !cleanMode;
+    setCleanMode(nextIsClean);
+    window.localStorage.setItem("vitrini-theme", nextIsClean ? "clean" : "dark");
+    document.documentElement.classList.toggle("clean", nextIsClean);
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", nextIsClean ? "#f8f8f6" : "#21140f");
+  }
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -92,12 +106,15 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-muted/30">
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-border bg-sidebar px-3 py-4 lg:flex">
-        <Link to="/dashboard" className="mb-6 flex items-center gap-2 px-2 font-semibold">
+        <a
+          href="https://vitrini-br.lovable.app/"
+          className="mb-6 flex items-center gap-2 px-2 font-semibold"
+        >
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Store className="size-4" />
           </span>
           <span className="font-[family-name:var(--font-display)]">Vitrini</span>
-        </Link>
+        </a>
         <nav className="flex-1 space-y-1">
           {NAV.map((item) => (
             <Link
@@ -158,6 +175,18 @@ export function AppShell({
 
             <div className="flex shrink-0 items-center gap-2">
               {action}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 gap-1.5 px-2.5 sm:px-3"
+                aria-label={cleanMode ? "Ativar modo dark" : "Ativar modo clean"}
+                aria-pressed={!cleanMode}
+                onClick={toggleTheme}
+              >
+                {cleanMode ? <Moon className="size-4" /> : <Sun className="size-4" />}
+                <span className="hidden text-xs sm:inline">{cleanMode ? "Dark" : "Clean"}</span>
+              </Button>
               {store && store.plan !== "pro" && pathname !== "/assinatura" ? (
                 <Button asChild size="sm" className="h-9 shrink-0">
                   <Link to="/assinatura">
