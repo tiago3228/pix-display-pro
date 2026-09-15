@@ -13,8 +13,8 @@ import {
   getMySubscription,
   startProSubscription,
 } from "@/lib/subscription.functions";
-import { brl, formatDay, FREE_PLAN_PRODUCT_LIMIT } from "@/lib/format";
-import { useProPricing } from "@/hooks/usePricing";
+import { brl, formatDay, BASIC_PLAN_PRODUCT_LIMIT, PRO_TRIAL_DAYS } from "@/lib/format";
+import { usePlansPricing, useProPricing } from "@/hooks/usePricing";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -59,8 +59,8 @@ const STATUS_LABEL: Record<string, string> = {
   expired: "Expirado",
 };
 
-const FREE_FEATURES = [
-  `Até ${FREE_PLAN_PRODUCT_LIMIT} produtos`,
+const BASIC_FEATURES = [
+  `Até ${BASIC_PLAN_PRODUCT_LIMIT} produtos`,
   "Vitrine pública com link e QR Code",
   "Pedidos pelo WhatsApp",
   "Pix à vista",
@@ -79,6 +79,7 @@ const PRO_FEATURES = [
 function Subscription() {
   const { data: store } = useMyStore();
   const pricing = useProPricing();
+  const plans = usePlansPricing();
   const queryClient = useQueryClient();
   const [confirmCancel, setConfirmCancel] = useState(false);
 
@@ -147,6 +148,19 @@ function Subscription() {
 
 
 
+      {data?.proSource === "trial" && data.trialEndsAt ? (
+        <div className="mb-4 rounded-lg border border-primary/40 bg-primary/5 p-4 text-sm">
+          <p className="font-semibold">
+            Você está nos {PRO_TRIAL_DAYS} dias grátis do PRO
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            O teste termina em {formatDay(data.trialEndsAt)}. Depois dessa data sua loja volta ao
+            plano Básica ({brl(plans.basicPrice)}/mês), a menos que você assine o PRO. Você pode
+            cancelar a qualquer momento.
+          </p>
+        </div>
+      ) : null}
+
       {subscription ? (
         <section className="surface mb-5 space-y-2 p-5">
           <div className="flex items-center justify-between">
@@ -204,13 +218,13 @@ function Subscription() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <PlanCard
-          name="Gratuito"
-          price="R$ 0"
-          features={FREE_FEATURES}
+          name="Básica"
+          price={`${brl(plans.basicPrice)}/mês`}
+          features={BASIC_FEATURES}
           active={!isPro}
           footer={
             <Button className="mt-5 h-11 w-full" variant="outline" disabled>
-              {isPro ? "Disponível ao cancelar" : "Plano atual"}
+              {isPro ? "Disponível ao cancelar o PRO" : "Plano atual"}
             </Button>
           }
         />
@@ -279,7 +293,7 @@ function Subscription() {
             <AlertDialogTitle>Tem certeza que deseja cancelar o PRO?</AlertDialogTitle>
             <AlertDialogDescription>
               O cancelamento é enviado ao Mercado Pago e novas cobranças deixam de ser feitas. Seu
-              histórico é preservado e sua loja volta ao plano gratuito.
+              histórico é preservado e sua loja volta ao plano Básica.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
