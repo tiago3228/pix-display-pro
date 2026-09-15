@@ -20,6 +20,11 @@ export function EncomendaDialog({ product, onClose }: Props) {
   const [customerWhatsapp, setCustomerWhatsapp] = useState("");
   const [customerNote, setCustomerNote] = useState("");
   const [sending, setSending] = useState(false);
+  function formatWhatsapp(value: string) {
+    const digits = value.replace(/\D/g, "").slice(0, 10);
+    if (digits.length <= 2) return digits;
+    return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+  }
   const quote = useMemo(() => {
     if (!product) return null;
     const tier = product.orderTiers
@@ -39,6 +44,14 @@ export function EncomendaDialog({ product, onClose }: Props) {
       (product!.orderMaxQuantity !== null && quantity > product!.orderMaxQuantity)
     ) {
       toast.error("A quantidade está fora dos limites configurados.");
+      return;
+    }
+    if (!customerName.trim()) {
+      toast.error("Informe seu nome.");
+      return;
+    }
+    if (!/^\d{2}-\d{4}-\d{4}$/.test(customerWhatsapp)) {
+      toast.error("Informe o WhatsApp no formato 31-9999-9999.");
       return;
     }
     setSending(true);
@@ -107,6 +120,7 @@ export function EncomendaDialog({ product, onClose }: Props) {
             <Label htmlFor="order-name">Seu nome</Label>
             <Input
               id="order-name"
+              required
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
             />
@@ -116,9 +130,13 @@ export function EncomendaDialog({ product, onClose }: Props) {
             <Input
               id="order-whatsapp"
               inputMode="tel"
+              required
+              placeholder="31-9999-9999"
+              maxLength={12}
               value={customerWhatsapp}
-              onChange={(e) => setCustomerWhatsapp(e.target.value)}
+              onChange={(e) => setCustomerWhatsapp(formatWhatsapp(e.target.value))}
             />
+            <p className="text-xs text-muted-foreground">Informe o código da cidade e o número.</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="order-note">Observações (opcional)</Label>

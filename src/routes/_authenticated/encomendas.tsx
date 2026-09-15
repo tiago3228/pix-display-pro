@@ -109,6 +109,9 @@ function Encomendas() {
                   <b>Cliente:</b> {row.customer_name || "Não informado"}
                 </span>
                 <span>
+                  <b>WhatsApp:</b> {row.customer_whatsapp || "Não informado"}
+                </span>
+                <span>
                   <b>Valor:</b> {brl(Number(row.total))}
                 </span>
                 <span>
@@ -151,7 +154,7 @@ function Encomendas() {
                       target="_blank"
                       rel="noopener"
                     >
-                      <MessageCircle className="mr-1 size-4" /> WhatsApp
+                      <MessageCircle className="mr-1 size-4" /> Responder no WhatsApp
                     </a>
                   </Button>
                 ) : null}

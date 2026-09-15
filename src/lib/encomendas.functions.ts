@@ -106,8 +106,10 @@ export const submitEncomenda = createServerFn({ method: "POST" })
       .object({
         productId: z.string().uuid(),
         quantity: z.number().int().positive(),
-        customerName: z.string().max(120).default(""),
-        customerWhatsapp: z.string().max(30).default(""),
+        customerName: z.string().trim().min(1, "Informe seu nome.").max(120),
+        customerWhatsapp: z
+          .string()
+          .regex(/^\d{2}-\d{4}-\d{4}$/, "WhatsApp inválido. Use o formato 31-9999-9999."),
         customerNote: z.string().max(1000).default(""),
       })
       .parse(data),
