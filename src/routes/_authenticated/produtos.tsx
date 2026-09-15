@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Camera, Eye, EyeOff, ImageIcon, Pencil, Plus, Star, Trash2 } from "lucide-react";
+import { Camera, Eye, EyeOff, ImageIcon, Package, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyStore } from "@/hooks/useAuth";
@@ -36,6 +36,7 @@ export const Route = createFileRoute("/_authenticated/produtos")({
 });
 
 type VariantDraft = { id?: string; label: string; price: string; stock: string };
+type OrderTierDraft = { minQuantity: string; unitPrice: string };
 
 type ProductRow = {
   id: string;
@@ -50,6 +51,14 @@ type ProductRow = {
   image_url: string | null;
   category_id: string | null;
   product_variants: { id: string; label: string; price: number | null; stock: number }[];
+  order_enabled: boolean;
+  order_unit_price: number | null;
+  order_min_quantity: number;
+  order_max_quantity: number | null;
+  order_lead_time: string | null;
+  order_notes: string | null;
+  order_progressive_pricing: boolean;
+  product_order_tiers?: { min_quantity: number; unit_price: number }[];
 };
 
 const emptyForm = {
@@ -61,6 +70,13 @@ const emptyForm = {
   is_hidden: false,
   is_featured: false,
   category_id: "none",
+  order_enabled: false,
+  order_unit_price: "",
+  order_min_quantity: "1",
+  order_max_quantity: "",
+  order_lead_time: "",
+  order_notes: "",
+  order_progressive_pricing: false,
 };
 
 function Products() {
@@ -71,6 +87,7 @@ function Products() {
   const [form, setForm] = useState(emptyForm);
   const [variants, setVariants] = useState<VariantDraft[]>([]);
   const [optionName, setOptionName] = useState("Tamanho");
+  const [orderTiers, setOrderTiers] = useState<OrderTierDraft[]>([]);
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -97,7 +114,7 @@ function Products() {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, name, description, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, product_variants(id, label, price, stock)",
+          "id, name, description, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, product_variants(id, label, price, stock), product_order_tiers(min_quantity, unit_price)",
         )
         .eq("store_id", store!.id)
         .order("created_at", { ascending: false });
@@ -118,6 +135,7 @@ function Products() {
     setEditing(null);
     setForm(emptyForm);
     setVariants([]);
+    setOrderTiers([]);
     setPhotos([]);
     setOpen(true);
   }
@@ -133,6 +151,14 @@ function Products() {
       is_hidden: product.is_hidden,
       is_featured: product.is_featured,
       category_id: product.category_id ?? "none",
+      order_enabled: product.order_enabled,
+      order_unit_price: product.order_unit_price === null ? "" : String(product.order_unit_price),
+      order_min_quantity: String(product.order_min_quantity ?? 1),
+      order_max_quantity:
+        product.order_max_quantity === null ? "" : String(product.order_max_quantity),
+      order_lead_time: product.order_lead_time ?? "",
+      order_notes: product.order_notes ?? "",
+      order_progressive_pricing: product.order_progressive_pricing,
     });
     setVariants(
       product.product_variants.map((v) => ({
@@ -140,6 +166,12 @@ function Products() {
         label: v.label,
         price: v.price === null ? "" : String(v.price),
         stock: String(v.stock),
+      })),
+    );
+    setOrderTiers(
+      (product.product_order_tiers ?? []).map((tier) => ({
+        minQuantity: String(tier.min_quantity),
+        unitPrice: String(tier.unit_price),
       })),
     );
     setPhotos(product.image_url ? [product.image_url] : []);
@@ -164,6 +196,36 @@ function Products() {
       toast.error("Informe o nome do produto.");
       return;
     }
+    const normalizedTiers = orderTiers.map((tier) => ({
+      minQuantity: Number(tier.minQuantity),
+      unitPrice: Number(String(tier.unitPrice).replace(",", ".")),
+    }));
+    if (form.order_enabled) {
+      const unitPrice = Number(String(form.order_unit_price).replace(",", "."));
+      const minQuantity = Number(form.order_min_quantity);
+      const maxQuantity = form.order_max_quantity ? Number(form.order_max_quantity) : null;
+      if (
+        unitPrice <= 0 ||
+        minQuantity < 1 ||
+        (maxQuantity !== null && maxQuantity < minQuantity)
+      ) {
+        toast.error("Informe preço e quantidades válidos para a encomenda.");
+        return;
+      }
+      if (normalizedTiers.some((tier) => tier.minQuantity < minQuantity || tier.unitPrice <= 0)) {
+        toast.error("Revise as faixas de preço da encomenda.");
+        return;
+      }
+      if (
+        new Set(normalizedTiers.map((tier) => tier.minQuantity)).size !== normalizedTiers.length ||
+        normalizedTiers.some(
+          (tier, index) => index > 0 && tier.unitPrice > normalizedTiers[index - 1]!.unitPrice,
+        )
+      ) {
+        toast.error("As faixas não podem repetir quantidades nem aumentar o preço por unidade.");
+        return;
+      }
+    }
     setSaving(true);
     const imagePath = photos[0] ?? null;
 
@@ -181,6 +243,16 @@ function Products() {
       category_id: form.category_id === "none" ? null : form.category_id,
       ...(photos.length || editing ? { image_url: imagePath } : {}),
       updated_at: new Date().toISOString(),
+      order_enabled: form.order_enabled,
+      order_unit_price: form.order_enabled
+        ? Number(String(form.order_unit_price).replace(",", "."))
+        : null,
+      order_min_quantity: form.order_enabled ? Number(form.order_min_quantity) : 1,
+      order_max_quantity:
+        form.order_enabled && form.order_max_quantity ? Number(form.order_max_quantity) : null,
+      order_lead_time: form.order_enabled ? form.order_lead_time.trim() || null : null,
+      order_notes: form.order_enabled ? form.order_notes.trim() || null : null,
+      order_progressive_pricing: form.order_enabled && form.order_progressive_pricing,
     };
 
     const { data: saved, error } = editing
@@ -214,6 +286,21 @@ function Products() {
       if (insertImagesError) {
         setSaving(false);
         toast.error(`Não foi possível salvar as fotos: ${insertImagesError.message}`);
+        return;
+      }
+    }
+    await supabase.from("product_order_tiers").delete().eq("product_id", saved.id);
+    if (form.order_enabled && form.order_progressive_pricing && normalizedTiers.length) {
+      const { error: tierError } = await supabase.from("product_order_tiers").insert(
+        normalizedTiers.map((tier) => ({
+          product_id: saved.id,
+          min_quantity: tier.minQuantity,
+          unit_price: tier.unitPrice,
+        })),
+      );
+      if (tierError) {
+        setSaving(false);
+        toast.error(`Não foi possível salvar as faixas: ${tierError.message}`);
         return;
       }
     }
@@ -493,6 +580,112 @@ function Products() {
                   </Button>
                 </div>
               ))}
+            </div>
+
+            <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+              <ToggleRow
+                label="📦 Disponibilizar para encomenda"
+                checked={form.order_enabled}
+                onChange={(v) => setForm({ ...form, order_enabled: v })}
+              />
+              {form.order_enabled ? (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>Preço por unidade (R$)</Label>
+                      <Input
+                        inputMode="decimal"
+                        value={form.order_unit_price}
+                        onChange={(e) => setForm({ ...form, order_unit_price: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Quantidade mínima</Label>
+                      <Input
+                        inputMode="numeric"
+                        value={form.order_min_quantity}
+                        onChange={(e) => setForm({ ...form, order_min_quantity: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Quantidade máxima</Label>
+                      <Input
+                        inputMode="numeric"
+                        value={form.order_max_quantity}
+                        onChange={(e) => setForm({ ...form, order_max_quantity: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Prazo de produção</Label>
+                      <Input
+                        placeholder="Ex.: 7 dias úteis"
+                        value={form.order_lead_time}
+                        onChange={(e) => setForm({ ...form, order_lead_time: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <Textarea
+                    rows={2}
+                    placeholder="Observações: cores, tamanhos, sabores..."
+                    value={form.order_notes}
+                    onChange={(e) => setForm({ ...form, order_notes: e.target.value })}
+                  />
+                  <ToggleRow
+                    label="Ativar preço progressivo por quantidade"
+                    checked={form.order_progressive_pricing}
+                    onChange={(v) => setForm({ ...form, order_progressive_pricing: v })}
+                  />
+                  {form.order_progressive_pricing ? (
+                    <div className="space-y-2">
+                      {orderTiers.map((tier, index) => (
+                        <div key={index} className="grid grid-cols-[1fr_1fr_auto] gap-2">
+                          <Input
+                            placeholder="A partir de"
+                            inputMode="numeric"
+                            value={tier.minQuantity}
+                            onChange={(e) =>
+                              setOrderTiers(
+                                orderTiers.map((item, i) =>
+                                  i === index ? { ...item, minQuantity: e.target.value } : item,
+                                ),
+                              )
+                            }
+                          />
+                          <Input
+                            placeholder="Preço/unidade"
+                            inputMode="decimal"
+                            value={tier.unitPrice}
+                            onChange={(e) =>
+                              setOrderTiers(
+                                orderTiers.map((item, i) =>
+                                  i === index ? { ...item, unitPrice: e.target.value } : item,
+                                ),
+                              )
+                            }
+                          />
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => setOrderTiers(orderTiers.filter((_, i) => i !== index))}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setOrderTiers([...orderTiers, { minQuantity: "", unitPrice: "" }])
+                        }
+                      >
+                        <Plus className="mr-1 size-4" /> Adicionar faixa
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
 
             <ToggleRow

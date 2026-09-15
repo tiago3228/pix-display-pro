@@ -10,6 +10,7 @@ import {
   Menu,
   Camera,
   Package,
+  PackageOpen,
   QrCode,
   Settings,
   ShieldCheck,
@@ -35,6 +36,7 @@ const NAV = [
   { to: "/produtos", label: "Produtos", short: "Produtos", icon: Package },
   { to: "/produtos-ia", label: "Cadastro por foto (IA)", short: "Foto IA", icon: Camera },
   { to: "/pedidos", label: "Pedidos", short: "Pedidos", icon: ShoppingCart },
+  { to: "/encomendas", label: "Encomendas", short: "Encomendas", icon: PackageOpen },
   { to: "/cobrancas", label: "Cobranças", short: "Cobranças", icon: Wallet },
 
   { to: "/faturamento", label: "Faturamento", short: "Faturamento", icon: BarChart3 },

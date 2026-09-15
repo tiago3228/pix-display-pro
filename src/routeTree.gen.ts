@@ -21,6 +21,7 @@ import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedCobrancasRouteImport } from './routes/_authenticated/cobrancas'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedEncomendasRouteImport } from './routes/_authenticated/encomendas'
 import { Route as AuthenticatedFaturamentoRouteImport } from './routes/_authenticated/faturamento'
 import { Route as AuthenticatedMinhaLojaRouteImport } from './routes/_authenticated/minha-loja'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -96,6 +97,11 @@ const AuthenticatedConfiguracoesRoute =
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEncomendasRoute = AuthenticatedEncomendasRouteImport.update({
+  id: '/encomendas',
+  path: '/encomendas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedFaturamentoRoute =
@@ -197,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/cobrancas': typeof AuthenticatedCobrancasRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/encomendas': typeof AuthenticatedEncomendasRoute
   '/faturamento': typeof AuthenticatedFaturamentoRoute
   '/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -226,6 +233,7 @@ export interface FileRoutesByTo {
   '/cobrancas': typeof AuthenticatedCobrancasRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/encomendas': typeof AuthenticatedEncomendasRoute
   '/faturamento': typeof AuthenticatedFaturamentoRoute
   '/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -257,6 +265,7 @@ export interface FileRoutesById {
   '/_authenticated/cobrancas': typeof AuthenticatedCobrancasRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/encomendas': typeof AuthenticatedEncomendasRoute
   '/_authenticated/faturamento': typeof AuthenticatedFaturamentoRoute
   '/_authenticated/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -288,6 +297,7 @@ export interface FileRouteTypes {
     | '/cobrancas'
     | '/configuracoes'
     | '/dashboard'
+    | '/encomendas'
     | '/faturamento'
     | '/minha-loja'
     | '/onboarding'
@@ -317,6 +327,7 @@ export interface FileRouteTypes {
     | '/cobrancas'
     | '/configuracoes'
     | '/dashboard'
+    | '/encomendas'
     | '/faturamento'
     | '/minha-loja'
     | '/onboarding'
@@ -347,6 +358,7 @@ export interface FileRouteTypes {
     | '/_authenticated/cobrancas'
     | '/_authenticated/configuracoes'
     | '/_authenticated/dashboard'
+    | '/_authenticated/encomendas'
     | '/_authenticated/faturamento'
     | '/_authenticated/minha-loja'
     | '/_authenticated/onboarding'
@@ -462,6 +474,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/encomendas': {
+      id: '/_authenticated/encomendas'
+      path: '/encomendas'
+      fullPath: '/encomendas'
+      preLoaderRoute: typeof AuthenticatedEncomendasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/faturamento': {
@@ -603,6 +622,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedCobrancasRoute: typeof AuthenticatedCobrancasRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedEncomendasRoute: typeof AuthenticatedEncomendasRoute
   AuthenticatedFaturamentoRoute: typeof AuthenticatedFaturamentoRoute
   AuthenticatedMinhaLojaRoute: typeof AuthenticatedMinhaLojaRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -620,6 +640,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCobrancasRoute: AuthenticatedCobrancasRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedEncomendasRoute: AuthenticatedEncomendasRoute,
   AuthenticatedFaturamentoRoute: AuthenticatedFaturamentoRoute,
   AuthenticatedMinhaLojaRoute: AuthenticatedMinhaLojaRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,

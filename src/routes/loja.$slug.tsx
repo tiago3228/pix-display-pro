@@ -11,6 +11,7 @@ import {
   Minus,
   MessageCircle,
   Plus,
+  PackageOpen,
   Share2,
   ShoppingBag,
   Store as StoreIcon,
@@ -34,6 +35,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { EncomendaDialog } from "@/components/EncomendaDialog";
 
 export const Route = createFileRoute("/loja/$slug")({
   loader: ({ params }) => getStorefront({ data: { slug: params.slug } }),
@@ -92,6 +94,7 @@ export function StorePage() {
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [selected, setSelected] = useState<StorefrontProduct | null>(null);
+  const [orderProduct, setOrderProduct] = useState<StorefrontProduct | null>(null);
   const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
   const [gallery, setGallery] = useState<StorefrontProduct | null>(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -141,7 +144,8 @@ export function StorePage() {
   function statusOf(product: StorefrontProduct) {
     if (!product.is_available) return "unavailable" as const;
     const stock = stockOf(product);
-    if (stock <= 0) return "sold_out" as const;
+    if (stock <= 0)
+      return product.orderEnabled ? ("sold_out_with_order" as const) : ("sold_out" as const);
     if (stock === 1) return "last" as const;
     return "ok" as const;
   }
@@ -387,6 +391,9 @@ export function StorePage() {
                       {status === "ok" && product.track_stock ? (
                         <Badge variant="secondary">{stockOf(product)} unidades disponíveis</Badge>
                       ) : null}
+                      {status === "sold_out_with_order" ? (
+                        <Badge variant="secondary">📦 Disponível para encomenda</Badge>
+                      ) : null}
                       {status === "sold_out" || status === "unavailable" ? (
                         <Badge variant="outline">Esgotado</Badge>
                       ) : null}
@@ -394,17 +401,33 @@ export function StorePage() {
 
                     <div className="mt-auto pt-2">
                       {product.has_variants ? (
-                        <Button
-                          size="sm"
-                          className="w-full"
-                          style={{ backgroundColor: "var(--vitrini-orange)" }}
-                          disabled={status === "sold_out" || status === "unavailable"}
-                          onClick={() => setSelected(product)}
-                        >
-                          Escolher opções
-                        </Button>
+                        <div className="space-y-2">
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            style={{ backgroundColor: "var(--vitrini-orange)" }}
+                            disabled={
+                              status === "sold_out" ||
+                              status === "sold_out_with_order" ||
+                              status === "unavailable"
+                            }
+                            onClick={() => setSelected(product)}
+                          >
+                            Escolher opções
+                          </Button>
+                          {product.orderEnabled ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full"
+                              onClick={() => setOrderProduct(product)}
+                            >
+                              <PackageOpen className="mr-1 size-4" /> Encomendar
+                            </Button>
+                          ) : null}
+                        </div>
                       ) : (
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <label className="sr-only" htmlFor={`quantity-${product.id}`}>
                             Quantidade de {product.name}
                           </label>
@@ -419,7 +442,11 @@ export function StorePage() {
                               }))
                             }
                             className="h-9 w-20 rounded-md border border-input bg-background px-2 text-sm font-medium"
-                            disabled={status === "sold_out" || status === "unavailable"}
+                            disabled={
+                              status === "sold_out" ||
+                              status === "sold_out_with_order" ||
+                              status === "unavailable"
+                            }
                           >
                             {Array.from(
                               { length: product.track_stock ? Math.min(stockOf(product), 20) : 20 },
@@ -434,11 +461,25 @@ export function StorePage() {
                             size="sm"
                             className="min-w-0 flex-1"
                             style={{ backgroundColor: "var(--vitrini-orange)" }}
-                            disabled={status === "sold_out" || status === "unavailable"}
+                            disabled={
+                              status === "sold_out" ||
+                              status === "sold_out_with_order" ||
+                              status === "unavailable"
+                            }
                             onClick={() => addSimple(product, productQuantities[product.id] ?? 1)}
                           >
-                            Adicionar
+                            Comprar
                           </Button>
+                          {product.orderEnabled ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="min-w-0 flex-1"
+                              onClick={() => setOrderProduct(product)}
+                            >
+                              <PackageOpen className="mr-1 size-4" /> Encomendar
+                            </Button>
+                          ) : null}
                         </div>
                       )}
                     </div>
@@ -522,6 +563,7 @@ export function StorePage() {
         </div>
       ) : null}
 
+      <EncomendaDialog product={orderProduct} onClose={() => setOrderProduct(null)} />
       <Dialog open={Boolean(gallery)} onOpenChange={(open) => !open && setGallery(null)}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto">
           <DialogHeader>

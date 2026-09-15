@@ -26,6 +26,14 @@ export type StorefrontProduct = {
   category_id: string | null;
   options: { id: string; name: string; values: string[] }[];
   variants: StorefrontVariant[];
+  orderEnabled: boolean;
+  orderUnitPrice: number | null;
+  orderMinQuantity: number;
+  orderMaxQuantity: number | null;
+  orderLeadTime: string | null;
+  orderNotes: string | null;
+  orderProgressivePricing: boolean;
+  orderTiers: { minQuantity: number; unitPrice: number }[];
 };
 
 export type Storefront = {
@@ -73,7 +81,7 @@ export const getStorefront = createServerFn({ method: "GET" })
       supabase
         .from("products")
         .select(
-          "id, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position",
+          "id, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing",
         )
         .eq("store_id", store.id)
         .eq("is_hidden", false)
@@ -88,7 +96,7 @@ export const getStorefront = createServerFn({ method: "GET" })
           .in("product_id", productIds)
           .order("position")
       : { data: [] as { product_id: string; image_url: string; position: number }[] };
-    const [{ data: options }, { data: variants }] = await Promise.all([
+    const [{ data: options }, { data: variants }, { data: orderTiers }] = await Promise.all([
       productIds.length
         ? supabase
             .from("product_options")
@@ -101,6 +109,13 @@ export const getStorefront = createServerFn({ method: "GET" })
             .from("product_variants")
             .select("id, product_id, label, price, stock, is_available")
             .in("product_id", productIds)
+        : Promise.resolve({ data: [] as never[] }),
+      productIds.length
+        ? supabase
+            .from("product_order_tiers")
+            .select("product_id, min_quantity, unit_price")
+            .in("product_id", productIds)
+            .order("min_quantity")
         : Promise.resolve({ data: [] as never[] }),
     ]);
 
@@ -195,6 +210,19 @@ export const getStorefront = createServerFn({ method: "GET" })
             stock: v.stock,
             is_available: v.is_available,
           })),
+        orderEnabled: Boolean(p.order_enabled),
+        orderUnitPrice: p.order_unit_price === null ? null : Number(p.order_unit_price),
+        orderMinQuantity: Number(p.order_min_quantity ?? 1),
+        orderMaxQuantity: p.order_max_quantity === null ? null : Number(p.order_max_quantity),
+        orderLeadTime: p.order_lead_time ?? null,
+        orderNotes: p.order_notes ?? null,
+        orderProgressivePricing: Boolean(p.order_progressive_pricing),
+        orderTiers: (orderTiers ?? [])
+          .filter((tier) => tier.product_id === p.id)
+          .map((tier) => ({
+            minQuantity: Number(tier.min_quantity),
+            unitPrice: Number(tier.unit_price),
+          })),
       })),
     };
   });
@@ -234,7 +262,9 @@ export const submitOrder = createServerFn({ method: "POST" })
 
     const { data: store } = await supabaseAdmin
       .from("stores")
-      .select("id, is_active, plan, pro_trial_ends_at, allow_installments, max_installments, min_installment_amount")
+      .select(
+        "id, is_active, plan, pro_trial_ends_at, allow_installments, max_installments, min_installment_amount",
+      )
       .eq("id", data.storeId)
       .maybeSingle();
     if (!store || !store.is_active) throw new Error("Loja indisponível");
