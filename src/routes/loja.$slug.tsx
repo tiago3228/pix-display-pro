@@ -109,10 +109,29 @@ export function StorePage() {
 
   const products = useMemo(() => {
     if (!data) return [];
-    if (activeCategory === "all") return data.products;
-    if (activeCategory === "featured") return data.products.filter((p) => p.is_featured);
-    return data.products.filter((p) => p.category_id === activeCategory);
+    const filtered =
+      activeCategory === "all"
+        ? data.products
+        : activeCategory === "featured"
+          ? data.products.filter((p) => p.is_featured)
+          : data.products.filter((p) => p.category_id === activeCategory);
+    return [...filtered].sort((a, b) => {
+      const stockA = a.track_stock ? stockOfProduct(a) : Number.POSITIVE_INFINITY;
+      const stockB = b.track_stock ? stockOfProduct(b) : Number.POSITIVE_INFINITY;
+      const availableA = a.is_available && (a.orderEnabled || stockA > 0);
+      const availableB = b.is_available && (b.orderEnabled || stockB > 0);
+      if (availableA !== availableB) return availableA ? -1 : 1;
+      if (stockA !== stockB) return stockB - stockA;
+      return a.name.localeCompare(b.name, "pt-BR");
+    });
   }, [data, activeCategory]);
+
+  function stockOfProduct(product: StorefrontProduct) {
+    if (!product.track_stock) return Number.POSITIVE_INFINITY;
+    if (product.has_variants)
+      return product.variants.reduce((sum, variant) => sum + Math.max(variant.stock, 0), 0);
+    return Math.max(product.stock, 0);
+  }
 
   const plans = useMemo(() => {
     if (!data?.store.allow_installments) return [];

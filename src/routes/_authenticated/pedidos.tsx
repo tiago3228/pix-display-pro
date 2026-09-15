@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileText, MessageCircle, Search } from "lucide-react";
+import { FileText, MessageCircle, Search, Trash2 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { getOrderReceiptUrl } from "@/lib/storefront.functions";
 import { toast } from "sonner";
@@ -70,6 +70,23 @@ function Orders() {
       return;
     }
     toast.success("Status atualizado.");
+    queryClient.invalidateQueries({ queryKey: ["orders", store?.id] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard", store?.id] });
+  }
+
+  async function deleteOrder(id: string, number: number) {
+    if (
+      !window.confirm(
+        `Excluir permanentemente o pedido #${number}? Esta ação não pode ser desfeita.`,
+      )
+    )
+      return;
+    const { error } = await supabase.from("orders").delete().eq("id", id).eq("store_id", store!.id);
+    if (error) {
+      toast.error("Não foi possível excluir o pedido.");
+      return;
+    }
+    toast.success("Pedido excluído.");
     queryClient.invalidateQueries({ queryKey: ["orders", store?.id] });
     queryClient.invalidateQueries({ queryKey: ["dashboard", store?.id] });
   }
@@ -175,6 +192,14 @@ function Orders() {
                   <FileText className="mr-1.5 size-4" /> Ver comprovante
                 </Button>
               ) : null}
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-destructive hover:text-destructive"
+                onClick={() => deleteOrder(order.id, order.number)}
+              >
+                <Trash2 className="mr-1.5 size-4" /> Excluir pedido
+              </Button>
             </div>
           </div>
         ))}
