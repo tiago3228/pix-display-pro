@@ -79,6 +79,7 @@ const PRO_FEATURES = [
 function Subscription() {
   const { data: store } = useMyStore();
   const pricing = useProPricing();
+  const plans = usePlansPricing();
   const queryClient = useQueryClient();
   const [confirmCancel, setConfirmCancel] = useState(false);
 
@@ -204,13 +205,13 @@ function Subscription() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <PlanCard
-          name="Gratuito"
-          price="R$ 0"
-          features={FREE_FEATURES}
+          name="Básica"
+          price={`${brl(plans.basicPrice)}/mês`}
+          features={BASIC_FEATURES}
           active={!isPro}
           footer={
             <Button className="mt-5 h-11 w-full" variant="outline" disabled>
-              {isPro ? "Disponível ao cancelar" : "Plano atual"}
+              {isPro ? "Disponível ao cancelar o PRO" : "Plano atual"}
             </Button>
           }
         />
