@@ -13,8 +13,8 @@ import {
   getMySubscription,
   startProSubscription,
 } from "@/lib/subscription.functions";
-import { brl, formatDay, FREE_PLAN_PRODUCT_LIMIT } from "@/lib/format";
-import { useProPricing } from "@/hooks/usePricing";
+import { brl, formatDay, BASIC_PLAN_PRODUCT_LIMIT, PRO_TRIAL_DAYS } from "@/lib/format";
+import { usePlansPricing, useProPricing } from "@/hooks/usePricing";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -59,8 +59,8 @@ const STATUS_LABEL: Record<string, string> = {
   expired: "Expirado",
 };
 
-const FREE_FEATURES = [
-  `Até ${FREE_PLAN_PRODUCT_LIMIT} produtos`,
+const BASIC_FEATURES = [
+  `Até ${BASIC_PLAN_PRODUCT_LIMIT} produtos`,
   "Vitrine pública com link e QR Code",
   "Pedidos pelo WhatsApp",
   "Pix à vista",
