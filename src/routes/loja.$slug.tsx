@@ -252,23 +252,23 @@ export function StorePage() {
 
   return (
     <div
-      className="min-h-screen bg-muted/30 pb-28"
-      style={{ ["--brand" as string]: store.primary_color }}
+      className="vitrini-storefront min-h-screen pb-28"
+      style={{ ["--brand" as string]: "var(--vitrini-orange)" }}
     >
       <header className="relative">
         <div
-          className="h-28 w-full sm:h-40"
+          className="h-36 w-full sm:h-52"
           style={{
             background: store.banner
               ? `center/cover url(${store.banner})`
-              : `linear-gradient(120deg, ${store.primary_color}, ${store.primary_color}88)`,
+              : "linear-gradient(120deg, #160d09 0%, #6b2d13 52%, #f47b20 150%)",
           }}
         />
         <div className="mx-auto max-w-3xl px-4">
-          <div className="surface -mt-10 flex items-start gap-4 p-4">
+          <div className="surface vitrini-glow -mt-12 flex items-start gap-4 p-4 sm:p-5">
             <div
-              className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl text-2xl font-bold text-white"
-              style={{ backgroundColor: store.primary_color }}
+              className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-2xl font-bold text-white sm:size-20"
+              style={{ backgroundColor: "var(--vitrini-orange)" }}
             >
               {store.logo ? (
                 <img src={store.logo} alt={store.name} className="size-full object-cover" />
@@ -277,8 +277,11 @@ export function StorePage() {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-lg font-bold">{store.name}</h1>
-              <p className="text-sm text-muted-foreground">{store.description}</p>
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.22em] text-orange-300">
+                VITRINI • LOJA ONLINE
+              </p>
+              <h1 className="truncate text-xl font-bold sm:text-2xl">{store.name}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">{store.description}</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <a
                   href={whatsappLink(store.whatsapp, `Olá, ${store.seller_name || store.name}!`)}
@@ -293,7 +296,7 @@ export function StorePage() {
                     href={`https://instagram.com/${store.instagram.replace("@", "")}`}
                     target="_blank"
                     rel="noopener"
-                    className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1 text-xs font-medium"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-orange-300/30 px-3 py-1 text-xs font-medium text-orange-100"
                   >
                     <Instagram className="size-3.5" /> Instagram
                   </a>
@@ -302,27 +305,25 @@ export function StorePage() {
             </div>
           </div>
           {store.welcome_message ? (
-            <p className="mt-3 text-center text-sm text-muted-foreground">
-              {store.welcome_message}
-            </p>
+            <p className="mt-3 text-center text-sm text-orange-100/75">{store.welcome_message}</p>
           ) : null}
         </div>
       </header>
 
-      <div className="sticky top-0 z-20 mt-4 bg-muted/80 py-2 backdrop-blur">
+      <div className="sticky top-0 z-20 mt-4 border-y border-orange-200/10 bg-[#21140f]/85 py-2 backdrop-blur">
         <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
           <CategoryChip
             label="Todos"
             active={activeCategory === "all"}
             onClick={() => setActiveCategory("all")}
-            color={store.primary_color}
+            color="var(--vitrini-orange)"
           />
           {data.products.some((p) => p.is_featured) ? (
             <CategoryChip
               label="Destaques"
               active={activeCategory === "featured"}
               onClick={() => setActiveCategory("featured")}
-              color={store.primary_color}
+              color="var(--vitrini-orange)"
             />
           ) : null}
           {data.categories.map((c) => (
@@ -331,13 +332,13 @@ export function StorePage() {
               label={c.name}
               active={activeCategory === c.id}
               onClick={() => setActiveCategory(c.id)}
-              color={store.primary_color}
+              color="var(--vitrini-orange)"
             />
           ))}
         </div>
       </div>
 
-      <main className="mx-auto mt-4 max-w-3xl px-4">
+      <main className="mx-auto mt-5 max-w-3xl px-4">
         {products.length === 0 ? (
           <div className="surface p-8 text-center text-sm text-muted-foreground">
             Nenhum produto por aqui ainda.
@@ -347,11 +348,14 @@ export function StorePage() {
             {products.map((product) => {
               const status = statusOf(product);
               return (
-                <article key={product.id} className="surface flex gap-3 p-3">
+                <article
+                  key={product.id}
+                  className="surface group flex gap-3 p-3 transition hover:-translate-y-0.5 hover:border-orange-300/30 sm:p-4"
+                >
                   <button
                     type="button"
                     aria-label={`Ver fotos de ${product.name}`}
-                    className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-muted"
+                    className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-muted sm:size-28"
                     onClick={() => product.images.length > 0 && setGallery(product)}
                   >
                     {product.image ? (
@@ -359,7 +363,7 @@ export function StorePage() {
                         src={product.image}
                         alt={product.name}
                         loading="lazy"
-                        className="size-full object-cover"
+                        className="size-full object-cover transition duration-500 group-hover:scale-105"
                       />
                     ) : (
                       <div className="flex size-full items-center justify-center text-muted-foreground">
@@ -393,7 +397,7 @@ export function StorePage() {
                         <Button
                           size="sm"
                           className="w-full"
-                          style={{ backgroundColor: store.primary_color }}
+                          style={{ backgroundColor: "var(--vitrini-orange)" }}
                           disabled={status === "sold_out" || status === "unavailable"}
                           onClick={() => setSelected(product)}
                         >
@@ -429,7 +433,7 @@ export function StorePage() {
                           <Button
                             size="sm"
                             className="min-w-0 flex-1"
-                            style={{ backgroundColor: store.primary_color }}
+                            style={{ backgroundColor: "var(--vitrini-orange)" }}
                             disabled={status === "sold_out" || status === "unavailable"}
                             onClick={() => addSimple(product, productQuantities[product.id] ?? 1)}
                           >
@@ -445,9 +449,16 @@ export function StorePage() {
           </div>
         )}
         <div className="mx-auto mt-8 flex max-w-sm flex-col items-center gap-2 rounded-2xl border border-border bg-card/60 p-3 text-center shadow-sm">
-          <p className="text-xs font-medium text-muted-foreground">Quer ter uma lojinha online como esta?</p>
+          <p className="text-xs font-medium text-muted-foreground">
+            Quer ter uma lojinha online como esta?
+          </p>
           <div className="flex w-full gap-2">
-            <Button asChild variant="secondary" size="sm" className="h-8 flex-1 gap-1.5 rounded-full text-xs">
+            <Button
+              asChild
+              variant="secondary"
+              size="sm"
+              className="h-8 flex-1 gap-1.5 rounded-full text-xs"
+            >
               <a
                 href="https://vitrini-br.lovable.app"
                 target="_blank"
@@ -463,7 +474,8 @@ export function StorePage() {
               className="h-8 flex-1 gap-1.5 rounded-full text-xs"
               onClick={async () => {
                 const url = "https://vitrini-br.lovable.app";
-                const text = "Conhece alguém que tem lojinha ou vende algo e ainda não está automatizada? Indique o Vitrini:";
+                const text =
+                  "Conhece alguém que tem lojinha ou vende algo e ainda não está automatizada? Indique o Vitrini:";
                 try {
                   if (navigator.share) {
                     await navigator.share({ title: "Vitrini", text, url });
@@ -498,7 +510,7 @@ export function StorePage() {
             <Button
               size="lg"
               className="h-12 flex-1"
-              style={{ backgroundColor: store.primary_color }}
+              style={{ backgroundColor: "var(--vitrini-orange)" }}
               onClick={() => {
                 setCartOpen(true);
                 void track({ data: { storeId: store.id, type: "checkout_started" } });
@@ -534,7 +546,7 @@ export function StorePage() {
 
       <VariantDialog
         product={selected}
-        color={store.primary_color}
+        color="var(--vitrini-orange)"
         onClose={() => setSelected(null)}
         onAdd={(item) => {
           cart.add(item);
@@ -775,7 +787,7 @@ export function StorePage() {
                 <>
                   <Button
                     className="h-12"
-                    style={{ backgroundColor: store.primary_color }}
+                    style={{ backgroundColor: "var(--vitrini-orange)" }}
                     onClick={() => setStep("checkout")}
                   >
                     Finalizar pedido
