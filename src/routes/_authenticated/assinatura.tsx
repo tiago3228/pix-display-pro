@@ -148,6 +148,19 @@ function Subscription() {
 
 
 
+      {data?.proSource === "trial" && data.trialEndsAt ? (
+        <div className="mb-4 rounded-lg border border-primary/40 bg-primary/5 p-4 text-sm">
+          <p className="font-semibold">
+            Você está nos {PRO_TRIAL_DAYS} dias grátis do PRO
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            O teste termina em {formatDay(data.trialEndsAt)}. Depois dessa data sua loja volta ao
+            plano Básica ({brl(plans.basicPrice)}/mês), a menos que você assine o PRO. Você pode
+            cancelar a qualquer momento.
+          </p>
+        </div>
+      ) : null}
+
       {subscription ? (
         <section className="surface mb-5 space-y-2 p-5">
           <div className="flex items-center justify-between">
