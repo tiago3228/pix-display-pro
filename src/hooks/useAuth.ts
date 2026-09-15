@@ -33,6 +33,7 @@ export type MyStore = {
   banner_url: string | null;
   primary_color: string;
   welcome_message: string;
+  share_message: string | null;
   pix_key_type: string;
   pix_key: string;
   plan: string;
