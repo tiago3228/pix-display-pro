@@ -98,7 +98,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "theme-color", content: "#21140F" },
+      { name: "theme-color", content: "#FFFFFF" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
@@ -133,7 +133,7 @@ function RootShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const queryClient = router.options.context.queryClient;
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className="clean">
       <head>
         <HeadContent />
       </head>

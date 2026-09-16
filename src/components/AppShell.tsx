@@ -26,6 +26,7 @@ import { brl } from "@/lib/format";
 
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
@@ -151,6 +152,9 @@ export function AppShell({
 
             <div className="flex shrink-0 items-center gap-2">
               {action}
+              <div className="hidden sm:block">
+                <ThemeToggle />
+              </div>
               {store && store.plan !== "pro" && pathname !== "/assinatura" ? (
                 <Button asChild size="sm" className="h-9 shrink-0">
                   <Link to="/assinatura">
@@ -215,6 +219,10 @@ export function AppShell({
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
               <div className="grid gap-1 px-4 pb-6">
+                <div className="mb-2 flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                  <span className="text-sm font-medium">Aparência</span>
+                  <ThemeToggle compact />
+                </div>
                 {store && store.plan !== "pro" ? (
                   <Link
                     to="/assinatura"
