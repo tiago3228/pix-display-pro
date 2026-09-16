@@ -19,6 +19,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedAssinaturaRouteImport } from './routes/_authenticated/assinatura'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedCobrancasRouteImport } from './routes/_authenticated/cobrancas'
+import { Route as AuthenticatedComoFuncionaRouteImport } from './routes/_authenticated/como-funciona'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEncomendasRouteImport } from './routes/_authenticated/encomendas'
@@ -88,6 +89,12 @@ const AuthenticatedCobrancasRoute = AuthenticatedCobrancasRouteImport.update({
   path: '/cobrancas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedComoFuncionaRoute =
+  AuthenticatedComoFuncionaRouteImport.update({
+    id: '/como-funciona',
+    path: '/como-funciona',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedConfiguracoesRoute =
   AuthenticatedConfiguracoesRouteImport.update({
     id: '/configuracoes',
@@ -201,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/assinatura': typeof AuthenticatedAssinaturaRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/cobrancas': typeof AuthenticatedCobrancasRoute
+  '/como-funciona': typeof AuthenticatedComoFuncionaRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/encomendas': typeof AuthenticatedEncomendasRoute
@@ -231,6 +239,7 @@ export interface FileRoutesByTo {
   '/assinatura': typeof AuthenticatedAssinaturaRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/cobrancas': typeof AuthenticatedCobrancasRoute
+  '/como-funciona': typeof AuthenticatedComoFuncionaRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/encomendas': typeof AuthenticatedEncomendasRoute
@@ -263,6 +272,7 @@ export interface FileRoutesById {
   '/_authenticated/assinatura': typeof AuthenticatedAssinaturaRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/cobrancas': typeof AuthenticatedCobrancasRoute
+  '/_authenticated/como-funciona': typeof AuthenticatedComoFuncionaRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/encomendas': typeof AuthenticatedEncomendasRoute
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
     | '/assinatura'
     | '/clientes'
     | '/cobrancas'
+    | '/como-funciona'
     | '/configuracoes'
     | '/dashboard'
     | '/encomendas'
@@ -325,6 +336,7 @@ export interface FileRouteTypes {
     | '/assinatura'
     | '/clientes'
     | '/cobrancas'
+    | '/como-funciona'
     | '/configuracoes'
     | '/dashboard'
     | '/encomendas'
@@ -356,6 +368,7 @@ export interface FileRouteTypes {
     | '/_authenticated/assinatura'
     | '/_authenticated/clientes'
     | '/_authenticated/cobrancas'
+    | '/_authenticated/como-funciona'
     | '/_authenticated/configuracoes'
     | '/_authenticated/dashboard'
     | '/_authenticated/encomendas'
@@ -460,6 +473,13 @@ declare module '@tanstack/react-router' {
       path: '/cobrancas'
       fullPath: '/cobrancas'
       preLoaderRoute: typeof AuthenticatedCobrancasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/como-funciona': {
+      id: '/_authenticated/como-funciona'
+      path: '/como-funciona'
+      fullPath: '/como-funciona'
+      preLoaderRoute: typeof AuthenticatedComoFuncionaRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/configuracoes': {
@@ -620,6 +640,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAssinaturaRoute: typeof AuthenticatedAssinaturaRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedCobrancasRoute: typeof AuthenticatedCobrancasRoute
+  AuthenticatedComoFuncionaRoute: typeof AuthenticatedComoFuncionaRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEncomendasRoute: typeof AuthenticatedEncomendasRoute
@@ -638,6 +659,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAssinaturaRoute: AuthenticatedAssinaturaRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedCobrancasRoute: AuthenticatedCobrancasRoute,
+  AuthenticatedComoFuncionaRoute: AuthenticatedComoFuncionaRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEncomendasRoute: AuthenticatedEncomendasRoute,

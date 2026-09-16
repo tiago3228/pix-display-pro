@@ -4,20 +4,18 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
   CreditCard,
+  HelpCircle,
   LayoutDashboard,
   LogOut,
-  Moon,
   Menu,
   Camera,
   Package,
-  PackageOpen,
   QrCode,
   Settings,
   ShieldCheck,
   ShoppingCart,
   Sparkles,
   Store,
-  Sun,
   Users,
   Wallet,
 } from "lucide-react";
@@ -36,7 +34,6 @@ const NAV = [
   { to: "/produtos", label: "Produtos", short: "Produtos", icon: Package },
   { to: "/produtos-ia", label: "Cadastro por foto (IA)", short: "Foto IA", icon: Camera },
   { to: "/pedidos", label: "Pedidos", short: "Pedidos", icon: ShoppingCart },
-  { to: "/encomendas", label: "Encomendas", short: "Encomendas", icon: PackageOpen },
   { to: "/cobrancas", label: "Cobranças", short: "Cobranças", icon: Wallet },
 
   { to: "/faturamento", label: "Faturamento", short: "Faturamento", icon: BarChart3 },
@@ -45,6 +42,7 @@ const NAV = [
   { to: "/clientes", label: "Clientes", short: "Clientes", icon: Users },
   { to: "/configuracoes", label: "Configurações", short: "Ajustes", icon: Settings },
   { to: "/assinatura", label: "Assinatura", short: "PRO", icon: CreditCard },
+  { to: "/como-funciona", label: "Como funciona", short: "Ajuda", icon: HelpCircle },
 ] as const;
 
 const MOBILE_NAV = NAV.slice(0, 4);
@@ -68,7 +66,6 @@ export function AppShell({
   const { data: store, isLoading: storeLoading } = useMyStore();
   const { price: proPrice } = useProPricing();
   const [moreOpen, setMoreOpen] = useState(false);
-  const [cleanMode, setCleanMode] = useState(false);
 
   useEffect(() => {
     if (adminLoading || storeLoading) return;
@@ -77,26 +74,6 @@ export function AppShell({
       navigate({ to: "/onboarding", replace: true });
     }
   }, [store, storeLoading, isAdmin, adminLoading, navigate]);
-
-  useEffect(() => {
-    const saved = window.localStorage.getItem("vitrini-theme");
-    const isClean = saved !== "dark";
-    setCleanMode(isClean);
-    document.documentElement.classList.toggle("clean", isClean);
-    document
-      .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", isClean ? "#f8f8f6" : "#21140f");
-  }, []);
-
-  function toggleTheme() {
-    const nextIsClean = !cleanMode;
-    setCleanMode(nextIsClean);
-    window.localStorage.setItem("vitrini-theme", nextIsClean ? "clean" : "dark");
-    document.documentElement.classList.toggle("clean", nextIsClean);
-    document
-      .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", nextIsClean ? "#f8f8f6" : "#21140f");
-  }
 
   async function signOut() {
     await queryClient.cancelQueries();
@@ -108,15 +85,12 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-muted/30">
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-border bg-sidebar px-3 py-4 lg:flex">
-        <a
-          href="https://vitrini-br.lovable.app/"
-          className="mb-6 flex items-center gap-2 px-2 font-semibold"
-        >
+        <Link to="/dashboard" className="mb-6 flex items-center gap-2 px-2 font-semibold">
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Store className="size-4" />
           </span>
           <span className="font-[family-name:var(--font-display)]">Vitrini</span>
-        </a>
+        </Link>
         <nav className="flex-1 space-y-1">
           {NAV.map((item) => (
             <Link
@@ -177,18 +151,6 @@ export function AppShell({
 
             <div className="flex shrink-0 items-center gap-2">
               {action}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-9 gap-1.5 px-2.5 sm:px-3"
-                aria-label={cleanMode ? "Ativar modo dark" : "Ativar modo clean"}
-                aria-pressed={!cleanMode}
-                onClick={toggleTheme}
-              >
-                {cleanMode ? <Moon className="size-4" /> : <Sun className="size-4" />}
-                <span className="hidden text-xs sm:inline">{cleanMode ? "Dark" : "Clean"}</span>
-              </Button>
               {store && store.plan !== "pro" && pathname !== "/assinatura" ? (
                 <Button asChild size="sm" className="h-9 shrink-0">
                   <Link to="/assinatura">
