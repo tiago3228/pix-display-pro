@@ -76,6 +76,9 @@ function Admin() {
 
       <div className="mb-4 grid gap-2 sm:grid-cols-4">
         <Button asChild variant="outline" size="sm">
+          <Link to="/admin/assinaturas">Lojas e assinaturas</Link>
+        </Button>
+        <Button asChild variant="outline" size="sm">
           <Link to="/admin/faturamento">Faturamento</Link>
         </Button>
         <Button asChild variant="outline" size="sm">
