@@ -15,7 +15,7 @@ import { formatDate, whatsappLink } from "@/lib/format";
 import { ADMIN_TEMPLATES, fillTemplate } from "@/lib/campaigns";
 import { listAdminCampaignStores, type AdminCampaignStore } from "@/lib/admin-campaigns.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/lojas")({
+export const Route = createFileRoute("/_authenticated/admin_/lojas")({
   head: () => ({
     meta: [
       { title: "Lojas e campanhas | Vitrini" },

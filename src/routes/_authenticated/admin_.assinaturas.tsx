@@ -20,7 +20,7 @@ import {
   type AdminStoreOverview,
 } from "@/lib/admin-stores.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/assinaturas")({
+export const Route = createFileRoute("/_authenticated/admin_/assinaturas")({
   head: () => ({
     meta: [
       { title: "Lojas e assinaturas | Vitrini" },

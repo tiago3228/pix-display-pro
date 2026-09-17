@@ -17,7 +17,7 @@ import {
   getAdminRevenue,
 } from "@/lib/revenue.functions";
 
-export const Route = createFileRoute("/_authenticated/admin/faturamento")({
+export const Route = createFileRoute("/_authenticated/admin_/faturamento")({
   head: () => ({
     meta: [
       { title: "Faturamento da plataforma | Vitrini" },

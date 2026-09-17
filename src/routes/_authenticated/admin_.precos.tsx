@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 
-export const Route = createFileRoute("/_authenticated/admin/precos")({
+export const Route = createFileRoute("/_authenticated/admin_/precos")({
   head: () => ({
     meta: [
       { title: "Preços do Vitrini PRO | Vitrini" },

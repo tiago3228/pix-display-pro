@@ -33,11 +33,11 @@ import { Route as AuthenticatedQrcodesRouteImport } from './routes/_authenticate
 import { Route as CobrancaTokenRouteImport } from './routes/cobranca.$token'
 import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
 import { Route as SSlugRouteImport } from './routes/s.$slug'
-import { Route as AuthenticatedAdminAssinaturasRouteImport } from './routes/_authenticated/admin.assinaturas'
-import { Route as AuthenticatedAdminFaturamentoRouteImport } from './routes/_authenticated/admin.faturamento'
-import { Route as AuthenticatedAdminLandingRouteImport } from './routes/_authenticated/admin.landing'
-import { Route as AuthenticatedAdminLojasRouteImport } from './routes/_authenticated/admin.lojas'
-import { Route as AuthenticatedAdminPrecosRouteImport } from './routes/_authenticated/admin.precos'
+import { Route as AuthenticatedAdminAssinaturasRouteImport } from './routes/_authenticated/admin_.assinaturas'
+import { Route as AuthenticatedAdminFaturamentoRouteImport } from './routes/_authenticated/admin_.faturamento'
+import { Route as AuthenticatedAdminLandingRouteImport } from './routes/_authenticated/admin_.landing'
+import { Route as AuthenticatedAdminLojasRouteImport } from './routes/_authenticated/admin_.lojas'
+import { Route as AuthenticatedAdminPrecosRouteImport } from './routes/_authenticated/admin_.precos'
 import { Route as AuthenticatedAdminSolicitacoesProRouteImport } from './routes/_authenticated/admin_.solicitacoes-pro'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public/webhooks/mercadopago'
 
@@ -165,32 +165,32 @@ const SSlugRoute = SSlugRouteImport.update({
 } as any)
 const AuthenticatedAdminAssinaturasRoute =
   AuthenticatedAdminAssinaturasRouteImport.update({
-    id: '/assinaturas',
-    path: '/assinaturas',
-    getParentRoute: () => AuthenticatedAdminRoute,
+    id: '/admin_/assinaturas',
+    path: '/admin/assinaturas',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminFaturamentoRoute =
   AuthenticatedAdminFaturamentoRouteImport.update({
-    id: '/faturamento',
-    path: '/faturamento',
-    getParentRoute: () => AuthenticatedAdminRoute,
+    id: '/admin_/faturamento',
+    path: '/admin/faturamento',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminLandingRoute =
   AuthenticatedAdminLandingRouteImport.update({
-    id: '/landing',
-    path: '/landing',
-    getParentRoute: () => AuthenticatedAdminRoute,
+    id: '/admin_/landing',
+    path: '/admin/landing',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminLojasRoute = AuthenticatedAdminLojasRouteImport.update({
-  id: '/lojas',
-  path: '/lojas',
-  getParentRoute: () => AuthenticatedAdminRoute,
+  id: '/admin_/lojas',
+  path: '/admin/lojas',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedAdminPrecosRoute =
   AuthenticatedAdminPrecosRouteImport.update({
-    id: '/precos',
-    path: '/precos',
-    getParentRoute: () => AuthenticatedAdminRoute,
+    id: '/admin_/precos',
+    path: '/admin/precos',
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAdminSolicitacoesProRoute =
   AuthenticatedAdminSolicitacoesProRouteImport.update({
@@ -211,7 +211,7 @@ export interface FileRoutesByFullPath {
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/admin': typeof AuthenticatedAdminRoute
   '/assinatura': typeof AuthenticatedAssinaturaRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/cobrancas': typeof AuthenticatedCobrancasRoute
@@ -243,7 +243,7 @@ export interface FileRoutesByTo {
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/admin': typeof AuthenticatedAdminRoute
   '/assinatura': typeof AuthenticatedAssinaturaRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/cobrancas': typeof AuthenticatedCobrancasRoute
@@ -277,7 +277,7 @@ export interface FileRoutesById {
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/assinatura': typeof AuthenticatedAssinaturaRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/cobrancas': typeof AuthenticatedCobrancasRoute
@@ -295,11 +295,11 @@ export interface FileRoutesById {
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
   '/s/$slug': typeof SSlugRoute
-  '/_authenticated/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
-  '/_authenticated/admin/faturamento': typeof AuthenticatedAdminFaturamentoRoute
-  '/_authenticated/admin/landing': typeof AuthenticatedAdminLandingRoute
-  '/_authenticated/admin/lojas': typeof AuthenticatedAdminLojasRoute
-  '/_authenticated/admin/precos': typeof AuthenticatedAdminPrecosRoute
+  '/_authenticated/admin_/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
+  '/_authenticated/admin_/faturamento': typeof AuthenticatedAdminFaturamentoRoute
+  '/_authenticated/admin_/landing': typeof AuthenticatedAdminLandingRoute
+  '/_authenticated/admin_/lojas': typeof AuthenticatedAdminLojasRoute
+  '/_authenticated/admin_/precos': typeof AuthenticatedAdminPrecosRoute
   '/_authenticated/admin_/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
@@ -394,11 +394,11 @@ export interface FileRouteTypes {
     | '/cobranca/$token'
     | '/loja/$slug'
     | '/s/$slug'
-    | '/_authenticated/admin/assinaturas'
-    | '/_authenticated/admin/faturamento'
-    | '/_authenticated/admin/landing'
-    | '/_authenticated/admin/lojas'
-    | '/_authenticated/admin/precos'
+    | '/_authenticated/admin_/assinaturas'
+    | '/_authenticated/admin_/faturamento'
+    | '/_authenticated/admin_/landing'
+    | '/_authenticated/admin_/lojas'
+    | '/_authenticated/admin_/precos'
     | '/_authenticated/admin_/solicitacoes-pro'
     | '/api/public/webhooks/mercadopago'
   fileRoutesById: FileRoutesById
@@ -586,40 +586,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/admin/assinaturas': {
-      id: '/_authenticated/admin/assinaturas'
-      path: '/assinaturas'
+    '/_authenticated/admin_/assinaturas': {
+      id: '/_authenticated/admin_/assinaturas'
+      path: '/admin/assinaturas'
       fullPath: '/admin/assinaturas'
       preLoaderRoute: typeof AuthenticatedAdminAssinaturasRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/faturamento': {
-      id: '/_authenticated/admin/faturamento'
-      path: '/faturamento'
+    '/_authenticated/admin_/faturamento': {
+      id: '/_authenticated/admin_/faturamento'
+      path: '/admin/faturamento'
       fullPath: '/admin/faturamento'
       preLoaderRoute: typeof AuthenticatedAdminFaturamentoRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/landing': {
-      id: '/_authenticated/admin/landing'
-      path: '/landing'
+    '/_authenticated/admin_/landing': {
+      id: '/_authenticated/admin_/landing'
+      path: '/admin/landing'
       fullPath: '/admin/landing'
       preLoaderRoute: typeof AuthenticatedAdminLandingRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/lojas': {
-      id: '/_authenticated/admin/lojas'
-      path: '/lojas'
+    '/_authenticated/admin_/lojas': {
+      id: '/_authenticated/admin_/lojas'
+      path: '/admin/lojas'
       fullPath: '/admin/lojas'
       preLoaderRoute: typeof AuthenticatedAdminLojasRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/admin/precos': {
-      id: '/_authenticated/admin/precos'
-      path: '/precos'
+    '/_authenticated/admin_/precos': {
+      id: '/_authenticated/admin_/precos'
+      path: '/admin/precos'
       fullPath: '/admin/precos'
       preLoaderRoute: typeof AuthenticatedAdminPrecosRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin_/solicitacoes-pro': {
       id: '/_authenticated/admin_/solicitacoes-pro'
@@ -638,27 +638,8 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminAssinaturasRoute: typeof AuthenticatedAdminAssinaturasRoute
-  AuthenticatedAdminFaturamentoRoute: typeof AuthenticatedAdminFaturamentoRoute
-  AuthenticatedAdminLandingRoute: typeof AuthenticatedAdminLandingRoute
-  AuthenticatedAdminLojasRoute: typeof AuthenticatedAdminLojasRoute
-  AuthenticatedAdminPrecosRoute: typeof AuthenticatedAdminPrecosRoute
-}
-
-const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
-  AuthenticatedAdminAssinaturasRoute: AuthenticatedAdminAssinaturasRoute,
-  AuthenticatedAdminFaturamentoRoute: AuthenticatedAdminFaturamentoRoute,
-  AuthenticatedAdminLandingRoute: AuthenticatedAdminLandingRoute,
-  AuthenticatedAdminLojasRoute: AuthenticatedAdminLojasRoute,
-  AuthenticatedAdminPrecosRoute: AuthenticatedAdminPrecosRoute,
-}
-
-const AuthenticatedAdminRouteWithChildren =
-  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
-
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAssinaturaRoute: typeof AuthenticatedAssinaturaRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedCobrancasRoute: typeof AuthenticatedCobrancasRoute
@@ -673,11 +654,16 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRoute
   AuthenticatedProdutosIaRoute: typeof AuthenticatedProdutosIaRoute
   AuthenticatedQrcodesRoute: typeof AuthenticatedQrcodesRoute
+  AuthenticatedAdminAssinaturasRoute: typeof AuthenticatedAdminAssinaturasRoute
+  AuthenticatedAdminFaturamentoRoute: typeof AuthenticatedAdminFaturamentoRoute
+  AuthenticatedAdminLandingRoute: typeof AuthenticatedAdminLandingRoute
+  AuthenticatedAdminLojasRoute: typeof AuthenticatedAdminLojasRoute
+  AuthenticatedAdminPrecosRoute: typeof AuthenticatedAdminPrecosRoute
   AuthenticatedAdminSolicitacoesProRoute: typeof AuthenticatedAdminSolicitacoesProRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAssinaturaRoute: AuthenticatedAssinaturaRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedCobrancasRoute: AuthenticatedCobrancasRoute,
@@ -692,6 +678,11 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProdutosRoute: AuthenticatedProdutosRoute,
   AuthenticatedProdutosIaRoute: AuthenticatedProdutosIaRoute,
   AuthenticatedQrcodesRoute: AuthenticatedQrcodesRoute,
+  AuthenticatedAdminAssinaturasRoute: AuthenticatedAdminAssinaturasRoute,
+  AuthenticatedAdminFaturamentoRoute: AuthenticatedAdminFaturamentoRoute,
+  AuthenticatedAdminLandingRoute: AuthenticatedAdminLandingRoute,
+  AuthenticatedAdminLojasRoute: AuthenticatedAdminLojasRoute,
+  AuthenticatedAdminPrecosRoute: AuthenticatedAdminPrecosRoute,
   AuthenticatedAdminSolicitacoesProRoute:
     AuthenticatedAdminSolicitacoesProRoute,
 }
