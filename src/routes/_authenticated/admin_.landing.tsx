@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-export const Route = createFileRoute("/_authenticated/admin/landing")({
+export const Route = createFileRoute("/_authenticated/admin_/landing")({
   head: () => ({
     meta: [
       { title: "Banner principal | Vitrini" },
