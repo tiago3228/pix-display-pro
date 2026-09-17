@@ -119,7 +119,7 @@ export const submitEncomenda = createServerFn({ method: "POST" })
     const { data: product } = await db
       .from("products")
       .select(
-        "id, store_id, name, price, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time",
+        "id, store_id, name, price, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_progressive_pricing",
       )
       .eq("id", data.productId)
       .maybeSingle();

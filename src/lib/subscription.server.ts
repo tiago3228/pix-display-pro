@@ -172,7 +172,12 @@ export async function syncFromPreapproval(
     requireDatabaseResult(insertResult, "SUBSCRIPTION_INSERT");
   }
 
-  const plan = await applyPlanToStore(storeId, status, graceUntil, subscriptionPlan);
+  const plan = await applyPlanToStore(
+    storeId,
+    status,
+    graceUntil,
+    subscriptionPlan === "pro" ? "pro" : "basica",
+  );
   await logAudit({
     storeId,
     action: `subscription_${status}`,
