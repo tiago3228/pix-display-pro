@@ -313,6 +313,91 @@ export type Database = {
           },
         ]
       }
+      encomendas: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          customer_name: string
+          customer_note: string | null
+          customer_whatsapp: string
+          discount: number
+          id: string
+          lead_time: string | null
+          number: number
+          owner_note: string | null
+          product_id: string
+          quantity: number
+          regular_unit_price: number
+          status: string
+          store_id: string
+          total: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string
+          customer_note?: string | null
+          customer_whatsapp?: string
+          discount?: number
+          id?: string
+          lead_time?: string | null
+          number?: number
+          owner_note?: string | null
+          product_id: string
+          quantity: number
+          regular_unit_price: number
+          status?: string
+          store_id: string
+          total: number
+          unit_price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          customer_name?: string
+          customer_note?: string | null
+          customer_whatsapp?: string
+          discount?: number
+          id?: string
+          lead_time?: string | null
+          number?: number
+          owner_note?: string | null
+          product_id?: string
+          quantity?: number
+          regular_unit_price?: number
+          status?: string
+          store_id?: string
+          total?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "encomendas_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "encomendas_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "encomendas_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       installments: {
         Row: {
           amount: number
@@ -952,6 +1037,38 @@ export type Database = {
           },
         ]
       }
+      product_order_tiers: {
+        Row: {
+          created_at: string
+          id: string
+          min_quantity: number
+          product_id: string
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          min_quantity: number
+          product_id: string
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          min_quantity?: number
+          product_id?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_order_tiers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_variants: {
         Row: {
           id: string
@@ -1001,6 +1118,13 @@ export type Database = {
           is_featured: boolean
           is_hidden: boolean
           name: string
+          order_enabled: boolean
+          order_lead_time: string | null
+          order_max_quantity: number | null
+          order_min_quantity: number
+          order_notes: string | null
+          order_progressive_pricing: boolean
+          order_unit_price: number | null
           original_price: number | null
           position: number
           price: number
@@ -1023,6 +1147,13 @@ export type Database = {
           is_featured?: boolean
           is_hidden?: boolean
           name: string
+          order_enabled?: boolean
+          order_lead_time?: string | null
+          order_max_quantity?: number | null
+          order_min_quantity?: number
+          order_notes?: string | null
+          order_progressive_pricing?: boolean
+          order_unit_price?: number | null
           original_price?: number | null
           position?: number
           price?: number
@@ -1045,6 +1176,13 @@ export type Database = {
           is_featured?: boolean
           is_hidden?: boolean
           name?: string
+          order_enabled?: boolean
+          order_lead_time?: string | null
+          order_max_quantity?: number | null
+          order_min_quantity?: number
+          order_notes?: string | null
+          order_progressive_pricing?: boolean
+          order_unit_price?: number | null
           original_price?: number | null
           position?: number
           price?: number
