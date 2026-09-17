@@ -33,6 +33,7 @@ import { Route as AuthenticatedQrcodesRouteImport } from './routes/_authenticate
 import { Route as CobrancaTokenRouteImport } from './routes/cobranca.$token'
 import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
 import { Route as SSlugRouteImport } from './routes/s.$slug'
+import { Route as AuthenticatedAdminAssinaturasRouteImport } from './routes/_authenticated/admin.assinaturas'
 import { Route as AuthenticatedAdminFaturamentoRouteImport } from './routes/_authenticated/admin.faturamento'
 import { Route as AuthenticatedAdminLandingRouteImport } from './routes/_authenticated/admin.landing'
 import { Route as AuthenticatedAdminLojasRouteImport } from './routes/_authenticated/admin.lojas'
@@ -162,6 +163,12 @@ const SSlugRoute = SSlugRouteImport.update({
   path: '/s/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAdminAssinaturasRoute =
+  AuthenticatedAdminAssinaturasRouteImport.update({
+    id: '/assinaturas',
+    path: '/assinaturas',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminFaturamentoRoute =
   AuthenticatedAdminFaturamentoRouteImport.update({
     id: '/faturamento',
@@ -222,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
   '/s/$slug': typeof SSlugRoute
+  '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
   '/admin/faturamento': typeof AuthenticatedAdminFaturamentoRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/admin/lojas': typeof AuthenticatedAdminLojasRoute
@@ -253,6 +261,7 @@ export interface FileRoutesByTo {
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
   '/s/$slug': typeof SSlugRoute
+  '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
   '/admin/faturamento': typeof AuthenticatedAdminFaturamentoRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/admin/lojas': typeof AuthenticatedAdminLojasRoute
@@ -286,6 +295,7 @@ export interface FileRoutesById {
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
   '/s/$slug': typeof SSlugRoute
+  '/_authenticated/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
   '/_authenticated/admin/faturamento': typeof AuthenticatedAdminFaturamentoRoute
   '/_authenticated/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/_authenticated/admin/lojas': typeof AuthenticatedAdminLojasRoute
@@ -319,6 +329,7 @@ export interface FileRouteTypes {
     | '/cobranca/$token'
     | '/loja/$slug'
     | '/s/$slug'
+    | '/admin/assinaturas'
     | '/admin/faturamento'
     | '/admin/landing'
     | '/admin/lojas'
@@ -350,6 +361,7 @@ export interface FileRouteTypes {
     | '/cobranca/$token'
     | '/loja/$slug'
     | '/s/$slug'
+    | '/admin/assinaturas'
     | '/admin/faturamento'
     | '/admin/landing'
     | '/admin/lojas'
@@ -382,6 +394,7 @@ export interface FileRouteTypes {
     | '/cobranca/$token'
     | '/loja/$slug'
     | '/s/$slug'
+    | '/_authenticated/admin/assinaturas'
     | '/_authenticated/admin/faturamento'
     | '/_authenticated/admin/landing'
     | '/_authenticated/admin/lojas'
@@ -573,6 +586,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/assinaturas': {
+      id: '/_authenticated/admin/assinaturas'
+      path: '/assinaturas'
+      fullPath: '/admin/assinaturas'
+      preLoaderRoute: typeof AuthenticatedAdminAssinaturasRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/faturamento': {
       id: '/_authenticated/admin/faturamento'
       path: '/faturamento'
@@ -619,6 +639,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedAdminRouteChildren {
+  AuthenticatedAdminAssinaturasRoute: typeof AuthenticatedAdminAssinaturasRoute
   AuthenticatedAdminFaturamentoRoute: typeof AuthenticatedAdminFaturamentoRoute
   AuthenticatedAdminLandingRoute: typeof AuthenticatedAdminLandingRoute
   AuthenticatedAdminLojasRoute: typeof AuthenticatedAdminLojasRoute
@@ -626,6 +647,7 @@ interface AuthenticatedAdminRouteChildren {
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
+  AuthenticatedAdminAssinaturasRoute: AuthenticatedAdminAssinaturasRoute,
   AuthenticatedAdminFaturamentoRoute: AuthenticatedAdminFaturamentoRoute,
   AuthenticatedAdminLandingRoute: AuthenticatedAdminLandingRoute,
   AuthenticatedAdminLojasRoute: AuthenticatedAdminLojasRoute,
