@@ -76,19 +76,19 @@ function Admin() {
 
       <div className="mb-4 grid gap-2 sm:grid-cols-4">
         <Button asChild variant="outline" size="sm">
-          <Link to="/admin/assinaturas">Lojas e assinaturas</Link>
+          <a href="/admin/assinaturas">Lojas e assinaturas</a>
         </Button>
         <Button asChild variant="outline" size="sm">
-          <Link to="/admin/faturamento">Faturamento</Link>
+          <a href="/admin/faturamento">Faturamento</a>
         </Button>
         <Button asChild variant="outline" size="sm">
-          <Link to="/admin/precos">Preços e promoções</Link>
+          <a href="/admin/precos">Preços e promoções</a>
         </Button>
         <Button asChild variant="outline" size="sm">
-          <Link to="/admin/landing">Banner principal</Link>
+          <a href="/admin/landing">Banner principal</a>
         </Button>
         <Button asChild variant="outline" size="sm">
-          <Link to="/admin/lojas">Lojas e campanhas</Link>
+          <a href="/admin/lojas">Lojas e campanhas</a>
         </Button>
       </div>
 
@@ -97,7 +97,6 @@ function Admin() {
         <StatCard label="Assinantes Pro" value={String(pro)} />
         <StatCard label="Pedidos" value={String(data?.orders ?? 0)} />
       </div>
-
 
       <div className="surface mt-4 divide-y divide-border p-4">
         {(data?.stores ?? []).map((store) => (
