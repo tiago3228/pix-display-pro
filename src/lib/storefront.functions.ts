@@ -271,14 +271,16 @@ export const submitOrder = createServerFn({ method: "POST" })
 
     const { data: products } = await supabaseAdmin
       .from("products")
-      .select("id, name, price, store_id, is_hidden, stock, track_stock, has_variants")
+      .select(
+        "id, name, price, store_id, is_hidden, is_available, order_enabled, stock, track_stock, has_variants",
+      )
       .in(
         "id",
         data.items.map((i) => i.productId),
       );
     const { data: variants } = await supabaseAdmin
       .from("product_variants")
-      .select("id, product_id, label, price, stock")
+      .select("id, product_id, label, price, stock, is_available")
       .in(
         "id",
         data.items.map((i) => i.variantId).filter((v): v is string => Boolean(v)),
@@ -287,10 +289,22 @@ export const submitOrder = createServerFn({ method: "POST" })
     // Prices always come from the database, never from the browser payload.
     const items = data.items.map((item) => {
       const product = (products ?? []).find(
-        (p) => p.id === item.productId && p.store_id === store.id && !p.is_hidden,
+        (p) =>
+          p.id === item.productId &&
+          p.store_id === store.id &&
+          !p.is_hidden &&
+          p.is_available &&
+          p.order_enabled,
       );
-      if (!product) throw new Error("Produto inválido");
-      const variant = (variants ?? []).find((v) => v.id === item.variantId);
+      if (!product) throw new Error("Produto indisponível para pedido");
+      const variant = item.variantId
+        ? (variants ?? []).find((v) => v.id === item.variantId && v.product_id === product.id)
+        : null;
+      if (item.variantId && !variant) throw new Error("Variação de produto inválida");
+      if (product.has_variants && !variant)
+        throw new Error(`Selecione uma variação para "${product.name}".`);
+      if (variant && !variant.is_available)
+        throw new Error(`A variação "${variant.label}" está indisponível.`);
       const unitPrice = Number(variant?.price ?? product.price);
       return {
         product_id: product.id,
@@ -322,7 +336,13 @@ export const submitOrder = createServerFn({ method: "POST" })
     for (const item of data.items) {
       const product = (products ?? []).find((p) => p.id === item.productId);
       if (!product?.track_stock) continue;
-      const variant = (variants ?? []).find((v) => v.id === item.variantId);
+      const variant = item.variantId
+        ? (variants ?? []).find((v) => v.id === item.variantId && v.product_id === product.id)
+        : null;
+      if (product.has_variants && !variant) {
+        await rollback();
+        throw new Error(`Selecione uma variação para "${product.name}".`);
+      }
       const table = variant ? ("product_variants" as const) : ("products" as const);
       const rowId = variant ? variant.id : product.id;
       const current = variant ? variant.stock : product.stock;
@@ -408,16 +428,21 @@ export const submitOrder = createServerFn({ method: "POST" })
       throw new Error(error.message);
     }
 
-    await supabaseAdmin
+    const { error: itemsError } = await supabaseAdmin
       .from("order_items")
       .insert(items.map((i) => ({ ...i, order_id: order.id })));
+    if (itemsError) {
+      await supabaseAdmin.from("orders").delete().eq("id", order.id);
+      await rollback();
+      throw new Error("Não foi possível registrar os itens do pedido.");
+    }
 
     if (installmentCount > 1) {
       const { splitInstallments, FIRST_DUE_OFFSET_DAYS, INSTALLMENT_INTERVAL_DAYS } =
         await import("./format");
       const values = splitInstallments(total, installmentCount);
       const today = new Date();
-      await supabaseAdmin.from("installments").insert(
+      const { error: installmentsError } = await supabaseAdmin.from("installments").insert(
         values.map((amount, index) => {
           const due = new Date(today);
           // Parcela 1 vence em +30 dias, parcela 2 em +60, e assim por diante.
@@ -434,6 +459,12 @@ export const submitOrder = createServerFn({ method: "POST" })
           };
         }),
       );
+      if (installmentsError) {
+        await supabaseAdmin.from("order_items").delete().eq("order_id", order.id);
+        await supabaseAdmin.from("orders").delete().eq("id", order.id);
+        await rollback();
+        throw new Error("Não foi possível registrar o parcelamento.");
+      }
       await supabaseAdmin.from("audit_logs").insert({
         store_id: store.id,
         action: "installments_created",
