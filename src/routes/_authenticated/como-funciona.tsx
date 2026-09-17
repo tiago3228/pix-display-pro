@@ -110,15 +110,16 @@ const SECTIONS: TutorialSection[] = [
         action: "Ir para Produtos",
       },
       {
-        title: "Use o cadastro por foto com IA",
-        description: "Envie uma foto do produto para acelerar a criação do cadastro.",
+        title: "Cadastrar produtos com IA",
+        description:
+          "Envie uma foto de uma página ou catálogo para acelerar a criação dos cadastros.",
         details: [
           "Revise o nome, preço e descrição sugeridos pela IA.",
           "Confirme os dados antes de publicar.",
           "A ferramenta ajuda no cadastro, mas a conferência final é sua.",
         ],
         to: "/produtos-ia",
-        action: "Ir para Cadastro por foto",
+        action: "Ir para Cadastrar com IA",
       },
     ],
   },

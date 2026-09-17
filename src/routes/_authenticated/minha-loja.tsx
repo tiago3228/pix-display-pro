@@ -13,6 +13,12 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
+  DEFAULT_SHARE_MESSAGE,
+  StoreWhatsAppShare,
+  buildStoreShareMessage,
+  getStorePublicUrl,
+} from "@/components/StoreWhatsAppShare";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -43,6 +49,7 @@ function MyStore() {
     whatsapp: "",
     instagram: "",
     welcome_message: "",
+    share_message: DEFAULT_SHARE_MESSAGE,
     primary_color: "#0f766e",
     pix_key_type: "email",
     pix_key: "",
@@ -64,6 +71,7 @@ function MyStore() {
       whatsapp: store.whatsapp,
       instagram: store.instagram ?? "",
       welcome_message: store.welcome_message,
+      share_message: store.share_message?.trim() || DEFAULT_SHARE_MESSAGE,
       primary_color: store.primary_color,
       pix_key_type: store.pix_key_type,
       pix_key: store.pix_key,
@@ -157,8 +165,6 @@ function MyStore() {
     queryClient.invalidateQueries({ queryKey: ["my-store"] });
   }
 
-
-
   return (
     <AppShell title="Minha loja" description="Personalize sua vitrine">
       <div className="surface space-y-4 p-5">
@@ -206,6 +212,40 @@ function MyStore() {
             value={form.welcome_message}
             onChange={(e) => setForm({ ...form, welcome_message: e.target.value })}
           />
+        </div>
+
+        <div className="space-y-3 rounded-xl border border-whatsapp/30 bg-whatsapp/5 p-4">
+          <div>
+            <p className="text-sm font-semibold">Divulgação</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Personalize a frase que será enviada junto com o link da sua vitrine pelo WhatsApp.
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Mensagem para compartilhar no WhatsApp</Label>
+            <Textarea
+              rows={3}
+              value={form.share_message}
+              placeholder={DEFAULT_SHARE_MESSAGE}
+              onChange={(e) => setForm({ ...form, share_message: e.target.value })}
+            />
+            <p className="text-xs text-muted-foreground">
+              Essa mensagem será combinada automaticamente com o link correto da sua loja. Deixe em
+              branco para usar a mensagem padrão.
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-background/70 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Prévia do compartilhamento
+            </p>
+            <p className="mt-2 whitespace-pre-wrap text-sm">
+              {buildStoreShareMessage(
+                form.share_message,
+                getStorePublicUrl(form.slug || slugify(form.name)),
+              )}
+            </p>
+          </div>
+          {store ? <StoreWhatsAppShare slug={store.slug} message={form.share_message} /> : null}
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
