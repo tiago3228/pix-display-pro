@@ -62,49 +62,63 @@ type TutorialSection = {
 const SECTIONS: TutorialSection[] = [
   {
     number: "1",
-    title: "Comece pela configuração da loja",
+    title: "Comece pelo cadastro e pela identidade da loja",
     description:
-      "Preencha os dados que seus clientes verão e deixe sua vitrine com a identidade do seu negócio.",
+      "Antes de divulgar, deixe os dados básicos corretos para que o cliente reconheça seu negócio e consiga entrar em contato.",
     icon: Store,
     steps: [
       {
         title: "Complete o cadastro inicial",
-        description: "Informe o nome, segmento e dados básicos do seu negócio para ativar a loja.",
+        description: "Crie ou finalize a loja informando o nome, segmento e dados do proprietário.",
         details: [
-          "Escolha um nome fácil de reconhecer.",
-          "Confira o segmento para organizar sua experiência.",
-          "Finalize o onboarding para liberar o painel completo.",
+          "Escolha um nome fácil de reconhecer e compartilhar.",
+          "Informe o segmento correto para apresentar melhor sua vitrine.",
+          "Finalize o onboarding para liberar todos os menus do painel.",
         ],
         to: "/onboarding",
         action: "Ir para o cadastro inicial",
       },
       {
-        title: "Personalize sua loja",
-        description: "Adicione logo, capa, descrição, endereço e formas de contato.",
+        title: "Personalize sua Minha Loja",
+        description: "Configure logo, banner, descrição, WhatsApp, Instagram, Pix e aparência.",
         details: [
-          "Use uma imagem nítida e que represente sua marca.",
-          "Escreva uma descrição objetiva sobre o que você oferece.",
-          "Revise os dados antes de compartilhar o link público.",
+          "Use uma logo nítida e um banner que represente sua marca.",
+          "Revise o slug: ele forma o endereço público /s/nome-da-loja.",
+          "Mantenha o WhatsApp atualizado para receber e responder clientes.",
+          "Use Loja ativa somente quando a vitrine estiver pronta para receber pedidos.",
         ],
         to: "/minha-loja",
         action: "Ir para Minha Loja",
+      },
+      {
+        title: "Ajuste sua conta e a divulgação",
+        description:
+          "Use Configurações para atualizar seus dados pessoais, senha e mensagem do WhatsApp.",
+        details: [
+          "Na seção Divulgação, escreva a frase que acompanhará o link da vitrine.",
+          "Clique em Salvar mensagem e confira a prévia do compartilhamento.",
+          "Se apagar a frase, o Vitrini volta a usar a mensagem padrão.",
+        ],
+        to: "/configuracoes",
+        action: "Ir para Configurações",
       },
     ],
   },
   {
     number: "2",
-    title: "Cadastre o que você vende",
+    title: "Monte seu catálogo de produtos e serviços",
     description:
-      "Monte um catálogo claro, com informações suficientes para o cliente escolher sem precisar perguntar tudo pelo WhatsApp.",
+      "Um catálogo completo ajuda o cliente a decidir sozinho e reduz perguntas repetidas no WhatsApp.",
     icon: Package,
     steps: [
       {
-        title: "Adicione produtos e serviços",
-        description: "Cadastre nome, preço, descrição, foto, estoque e categoria.",
+        title: "Cadastrar produtos manualmente",
+        description: "Adicione nome, preço, descrição, categoria, foto e disponibilidade.",
         details: [
-          "Use nomes simples e fáceis de pesquisar.",
-          "Informe preços e disponibilidade corretamente.",
-          "Adicione fotos reais e bem iluminadas sempre que possível.",
+          "Use um nome curto e objetivo, como o cliente procuraria.",
+          "Informe preço e estoque corretamente para evitar pedidos incorretos.",
+          "Escreva uma descrição com tamanho, sabor, cor, prazo ou condições do serviço.",
+          "Edite ou desative o produto quando ele não estiver disponível.",
         ],
         to: "/produtos",
         action: "Ir para Produtos",
@@ -112,14 +126,26 @@ const SECTIONS: TutorialSection[] = [
       {
         title: "Cadastrar produtos com IA",
         description:
-          "Envie uma foto de uma página ou catálogo para acelerar a criação dos cadastros.",
+          "Fotografe uma página de catálogo, lista ou revista e deixe a IA sugerir os cadastros.",
         details: [
-          "Revise o nome, preço e descrição sugeridos pela IA.",
-          "Confirme os dados antes de publicar.",
-          "A ferramenta ajuda no cadastro, mas a conferência final é sua.",
+          "Tire uma foto clara, sem reflexos e com nomes e preços legíveis.",
+          "Aguarde a análise e revise cada nome, preço e descrição sugeridos.",
+          "Confirme somente os itens que realmente deseja publicar.",
+          "A IA acelera o trabalho, mas a conferência final é sempre do proprietário.",
         ],
         to: "/produtos-ia",
         action: "Ir para Cadastrar com IA",
+      },
+      {
+        title: "Adicionar fotos aos produtos",
+        description: "Use fotos reais e bem iluminadas para tornar a vitrine mais atrativa.",
+        details: [
+          "Prefira imagens horizontais ou quadradas, nítidas e sem excesso de texto.",
+          "Envie arquivos JPG, PNG, WebP ou GIF dentro do limite indicado.",
+          "Depois do upload, confira a imagem na visualização do produto e no link público.",
+        ],
+        to: "/produtos",
+        action: "Gerenciar fotos e produtos",
       },
     ],
   },
@@ -127,69 +153,73 @@ const SECTIONS: TutorialSection[] = [
     number: "3",
     title: "Publique e divulgue sua vitrine",
     description:
-      "Leve sua loja para Instagram, Facebook, WhatsApp, cartão de visita, embalagem e qualquer canal de divulgação.",
+      "O link público é a porta de entrada dos clientes. Use-o no Instagram, Facebook, WhatsApp, cartões e embalagens.",
     icon: Megaphone,
     steps: [
       {
-        title: "Copie o link público da loja",
-        description: "O Vitrini cria automaticamente uma página pública exclusiva para sua loja.",
+        title: "Copiar o link da vitrine",
+        description: "O Dashboard mostra o endereço público exclusivo da sua loja.",
         details: [
-          "Abra a visualização da loja para conferir como o cliente verá.",
-          "Copie o link e coloque na bio do Instagram e Facebook.",
-          "Envie o link em grupos, conversas e campanhas do WhatsApp.",
+          "Clique em Copiar para enviar o endereço em qualquer canal.",
+          "Clique em Ver loja para conferir a experiência do cliente.",
+          "Teste o link em uma janela anônima ou em outro celular antes de divulgar.",
         ],
         to: "/dashboard",
         action: "Ir para o Dashboard",
       },
       {
-        title: "Crie e use seu QR Code",
-        description: "Transforme o acesso à loja em um código fácil de escanear.",
+        title: "Compartilhar pelo WhatsApp",
+        description:
+          "No card Link da sua vitrine, clique em WhatsApp para abrir o compartilhamento pronto.",
         details: [
-          "Baixe o QR Code para imprimir ou publicar.",
-          "Coloque em balcão, cartão, embalagem ou material promocional.",
-          "Teste o código com o celular antes de divulgar.",
+          "A mensagem usa a frase configurada em Configurações → Divulgação.",
+          "O link correto da sua loja é incluído automaticamente e não é duplicado.",
+          "No WhatsApp, escolha um contato, grupo, comunidade ou Status.",
+          "Não é necessário copiar e colar o link manualmente.",
+        ],
+        to: "/dashboard",
+        action: "Abrir o Dashboard",
+      },
+      {
+        title: "Criar e usar o QR Code",
+        description: "Transforme o endereço da sua loja em um código fácil de escanear.",
+        details: [
+          "Baixe ou imprima o QR Code gerado para sua vitrine.",
+          "Coloque em balcão, cartão, embalagem, mesa ou material promocional.",
+          "Teste o código com a câmera do celular antes de imprimir em grande quantidade.",
         ],
         to: "/qrcodes",
         action: "Ir para QR Codes",
-      },
-      {
-        title: "Compartilhe pelo WhatsApp",
-        description: "Personalize a mensagem e abra o compartilhamento direto no WhatsApp.",
-        details: [
-          "Edite a mensagem de divulgação em Minha Loja.",
-          "O link correto da sua loja é incluído automaticamente.",
-          "No WhatsApp, escolha contato, grupo ou Status.",
-        ],
-        to: "/minha-loja",
-        action: "Ir para Divulgação",
       },
     ],
   },
   {
     number: "4",
-    title: "Receba e acompanhe pedidos",
+    title: "Receba e organize pedidos",
     description:
-      "Organize o atendimento desde o primeiro pedido até a confirmação da entrega ou retirada.",
+      "Acompanhe os pedidos desde a entrada até a entrega ou retirada, sem perder informações importantes.",
     icon: ShoppingCart,
     steps: [
       {
-        title: "Acompanhe os pedidos",
-        description: "Veja os pedidos recebidos, confira os itens e atualize o andamento.",
+        title: "Acompanhar pedidos",
+        description: "Veja os itens, dados do cliente, total e andamento de cada pedido.",
         details: [
-          "Confirme disponibilidade e os dados do cliente.",
+          "Abra o pedido e confira produtos, quantidades e observações.",
+          "Confirme disponibilidade e combine entrega ou retirada pelo WhatsApp quando necessário.",
           "Atualize o status para manter o cliente informado.",
-          "Use o WhatsApp para alinhar detalhes quando necessário.",
+          "Marque como entregue somente após concluir o atendimento.",
         ],
         to: "/pedidos",
         action: "Ir para Pedidos",
       },
       {
-        title: "Conheça seus clientes",
-        description: "Consulte o histórico de clientes que já compraram na sua vitrine.",
+        title: "Conhecer seus clientes",
+        description:
+          "Consulte o histórico de compradores para oferecer um atendimento mais próximo.",
         details: [
-          "Identifique clientes recorrentes.",
-          "Retome contatos para divulgar novidades e ofertas.",
-          "Use os dados somente para atendimento e comunicação responsável.",
+          "Use o histórico para identificar clientes recorrentes.",
+          "Confira os dados antes de entrar em contato.",
+          "Faça divulgações responsáveis e respeite a preferência do cliente.",
         ],
         to: "/clientes",
         action: "Ir para Clientes",
@@ -198,45 +228,64 @@ const SECTIONS: TutorialSection[] = [
   },
   {
     number: "5",
-    title: "Controle pagamentos e crescimento",
+    title: "Gerencie cobranças e pagamentos",
     description:
-      "Acompanhe cobranças, resultados e os recursos disponíveis para profissionalizar sua operação.",
-    icon: BarChart3,
+      "Registre valores, acompanhe recebimentos e mantenha o controle financeiro das vendas e serviços.",
+    icon: Wallet,
     steps: [
       {
-        title: "Gerencie cobranças",
-        description:
-          "Crie e acompanhe cobranças para vendas e serviços que precisam de controle financeiro.",
+        title: "Criar e acompanhar cobranças",
+        description: "Use Cobranças para organizar pagamentos combinados com seus clientes.",
         details: [
-          "Confira valores, vencimentos e status.",
-          "Envie links de cobrança pelo WhatsApp.",
-          "Mantenha os registros atualizados após o recebimento.",
+          "Preencha cliente, produto, valor e vencimento com atenção.",
+          "Envie o link de cobrança pelo WhatsApp quando necessário.",
+          "Atualize o pagamento assim que o cliente confirmar o recebimento.",
+          "Consulte parcelas em aberto e atrasadas para não perder prazos.",
         ],
         to: "/cobrancas",
         action: "Ir para Cobranças",
       },
       {
-        title: "Acompanhe seu faturamento",
-        description: "Use o painel financeiro para entender vendas e lançamentos da loja.",
+        title: "Consultar faturamento",
+        description: "Use Faturamento para acompanhar a movimentação registrada da sua loja.",
         details: [
-          "Consulte o movimento do período.",
-          "Compare resultados e identifique oportunidades.",
-          "Use os dados para planejar estoque e divulgação.",
+          "Analise o período selecionado e compare resultados.",
+          "Use os dados para planejar estoque, ofertas e divulgação.",
+          "Lembre-se de que o painel depende dos pedidos e lançamentos registrados.",
         ],
         to: "/faturamento",
         action: "Ir para Faturamento",
       },
+    ],
+  },
+  {
+    number: "6",
+    title: "Escolha o plano e acompanhe os recursos",
+    description:
+      "Consulte o plano atual e veja os recursos disponíveis para o momento do seu negócio.",
+    icon: CreditCard,
+    steps: [
       {
-        title: "Conheça o plano PRO",
-        description:
-          "Veja os recursos adicionais e escolha o plano adequado para o estágio do seu negócio.",
+        title: "Conhecer Básica e PRO",
+        description: "Compare os planos e escolha a opção adequada para sua operação.",
         details: [
-          "Compare Básica e PRO.",
-          "Confira os valores e benefícios atuais.",
-          "A confirmação de pagamentos ocorre pelo Mercado Pago ou pelo fluxo Pix configurado.",
+          "Confira preço, limites e recursos antes de assinar.",
+          "A assinatura Básica possui o período promocional PRO previsto na oferta vigente.",
+          "Após a confirmação, aguarde a atualização do plano no painel.",
         ],
         to: "/assinatura",
         action: "Ver planos",
+      },
+      {
+        title: "Acompanhar o resultado da loja",
+        description: "O Dashboard reúne pedidos, faturamento, produtos e visitas da vitrine.",
+        details: [
+          "Use os indicadores para identificar o que precisa de atenção.",
+          "Divulgue o link com frequência para aumentar as visitas.",
+          "Mantenha catálogo e preços atualizados para converter melhor.",
+        ],
+        to: "/dashboard",
+        action: "Ver indicadores",
       },
     ],
   },
@@ -246,7 +295,7 @@ function ComoFunciona() {
   return (
     <AppShell
       title="Como funciona"
-      description="Tudo o que você precisa para começar a vender com o Vitrini"
+      description="Central completa do proprietário para configurar, divulgar e operar sua loja"
     >
       <div className="space-y-5">
         <section className="rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:p-7">
@@ -259,19 +308,20 @@ function ComoFunciona() {
                 Central do proprietário
               </p>
               <h2 className="mt-1 text-2xl font-bold tracking-tight sm:text-3xl">
-                Como funciona o Vitrini
+                Sua loja em poucos passos
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
-                Siga este passo a passo para configurar seu negócio, publicar sua loja online,
-                divulgar seus produtos e começar a receber pedidos.
+                Configure os dados, publique seus produtos, divulgue o link e acompanhe os pedidos.
+                Sempre que aparecer um botão <strong className="text-foreground">Ir para</strong>,
+                você será levado diretamente ao serviço explicado.
               </p>
             </div>
           </div>
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             {[
-              ["1", "Configure", "Loja e catálogo"],
-              ["2", "Compartilhe", "Link, QR Code e WhatsApp"],
-              ["3", "Atenda", "Pedidos e clientes"],
+              ["1", "Configure", "Conta, loja e catálogo"],
+              ["2", "Divulgue", "Link, QR Code e WhatsApp"],
+              ["3", "Atenda", "Pedidos, clientes e cobranças"],
             ].map(([number, title, description]) => (
               <div key={number} className="rounded-xl border border-border bg-background/80 p-4">
                 <p className="text-sm font-bold text-primary">{number}</p>
@@ -282,6 +332,24 @@ function ComoFunciona() {
           </div>
         </section>
 
+        <section className="surface grid gap-4 p-5 sm:grid-cols-3 sm:p-6">
+          <QuickGuide
+            icon={ImagePlus}
+            title="Fotos"
+            text="Use imagens claras e revise o resultado no link público."
+          />
+          <QuickGuide
+            icon={QrCode}
+            title="Divulgação"
+            text="Compartilhe seu link no WhatsApp, redes sociais e QR Code."
+          />
+          <QuickGuide
+            icon={Settings}
+            title="Manutenção"
+            text="Atualize preços, disponibilidade e mensagem sempre que precisar."
+          />
+        </section>
+
         <div className="space-y-5">
           {SECTIONS.map((section) => (
             <TutorialSectionView key={section.number} section={section} />
@@ -290,9 +358,9 @@ function ComoFunciona() {
 
         <section className="surface flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="font-semibold">Precisa ajustar alguma informação?</p>
+            <p className="font-semibold">Pronto para começar?</p>
             <p className="text-sm text-muted-foreground">
-              Volte às configurações da loja para revisar seus dados e preferências.
+              Revise seus dados e publique sua vitrine quando tudo estiver correto.
             </p>
           </div>
           <Link
@@ -304,6 +372,28 @@ function ComoFunciona() {
         </section>
       </div>
     </AppShell>
+  );
+}
+
+function QuickGuide({
+  icon: Icon,
+  title,
+  text,
+}: {
+  icon: typeof ImagePlus;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <Icon className="size-4" />
+      </div>
+      <div>
+        <p className="text-sm font-semibold">{title}</p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">{text}</p>
+      </div>
+    </div>
   );
 }
 
@@ -327,7 +417,7 @@ function TutorialSectionView({ section }: { section: TutorialSection }) {
         {section.steps.map((step, index) => (
           <article
             key={step.title}
-            className="relative rounded-xl border border-border bg-muted/20 p-4 sm:p-5"
+            className="rounded-xl border border-border bg-muted/20 p-4 sm:p-5"
           >
             <div className="flex items-start gap-3">
               <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
