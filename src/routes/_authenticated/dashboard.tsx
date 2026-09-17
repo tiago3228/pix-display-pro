@@ -4,6 +4,7 @@ import {
   Copy,
   Eye,
   ExternalLink,
+  MessageCircle,
   Package,
   Plus,
   ShoppingBag,
@@ -17,6 +18,7 @@ import { AppShell, StatCard } from "@/components/AppShell";
 import { brl, formatDate, statusLabel } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { buildStoreShareMessage } from "@/components/StoreWhatsAppShare";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -112,6 +114,20 @@ function Dashboard() {
             <a href={storeUrl} target="_blank" rel="noopener">
               <ExternalLink className="mr-1.5 size-4" /> Ver loja
             </a>
+          </Button>
+          <Button
+            size="sm"
+            className="bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+            onClick={() => {
+              const message = buildStoreShareMessage(store?.share_message, storeUrl);
+              window.open(
+                `https://wa.me/?text=${encodeURIComponent(message)}`,
+                "_blank",
+                "noopener,noreferrer",
+              );
+            }}
+          >
+            <MessageCircle className="mr-1.5 size-4" /> WhatsApp
           </Button>
           <Button size="sm" variant="ghost" asChild>
             <Link to="/qrcodes">QR Codes</Link>

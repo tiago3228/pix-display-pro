@@ -3,17 +3,22 @@ import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
+import { useMyStore } from "@/hooks/useAuth";
+import { DEFAULT_SHARE_MESSAGE, StoreWhatsAppShare } from "@/components/StoreWhatsAppShare";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({
   component: Settings,
 });
 
 function Settings() {
+  const { data: store, refetch: refetchStore } = useMyStore();
   const [profile, setProfile] = useState({ name: "", whatsapp: "", email: "" });
+  const [shareMessage, setShareMessage] = useState(DEFAULT_SHARE_MESSAGE);
   const [passwords, setPasswords] = useState({ current: "", next: "" });
   const [saving, setSaving] = useState(false);
 
@@ -34,6 +39,10 @@ function Settings() {
       });
     })();
   }, []);
+
+  useEffect(() => {
+    setShareMessage(store?.share_message?.trim() || DEFAULT_SHARE_MESSAGE);
+  }, [store?.share_message]);
 
   async function saveProfile() {
     setSaving(true);
@@ -69,6 +78,22 @@ function Settings() {
     toast.success("Senha alterada!");
   }
 
+  async function saveShareMessage() {
+    if (!store) return;
+    setSaving(true);
+    const { error } = await supabase
+      .from("stores")
+      .update({ share_message: shareMessage.trim() || null })
+      .eq("id", store.id);
+    setSaving(false);
+    if (error) {
+      toast.error("Não foi possível salvar a mensagem de divulgação.");
+      return;
+    }
+    await refetchStore();
+    toast.success("Mensagem de divulgação salva!");
+  }
+
   return (
     <AppShell title="Configurações" description="Sua conta">
       <div className="surface space-y-4 p-5">
@@ -93,6 +118,32 @@ function Settings() {
         </div>
         <Button disabled={saving} onClick={saveProfile}>
           Salvar dados
+        </Button>
+      </div>
+
+      <div className="surface mt-4 space-y-4 p-5">
+        <div>
+          <p className="font-semibold">Divulgação</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Configure a frase padrão usada ao compartilhar o link da sua vitrine pelo WhatsApp.
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label>Mensagem para compartilhar no WhatsApp</Label>
+          <Textarea
+            rows={3}
+            value={shareMessage}
+            onChange={(e) => setShareMessage(e.target.value)}
+            placeholder={DEFAULT_SHARE_MESSAGE}
+          />
+          <p className="text-xs text-muted-foreground">
+            O link da loja será incluído automaticamente. Se apagar a frase, a mensagem padrão será
+            usada novamente.
+          </p>
+        </div>
+        {store ? <StoreWhatsAppShare slug={store.slug} message={shareMessage} /> : null}
+        <Button disabled={saving || !store} onClick={saveShareMessage}>
+          Salvar mensagem
         </Button>
       </div>
 
