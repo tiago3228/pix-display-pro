@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { brl, formatDate } from "@/lib/format";
 import {
   PAYMENT_METHODS,
@@ -166,15 +166,18 @@ export function ManualSaleForm({
   title,
   description,
   withCustomer,
+  defaultOpen = false,
   saving,
   onSubmit,
 }: {
   title: string;
   description: string;
   withCustomer?: boolean;
+  defaultOpen?: boolean;
   saving: boolean;
   onSubmit: (input: ManualSaleInput) => void;
 }) {
+  const [open, setOpen] = useState(defaultOpen);
   const [amount, setAmount] = useState("");
   const [soldAt, setSoldAt] = useState(todayInput());
   const [method, setMethod] = useState("pix");
@@ -201,58 +204,77 @@ export function ManualSaleForm({
 
   return (
     <section className="surface mt-4 space-y-3 p-4">
-      <div>
-        <p className="text-sm font-semibold">{title}</p>
-        <p className="text-xs text-muted-foreground">{description}</p>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div className="space-y-1.5">
-          <Label>Valor (R$)</Label>
-          <Input inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Data</Label>
-          <Input type="date" value={soldAt} onChange={(e) => setSoldAt(e.target.value)} />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Forma de pagamento</Label>
-          <Select value={method} onValueChange={setMethod}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PAYMENT_METHODS.map((item) => (
-                <SelectItem key={item.value} value={item.value}>
-                  {item.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="space-y-1.5">
-          <Label>Descrição</Label>
-          <Input
-            value={descriptionText}
-            placeholder="Venda presencial"
-            onChange={(e) => setDescriptionText(e.target.value)}
-          />
-        </div>
-        {withCustomer ? (
-          <div className="space-y-1.5">
-            <Label>Cliente</Label>
-            <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+      <button
+        type="button"
+        className="flex w-full items-center justify-between gap-3 text-left"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span>
+          <span className="block text-sm font-semibold">{title}</span>
+          <span className="mt-1 block text-xs text-muted-foreground">{description}</span>
+        </span>
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border text-muted-foreground transition hover:bg-accent hover:text-foreground">
+          {open ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+        </span>
+      </button>
+      {open ? (
+        <div className="space-y-3 border-t border-border pt-3">
+          {" "}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="space-y-1.5">
+              <Label>Valor (R$)</Label>
+              <Input
+                inputMode="decimal"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Data</Label>
+              <Input type="date" value={soldAt} onChange={(e) => setSoldAt(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Forma de pagamento</Label>
+              <Select value={method} onValueChange={setMethod}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PAYMENT_METHODS.map((item) => (
+                    <SelectItem key={item.value} value={item.value}>
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        ) : null}
-      </div>
-      <div className="space-y-1.5">
-        <Label>Observação</Label>
-        <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
-      </div>
-      <Button className="h-11 w-full sm:w-auto" disabled={saving} onClick={submit}>
-        {saving ? "Registrando..." : "Registrar venda"}
-      </Button>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>Descrição</Label>
+              <Input
+                value={descriptionText}
+                placeholder="Venda presencial"
+                onChange={(e) => setDescriptionText(e.target.value)}
+              />
+            </div>
+            {withCustomer ? (
+              <div className="space-y-1.5">
+                <Label>Cliente</Label>
+                <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+              </div>
+            ) : null}
+          </div>
+          <div className="space-y-1.5">
+            <Label>Observação</Label>
+            <Textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} />
+          </div>
+          <Button className="h-11 w-full sm:w-auto" disabled={saving} onClick={submit}>
+            {saving ? "Registrando..." : "Registrar venda"}
+          </Button>
+        </div>
+      ) : null}
     </section>
   );
 }
