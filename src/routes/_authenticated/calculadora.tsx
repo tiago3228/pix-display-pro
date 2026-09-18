@@ -69,17 +69,6 @@ function CalculatorPage() {
 
         <div className="space-y-3">
           <ExpandablePanel
-            open={openPanel === "price"}
-            onClick={() => setOpenPanel((current) => (current === "price" ? null : "price"))}
-            icon={<TrendingUp className="size-5" />}
-            title="Calculadora de preço e margem"
-            description="Defina preço de venda, margem, lucro e desconto para seus produtos."
-            tone="primary"
-          >
-            <PriceCalculator values={values} update={update} />
-          </ExpandablePanel>
-
-          <ExpandablePanel
             open={openPanel === "common"}
             onClick={() => setOpenPanel((current) => (current === "common" ? null : "common"))}
             icon={<Calculator className="size-5" />}
@@ -88,6 +77,17 @@ function CalculatorPage() {
             tone="amber"
           >
             <CommonCalculator />
+          </ExpandablePanel>
+
+          <ExpandablePanel
+            open={openPanel === "price"}
+            onClick={() => setOpenPanel((current) => (current === "price" ? null : "price"))}
+            icon={<TrendingUp className="size-5" />}
+            title="Calculadora de preço e margem"
+            description="Defina preço de venda, margem, lucro e desconto para seus produtos."
+            tone="primary"
+          >
+            <PriceCalculator values={values} update={update} />
           </ExpandablePanel>
         </div>
       </div>
