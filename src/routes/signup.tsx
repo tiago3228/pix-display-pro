@@ -28,7 +28,6 @@ function SignupPage() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: "", email: "", password: "", whatsapp: "" });
   const [loading, setLoading] = useState(false);
-  
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -83,7 +82,6 @@ function SignupPage() {
     navigate({ to: "/onboarding" });
   }
 
-
   async function handleGoogle() {
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin,
@@ -95,7 +93,6 @@ function SignupPage() {
     if (result.redirected) return;
     navigate({ to: "/onboarding" });
   }
-
 
   return (
     <AuthShell

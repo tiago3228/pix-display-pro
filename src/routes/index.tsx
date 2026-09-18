@@ -335,8 +335,19 @@ function Landing() {
       </main>
 
       <footer className="border-t border-border py-8">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>© {new Date().getFullYear()} Vitrini · By: Tiago Cardoso</span>
+          <nav className="flex flex-wrap gap-x-4 gap-y-2" aria-label="Informações públicas">
+            <Link to="/suporte" className="hover:text-foreground">
+              Suporte
+            </Link>
+            <Link to="/privacidade" className="hover:text-foreground">
+              Privacidade
+            </Link>
+            <Link to="/termos" className="hover:text-foreground">
+              Termos de uso
+            </Link>
+          </nav>
           <span>Pagamento realizado diretamente para o vendedor.</span>
         </div>
       </footer>

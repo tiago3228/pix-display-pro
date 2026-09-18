@@ -16,7 +16,7 @@ const uploadSchema = z.object({
 /** Gera URL temporária sem depender do Storage client do navegador. */
 export const getSignedAssetUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({ path: pathSchema }).parse(data))
+  .validator((data: unknown) => z.object({ path: pathSchema }).parse(data))
   .handler(async ({ data, context }) => {
     const firstSegment = data.path.split("/")[0];
     if (firstSegment !== context.userId) {
@@ -38,7 +38,7 @@ export const getSignedAssetUrl = createServerFn({ method: "POST" })
 /** Envia uma imagem pelo backend, sem depender da política de INSERT no navegador. */
 export const uploadAssetServer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => uploadSchema.parse(data))
+  .validator((data: unknown) => uploadSchema.parse(data))
   .handler(async ({ data, context }) => {
     const bytes = Buffer.from(data.base64, "base64");
     if (!bytes.length || bytes.length > 10 * 1024 * 1024) {

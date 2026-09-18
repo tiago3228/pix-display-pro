@@ -141,7 +141,7 @@ export const getMySubscription = createServerFn({ method: "GET" })
 /** Inicia (ou reaproveita) a assinatura PRO no Mercado Pago. Idempotente por loja. */
 export const startProSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         origin: z.string().max(200).optional(),

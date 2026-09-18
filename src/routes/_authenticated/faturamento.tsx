@@ -3,7 +3,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
-import { ManualSaleForm, PeriodFilter, RevenueList, RevenueSummary, usePeriodFilter } from "@/components/RevenuePanel";
+import {
+  ManualSaleForm,
+  PeriodFilter,
+  RevenueList,
+  RevenueSummary,
+  usePeriodFilter,
+} from "@/components/RevenuePanel";
 import { Paywall } from "@/components/Paywall";
 import { useMyStore } from "@/hooks/useAuth";
 import { addManualSale, deleteManualSale, getSellerRevenue } from "@/lib/revenue.functions";
@@ -12,9 +18,15 @@ export const Route = createFileRoute("/_authenticated/faturamento")({
   head: () => ({
     meta: [
       { title: "Faturamento da loja | Vitrini" },
-      { name: "description", content: "Acompanhe pedidos, vendas manuais e o faturamento da sua loja." },
+      {
+        name: "description",
+        content: "Acompanhe pedidos, vendas manuais e o faturamento da sua loja.",
+      },
       { property: "og:title", content: "Faturamento da loja | Vitrini" },
-      { property: "og:description", content: "Veja suas vendas da vitrine e lançamentos manuais em um só lugar." },
+      {
+        property: "og:description",
+        content: "Veja suas vendas da vitrine e lançamentos manuais em um só lugar.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -42,7 +54,8 @@ function SellerRevenue() {
       toast.success("Venda registrada no faturamento.");
       queryClient.invalidateQueries({ queryKey: ["seller-revenue"] });
     },
-    onError: (error: unknown) => toast.error(error instanceof Error ? error.message : "Não foi possível registrar a venda."),
+    onError: (error: unknown) =>
+      toast.error(error instanceof Error ? error.message : "Não foi possível registrar a venda."),
   });
 
   const deleteMutation = useMutation({
@@ -55,15 +68,32 @@ function SellerRevenue() {
   });
 
   if (storeLoading || (store?.plan === "pro" && isLoading)) {
-    return <AppShell title="Faturamento"><p className="text-sm text-muted-foreground">Carregando faturamento...</p></AppShell>;
+    return (
+      <AppShell title="Faturamento">
+        <p className="text-sm text-muted-foreground">Carregando faturamento...</p>
+      </AppShell>
+    );
   }
 
   if (!store || store.plan !== "pro") {
-    return <AppShell title="Faturamento" description="Disponível no plano PRO"><Paywall title="Faturamento PRO" text="Acompanhe pedidos e vendas manuais juntos em um painel financeiro." /></AppShell>;
+    return (
+      <AppShell title="Faturamento" description="Disponível no plano PRO">
+        <Paywall
+          title="Faturamento PRO"
+          text="Acompanhe pedidos e vendas manuais juntos em um painel financeiro."
+        />
+      </AppShell>
+    );
   }
 
   if (error) {
-    return <AppShell title="Faturamento"><div className="surface p-10 text-center text-sm text-destructive">Não foi possível carregar o faturamento.</div></AppShell>;
+    return (
+      <AppShell title="Faturamento">
+        <div className="surface p-10 text-center text-sm text-destructive">
+          Não foi possível carregar o faturamento.
+        </div>
+      </AppShell>
+    );
   }
 
   return (

@@ -15,10 +15,7 @@ import {
 } from "@/components/ui/select";
 import { useIsAdmin } from "@/hooks/useAuth";
 import { brl, formatDate } from "@/lib/format";
-import {
-  listAdminStoresOverview,
-  type AdminStoreOverview,
-} from "@/lib/admin-stores.functions";
+import { listAdminStoresOverview, type AdminStoreOverview } from "@/lib/admin-stores.functions";
 
 export const Route = createFileRoute("/_authenticated/admin_/assinaturas")({
   head: () => ({
@@ -133,7 +130,10 @@ function AdminSubscriptions() {
   const totals = data?.totals;
 
   return (
-    <AppShell title="Lojas e assinaturas" description="Todas as lojas, planos e situação de pagamento">
+    <AppShell
+      title="Lojas e assinaturas"
+      description="Todas as lojas, planos e situação de pagamento"
+    >
       <div className="space-y-5">
         <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <StatCard label="Lojas" value={String(totals?.stores ?? 0)} icon={StoreIcon} />

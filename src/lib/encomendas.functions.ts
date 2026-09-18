@@ -54,7 +54,7 @@ const quoteInput = z.object({
 });
 
 export const getEncomendaQuote = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => quoteInput.parse(data))
+  .validator((data: unknown) => quoteInput.parse(data))
   .handler(async ({ data }) => {
     const db = await admin();
     const { data: product, error } = await db
@@ -101,7 +101,7 @@ export const getEncomendaQuote = createServerFn({ method: "GET" })
   });
 
 export const submitEncomenda = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         productId: z.string().uuid(),
@@ -205,7 +205,7 @@ export const getMyEncomendas = createServerFn({ method: "GET" })
 
 export const updateEncomenda = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         id: z.string().uuid(),

@@ -141,7 +141,10 @@ export async function analyzePageImage(dataUrl: string): Promise<AnalyzeOutcome>
 }
 
 function safeJson(text: string): unknown {
-  const trimmed = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "");
+  const trimmed = text
+    .trim()
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/, "");
   try {
     return JSON.parse(trimmed);
   } catch {

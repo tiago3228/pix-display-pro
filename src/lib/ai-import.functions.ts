@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { AI_MAX_PAGES_PER_RUN, MAX_PRODUCT_IMAGES, aiPageLimitFor } from "./ai-import.config";
@@ -44,7 +45,9 @@ export type AnalyzeResult = {
   error?: "limit" | "provider" | "no-store";
 };
 
-async function storeOf(context: { supabase: any; userId: string }) {
+type AuthContext = { supabase: SupabaseClient; userId: string };
+
+async function storeOf(context: AuthContext) {
   const { data } = await context.supabase
     .from("stores")
     .select("id, plan")
@@ -95,9 +98,9 @@ const AnalyzeInput = z.object({
 /** Analisa as páginas enviadas. Cada página consome um crédito apenas quando a IA é chamada. */
 export const analyseCatalogPages = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => AnalyzeInput.parse(data))
+  .validator((data: unknown) => AnalyzeInput.parse(data))
   .handler(async ({ data, context }): Promise<AnalyzeResult> => {
-    const ctx = context as unknown as { supabase: any; userId: string };
+    const ctx = context as unknown as AuthContext;
     const store = await storeOf(ctx);
     let status = await buildStatus(store);
     if (!store) {
@@ -111,7 +114,14 @@ export const analyseCatalogPages = createServerFn({ method: "POST" })
       };
     }
     if (status.remaining <= 0) {
-      return { jobId: null, products: [], pagesAnalyzed: 0, pagesFailed: 0, status, error: "limit" };
+      return {
+        jobId: null,
+        products: [],
+        pagesAnalyzed: 0,
+        pagesFailed: 0,
+        status,
+        error: "limit",
+      };
     }
 
     const { analyzePageImage, currentPeriod } = await import("./ai-import.server");
@@ -259,9 +269,9 @@ export type CreateAiProductsResult = { created: number; updated: number; failed:
 /** Salva os produtos revisados pelo vendedor usando a estrutura de produtos existente. */
 export const createProductsFromAi = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => CreateInput.parse(data))
+  .validator((data: unknown) => CreateInput.parse(data))
   .handler(async ({ data, context }): Promise<CreateAiProductsResult> => {
-    const ctx = context as unknown as { supabase: any; userId: string };
+    const ctx = context as unknown as AuthContext;
     const store = await storeOf(ctx);
     if (!store) throw new Error("Crie sua loja antes de cadastrar produtos.");
 
@@ -408,7 +418,7 @@ export type AiImportHistoryRow = {
 export const listAiImports = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<AiImportHistoryRow[]> => {
-    const ctx = context as unknown as { supabase: any; userId: string };
+    const ctx = context as unknown as AuthContext;
     const store = await storeOf(ctx);
     if (!store) return [];
     const { data } = await ctx.supabase

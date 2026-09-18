@@ -29,8 +29,12 @@ export function resolvePricing(
   const startsAt = (row?.["promo_starts_at"] as string | null) ?? null;
   const endsAt = (row?.["promo_ends_at"] as string | null) ?? null;
   const now = Date.now();
-  const withinWindow = (!startsAt || new Date(startsAt).getTime() <= now) && (!endsAt || new Date(endsAt).getTime() >= now);
-  const active = Boolean(row?.["promo_active"] && promoPrice !== null && promoPrice >= 0 && withinWindow);
+  const withinWindow =
+    (!startsAt || new Date(startsAt).getTime() <= now) &&
+    (!endsAt || new Date(endsAt).getTime() >= now);
+  const active = Boolean(
+    row?.["promo_active"] && promoPrice !== null && promoPrice >= 0 && withinWindow,
+  );
   return {
     basePrice,
     price: active && promoPrice !== null ? promoPrice : basePrice,

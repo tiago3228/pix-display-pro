@@ -80,7 +80,6 @@ export function useCart(slug: string) {
     [persist, slug],
   );
 
-
   const remove = useCallback((key: string) => setQuantity(key, 0), [setQuantity]);
   const clear = useCallback(() => persist([]), [persist]);
 

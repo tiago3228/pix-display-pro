@@ -11,19 +11,21 @@ import {
   usePeriodFilter,
 } from "@/components/RevenuePanel";
 import { useIsAdmin } from "@/hooks/useAuth";
-import {
-  addPlatformSale,
-  deletePlatformSale,
-  getAdminRevenue,
-} from "@/lib/revenue.functions";
+import { addPlatformSale, deletePlatformSale, getAdminRevenue } from "@/lib/revenue.functions";
 
 export const Route = createFileRoute("/_authenticated/admin_/faturamento")({
   head: () => ({
     meta: [
       { title: "Faturamento da plataforma | Vitrini" },
-      { name: "description", content: "Acompanhe as receitas do Vitrini e registre vendas administrativas." },
+      {
+        name: "description",
+        content: "Acompanhe as receitas do Vitrini e registre vendas administrativas.",
+      },
       { property: "og:title", content: "Faturamento da plataforma | Vitrini" },
-      { property: "og:description", content: "Acompanhe assinaturas, pagamentos Pix e lançamentos manuais." },
+      {
+        property: "og:description",
+        content: "Acompanhe assinaturas, pagamentos Pix e lançamentos manuais.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -51,7 +53,8 @@ function AdminRevenue() {
       toast.success("Venda registrada no faturamento.");
       queryClient.invalidateQueries({ queryKey: ["admin-revenue"] });
     },
-    onError: (error: unknown) => toast.error(error instanceof Error ? error.message : "Não foi possível registrar a venda."),
+    onError: (error: unknown) =>
+      toast.error(error instanceof Error ? error.message : "Não foi possível registrar a venda."),
   });
 
   const deleteMutation = useMutation({
@@ -64,13 +67,29 @@ function AdminRevenue() {
   });
 
   if (adminLoading || (isAdmin && isLoading)) {
-    return <AppShell title="Faturamento"><p className="text-sm text-muted-foreground">Carregando faturamento...</p></AppShell>;
+    return (
+      <AppShell title="Faturamento">
+        <p className="text-sm text-muted-foreground">Carregando faturamento...</p>
+      </AppShell>
+    );
   }
   if (!isAdmin) {
-    return <AppShell title="Faturamento"><div className="surface p-10 text-center text-sm text-muted-foreground">Você não tem acesso a esta área.</div></AppShell>;
+    return (
+      <AppShell title="Faturamento">
+        <div className="surface p-10 text-center text-sm text-muted-foreground">
+          Você não tem acesso a esta área.
+        </div>
+      </AppShell>
+    );
   }
   if (error) {
-    return <AppShell title="Faturamento"><div className="surface p-10 text-center text-sm text-destructive">Não foi possível carregar o faturamento.</div></AppShell>;
+    return (
+      <AppShell title="Faturamento">
+        <div className="surface p-10 text-center text-sm text-destructive">
+          Não foi possível carregar o faturamento.
+        </div>
+      </AppShell>
+    );
   }
 
   return (

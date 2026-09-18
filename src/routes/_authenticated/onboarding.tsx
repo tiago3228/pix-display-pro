@@ -174,7 +174,12 @@ function Onboarding() {
       <div className="mx-auto max-w-lg">
         <div className="mb-4 flex items-center justify-between">
           {step > 1 && step < 4 ? (
-            <Button variant="ghost" size="sm" className="gap-1.5 px-2" onClick={() => setStep(step - 1)}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 px-2"
+              onClick={() => setStep(step - 1)}
+            >
               <ArrowLeft className="size-4" /> Voltar
             </Button>
           ) : (
@@ -190,7 +195,6 @@ function Onboarding() {
           </span>
           <span className="font-[family-name:var(--font-display)]">Vitrini</span>
         </div>
-
 
         <div className="mb-5 flex items-center gap-2">
           {[1, 2, 3].map((n) => (

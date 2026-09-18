@@ -62,7 +62,7 @@ export type Storefront = {
 } | null;
 
 export const getStorefront = createServerFn({ method: "GET" })
-  .inputValidator((data: { slug: string }) => z.object({ slug: z.string().min(1) }).parse(data))
+  .validator((data: { slug: string }) => z.object({ slug: z.string().min(1) }).parse(data))
   .handler(async ({ data }): Promise<Storefront> => {
     const supabase = createPublicClient();
     // A leitura pública passa por uma função segura que devolve apenas os
@@ -256,7 +256,7 @@ const orderSchema = z.object({
 
 /** Public endpoint: the buyer has no account, so the order is written server-side. */
 export const submitOrder = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => orderSchema.parse(data))
+  .validator((data: unknown) => orderSchema.parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -482,7 +482,7 @@ export const submitOrder = createServerFn({ method: "POST" })
   });
 
 export const trackStoreEvent = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         storeId: z.string().uuid(),
@@ -515,7 +515,7 @@ const MAX_RECEIPT_BYTES = 8 * 1024 * 1024;
  * gravado no bucket privado; só o vendedor dono da loja consegue visualizar.
  */
 export const uploadOrderReceipt = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         storeId: z.string().uuid(),
@@ -552,7 +552,7 @@ export const uploadOrderReceipt = createServerFn({ method: "POST" })
 /** O vendedor autenticado obtém um link temporário do comprovante do seu pedido. */
 export const getOrderReceiptUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({ orderId: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ orderId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     // RLS garante que o pedido pertence a uma loja do usuário autenticado.
     const { data: order } = await context.supabase

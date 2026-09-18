@@ -18,7 +18,7 @@ const saleSchema = z.object({
 /** Faturamento da plataforma: assinaturas por cartão, PRO via Pix e lançamentos manuais. */
 export const getAdminRevenue = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => rangeSchema.parse(data))
+  .validator((data: unknown) => rangeSchema.parse(data))
   .handler(async ({ data, context }): Promise<{ entries: RevenueEntry[] }> => {
     const { assertAdmin } = await import("./admin-guard.server");
     await assertAdmin(context.supabase as never, context.userId);
@@ -85,7 +85,7 @@ export const getAdminRevenue = createServerFn({ method: "POST" })
 
 export const addPlatformSale = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => saleSchema.parse(data))
+  .validator((data: unknown) => saleSchema.parse(data))
   .handler(async ({ data, context }) => {
     const { assertAdmin } = await import("./admin-guard.server");
     await assertAdmin(context.supabase as never, context.userId);
@@ -104,7 +104,7 @@ export const addPlatformSale = createServerFn({ method: "POST" })
 
 export const deletePlatformSale = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const { assertAdmin } = await import("./admin-guard.server");
     await assertAdmin(context.supabase as never, context.userId);
@@ -124,7 +124,10 @@ async function ownStore(context: { supabase: never; userId: string }) {
       };
     };
   };
-  const { data } = await supabase.from("stores").select("id, plan").eq("owner_id", context.userId)
+  const { data } = await supabase
+    .from("stores")
+    .select("id, plan")
+    .eq("owner_id", context.userId)
     .maybeSingle();
   if (!data) throw new Error("Crie sua loja antes de acessar o faturamento.");
   return data;
@@ -133,7 +136,7 @@ async function ownStore(context: { supabase: never; userId: string }) {
 /** Faturamento do lojista: pedidos da vitrine + vendas registradas manualmente. */
 export const getSellerRevenue = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => rangeSchema.parse(data))
+  .validator((data: unknown) => rangeSchema.parse(data))
   .handler(async ({ data, context }): Promise<{ entries: RevenueEntry[]; plan: string }> => {
     const store = await ownStore(context as never);
     const [orders, manual] = await Promise.all([
@@ -173,13 +176,12 @@ export const getSellerRevenue = createServerFn({ method: "POST" })
       })),
     ].sort((a, b) => b.date.localeCompare(a.date));
 
-
     return { entries, plan: store.plan };
   });
 
 export const addManualSale = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => saleSchema.parse(data))
+  .validator((data: unknown) => saleSchema.parse(data))
   .handler(async ({ data, context }) => {
     const store = await ownStore(context as never);
     if (store.plan !== "pro") throw new Error("Recurso disponível no plano PRO.");
@@ -199,7 +201,7 @@ export const addManualSale = createServerFn({ method: "POST" })
 
 export const deleteManualSale = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     const store = await ownStore(context as never);
     const { error } = await context.supabase
@@ -214,7 +216,7 @@ export const deleteManualSale = createServerFn({ method: "POST" })
 /** Devolve ao estoque as unidades de um pedido cancelado. */
 export const restockOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ orderId: z.string().uuid(), direction: z.enum(["return", "consume"]) }).parse(data),
   )
   .handler(async ({ data, context }) => {

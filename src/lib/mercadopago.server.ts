@@ -174,7 +174,6 @@ export async function createPreapproval(input: {
   });
 }
 
-
 export async function getPreapproval(id: string): Promise<Preapproval> {
   return mpFetch<Preapproval>(`/preapproval/${encodeURIComponent(id)}`);
 }

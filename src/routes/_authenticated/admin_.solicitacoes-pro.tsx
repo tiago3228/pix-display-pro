@@ -142,8 +142,8 @@ function ProPixAdmin() {
     <AppShell title="Solicitações PRO" description="Pagamentos do Vitrini PRO via Pix">
       {(data?.pendingCount ?? 0) > 0 ? (
         <div className="mb-4 rounded-lg border border-primary/40 bg-primary/5 px-3 py-2 text-sm">
-          🔔 <strong>Nova solicitação PRO via Pix</strong> — {data!.pendingCount} solicitação(ões) de{" "}
-          {brl(proPrice)} aguardando confirmação.
+          🔔 <strong>Nova solicitação PRO via Pix</strong> — {data!.pendingCount} solicitação(ões)
+          de {brl(proPrice)} aguardando confirmação.
         </div>
       ) : null}
 
@@ -240,10 +240,13 @@ function ProPixAdmin() {
       <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirmar que o Pix de {brl(selected?.amount ?? proPrice)} foi recebido?</DialogTitle>
+            <DialogTitle>
+              Confirmar que o Pix de {brl(selected?.amount ?? proPrice)} foi recebido?
+            </DialogTitle>
             <DialogDescription>
-              Ao aprovar, você confirma que verificou o recebimento do Pix de {brl(selected?.amount ?? proPrice)} fora do
-              Vitrini. Essa ação libera o plano PRO por 30 dias.
+              Ao aprovar, você confirma que verificou o recebimento do Pix de{" "}
+              {brl(selected?.amount ?? proPrice)} fora do Vitrini. Essa ação libera o plano PRO por
+              30 dias.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">

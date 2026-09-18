@@ -56,20 +56,22 @@ function mapRequest(row: Record<string, unknown>, storeName?: string | null): Pr
   };
 }
 
-async function requireAdmin(context: { supabase: { rpc: Function }; userId: string }) {
-  const { data } = await (
-    context.supabase.rpc as (
-      fn: string,
-      args: Record<string, unknown>,
-    ) => Promise<{ data: boolean | null }>
-  )("has_role", { _user_id: context.userId, _role: "admin" });
+type RpcClient = {
+  rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: boolean | null }>;
+};
+
+async function requireAdmin(context: { supabase: RpcClient; userId: string }) {
+  const { data } = await context.supabase.rpc("has_role", {
+    _user_id: context.userId,
+    _role: "admin",
+  });
   if (!data) throw new Error("Acesso restrito a administradores.");
 }
 
 /** Dados para exibir o QR Code / Copia e Cola do PRO via Pix. */
 export const getProPixCheckout = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(planInput)
+  .validator(planInput)
   .handler(async ({ data }): Promise<ProPixCheckout> => {
     const plan = data.plan;
     const { getPixSettings } = await import("./pro-pix.server");
@@ -134,7 +136,7 @@ export const getMyProPixRequests = createServerFn({ method: "GET" })
 /** Registra "já fiz o pagamento". Nunca libera o PRO — apenas cria a solicitação. */
 export const createProPixRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator(planInput)
+  .validator(planInput)
   .handler(async ({ data: input, context }) => {
     const plan = input.plan;
     const { data: stores } = await context.supabase
@@ -199,7 +201,7 @@ export const createProPixRequest = createServerFn({ method: "POST" })
 /** Lista administrativa das solicitações Pix. */
 export const listProPixRequests = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         status: z.enum(["all", "pending", "approved", "rejected", "canceled"]).default("all"),
@@ -245,7 +247,7 @@ export const countPendingProPixRequests = createServerFn({ method: "GET" })
 /** Aprovação atômica: libera o PRO por 30 dias. */
 export const approveProPixRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
     await requireAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -310,7 +312,7 @@ export const approveProPixRequest = createServerFn({ method: "POST" })
 /** Recusa com motivo obrigatório. Nunca libera o PRO. */
 export const rejectProPixRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ id: z.string().uuid(), reason: z.string().trim().min(3).max(300) }).parse(data),
   )
   .handler(async ({ data, context }) => {
@@ -378,7 +380,7 @@ export const listStoresForProGrant = createServerFn({ method: "GET" })
  */
 export const grantProManually = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         storeId: z.string().uuid(),
@@ -473,7 +475,7 @@ export const getPixSettingsAdmin = createServerFn({ method: "GET" })
 
 export const savePixSettings = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         pixKey: z.string().trim().min(3).max(120),

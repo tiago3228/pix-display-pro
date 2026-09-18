@@ -24,7 +24,7 @@ export type CollectionView = {
  * token aleatório. Nenhum ID interno é exposto na URL nem na resposta.
  */
 export const getCollection = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => z.object({ token: z.string().min(16).max(120) }).parse(data))
+  .validator((data: unknown) => z.object({ token: z.string().min(16).max(120) }).parse(data))
   .handler(async ({ data }): Promise<CollectionView> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 

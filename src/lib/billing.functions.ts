@@ -12,7 +12,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  */
 export const markInstallmentPaid = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         installmentId: z.string().uuid(),
@@ -79,7 +79,7 @@ export const markInstallmentPaid = createServerFn({ method: "POST" })
 /** Registra que o vendedor acionou uma cobrança (a mensagem é enviada por ele no WhatsApp). */
 export const registerReminder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         installmentId: z.string().uuid(),

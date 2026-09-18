@@ -32,7 +32,7 @@ export const SELLER_TEMPLATES: CampaignTemplate[] = [
     text: [
       "Oi, {cliente}! 😊",
       "",
-      'Boa notícia: *{produto}* voltou para o estoque da {loja}!',
+      "Boa notícia: *{produto}* voltou para o estoque da {loja}!",
       "",
       "Dá uma olhada na vitrine e garanta o seu:",
       "{link}",
@@ -90,16 +90,26 @@ export const ADMIN_TEMPLATES: CampaignTemplate[] = [
     ].join("\n"),
     fields: [
       { key: "beneficio", label: "Benefício", placeholder: "1 mês de PRO grátis" },
-      { key: "link", label: "Link para compartilhar", placeholder: "https://cardosovitrini.lovable.app" },
+      {
+        key: "link",
+        label: "Link para compartilhar",
+        placeholder: "https://cardosovitrini.lovable.app",
+      },
     ],
   },
   {
     value: "notice",
     label: "Aviso / novidade da plataforma",
-    text: ["Olá, {lojista}! 👋", "", "Novidade no Vitrini: {novidade}", "", "Qualquer dúvida, é só chamar por aqui. 💚"].join(
-      "\n",
-    ),
-    fields: [{ key: "novidade", label: "Novidade", placeholder: "agora você pode parcelar vendas" }],
+    text: [
+      "Olá, {lojista}! 👋",
+      "",
+      "Novidade no Vitrini: {novidade}",
+      "",
+      "Qualquer dúvida, é só chamar por aqui. 💚",
+    ].join("\n"),
+    fields: [
+      { key: "novidade", label: "Novidade", placeholder: "agora você pode parcelar vendas" },
+    ],
   },
   {
     value: "custom",
