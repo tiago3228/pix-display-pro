@@ -20,7 +20,13 @@ export const Route = createFileRoute("/_authenticated/calculadora")({
   component: CalculatorPage,
 });
 
-const initialValues = { cost: "", margin: "30", discount: "0" };
+const initialValues = {
+  cost: "",
+  margin: "30",
+  discount: "0",
+  quantity: "1",
+  targetRevenue: "",
+};
 type OpenPanel = "price" | "common" | null;
 
 function parseValue(value: string) {
@@ -152,6 +158,8 @@ function PriceCalculator({
   const cost = parseValue(values.cost);
   const margin = Math.min(parseValue(values.margin), 99.99);
   const discount = Math.min(parseValue(values.discount), 99.99);
+  const quantity = Math.floor(parseValue(values.quantity));
+  const targetRevenue = parseValue(values.targetRevenue);
   const result = useMemo(() => {
     const suggestedPrice = cost > 0 ? cost / (1 - margin / 100) : 0;
     const profit = suggestedPrice - cost;
@@ -160,6 +168,12 @@ function PriceCalculator({
     const actualMargin =
       priceAfterDiscount > 0 ? (profitAfterDiscount / priceAfterDiscount) * 100 : 0;
     const markup = cost > 0 ? (suggestedPrice / cost - 1) * 100 : 0;
+    const projectedRevenue = priceAfterDiscount * quantity;
+    const projectedCost = cost * quantity;
+    const projectedProfit = profitAfterDiscount * quantity;
+    const unitsForTarget =
+      priceAfterDiscount > 0 ? Math.ceil(targetRevenue / priceAfterDiscount) : 0;
+    const targetProfit = profitAfterDiscount * unitsForTarget;
     return {
       suggestedPrice,
       profit,
@@ -167,8 +181,13 @@ function PriceCalculator({
       profitAfterDiscount,
       actualMargin,
       markup,
+      projectedRevenue,
+      projectedCost,
+      projectedProfit,
+      unitsForTarget,
+      targetProfit,
     };
-  }, [cost, margin, discount]);
+  }, [cost, margin, discount, quantity, targetRevenue]);
 
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
@@ -218,6 +237,36 @@ function PriceCalculator({
             value={values.discount}
             onChange={(event) => update("discount", event.target.value)}
           />
+          <p className="text-xs text-muted-foreground">
+            Veja como a promoção afeta a receita e o lucro.
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="calculator-quantity">Quantidade de unidades</Label>
+          <Input
+            id="calculator-quantity"
+            type="number"
+            min="1"
+            step="1"
+            value={values.quantity}
+            onChange={(event) => update("quantity", event.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Projete a receita e o lucro para este volume de vendas.
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="calculator-target-revenue">Meta de faturamento (R$)</Label>
+          <Input
+            id="calculator-target-revenue"
+            inputMode="decimal"
+            placeholder="Ex.: 5.000,00"
+            value={values.targetRevenue}
+            onChange={(event) => update("targetRevenue", event.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Descubra quantas unidades precisa vender para atingir a meta.
+          </p>
         </div>
         <div className="flex gap-2 rounded-lg bg-muted/40 p-3 text-xs leading-5 text-muted-foreground">
           <Info className="mt-0.5 size-4 shrink-0 text-primary" />
@@ -260,6 +309,35 @@ function PriceCalculator({
                 {result.actualMargin.toFixed(1)}%
               </p>
             </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <ResultCard
+                label={`Receita projetada (${quantity} un.)`}
+                value={brl(result.projectedRevenue)}
+              />
+              <ResultCard label="Custo projetado" value={brl(result.projectedCost)} />
+              <ResultCard
+                label="Lucro projetado"
+                value={brl(result.projectedProfit)}
+                tone={result.projectedProfit < 0 ? "danger" : "default"}
+              />
+              {targetRevenue > 0 ? (
+                <ResultCard
+                  label="Unidades para a meta"
+                  value={`${result.unitsForTarget} un.`}
+                  emphasis
+                />
+              ) : null}
+            </div>
+            {targetRevenue > 0 ? (
+              <div className="rounded-xl border border-amber-300/50 bg-amber-50 p-4 text-amber-950 dark:border-amber-400/30 dark:bg-amber-950/20 dark:text-amber-100">
+                <p className="text-sm font-medium">Projeção para a meta de {brl(targetRevenue)}</p>
+                <p className="mt-1 text-sm opacity-80">
+                  Vendendo {result.unitsForTarget} unidades, a receita estimada será de{" "}
+                  {brl(result.unitsForTarget * result.priceAfterDiscount)} e o lucro estimado será
+                  de {brl(result.targetProfit)}.
+                </p>
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="mt-5 rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
