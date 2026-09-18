@@ -3,6 +3,7 @@ import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
+  Calculator,
   CreditCard,
   HelpCircle,
   LayoutDashboard,
@@ -31,19 +32,44 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { to: "/dashboard", label: "Dashboard", short: "Início", icon: LayoutDashboard },
-  { to: "/produtos", label: "Produtos", short: "Produtos", icon: Package },
-  { to: "/produtos-ia", label: "Cadastro por foto (IA)", short: "Foto IA", icon: Camera },
-  { to: "/pedidos", label: "Pedidos", short: "Pedidos", icon: ShoppingCart },
-  { to: "/cobrancas", label: "Cobranças", short: "Cobranças", icon: Wallet },
+  { to: "/dashboard", label: "Dashboard", short: "Início", icon: LayoutDashboard, featured: false },
+  { to: "/produtos", label: "Produtos", short: "Produtos", icon: Package, featured: false },
+  {
+    to: "/produtos-ia",
+    label: "Cadastro por foto (IA)",
+    short: "Foto IA",
+    icon: Camera,
+    featured: false,
+  },
+  { to: "/calculadora", label: "Calculadora", short: "Calcular", icon: Calculator, featured: true },
+  { to: "/pedidos", label: "Pedidos", short: "Pedidos", icon: ShoppingCart, featured: false },
+  { to: "/cobrancas", label: "Cobranças", short: "Cobranças", icon: Wallet, featured: false },
 
-  { to: "/faturamento", label: "Faturamento", short: "Faturamento", icon: BarChart3 },
-  { to: "/minha-loja", label: "Minha Loja", short: "Loja", icon: Store },
-  { to: "/qrcodes", label: "QR Codes", short: "QR Codes", icon: QrCode },
-  { to: "/clientes", label: "Clientes", short: "Clientes", icon: Users },
-  { to: "/configuracoes", label: "Configurações", short: "Ajustes", icon: Settings },
-  { to: "/assinatura", label: "Assinatura", short: "PRO", icon: CreditCard },
-  { to: "/como-funciona", label: "Como funciona", short: "Ajuda", icon: HelpCircle },
+  {
+    to: "/faturamento",
+    label: "Faturamento",
+    short: "Faturamento",
+    icon: BarChart3,
+    featured: false,
+  },
+  { to: "/minha-loja", label: "Minha Loja", short: "Loja", icon: Store, featured: false },
+  { to: "/qrcodes", label: "QR Codes", short: "QR Codes", icon: QrCode, featured: false },
+  { to: "/clientes", label: "Clientes", short: "Clientes", icon: Users, featured: false },
+  {
+    to: "/configuracoes",
+    label: "Configurações",
+    short: "Ajustes",
+    icon: Settings,
+    featured: false,
+  },
+  { to: "/assinatura", label: "Assinatura", short: "PRO", icon: CreditCard, featured: false },
+  {
+    to: "/como-funciona",
+    label: "Como funciona",
+    short: "Ajuda",
+    icon: HelpCircle,
+    featured: false,
+  },
 ] as const;
 
 const MOBILE_NAV = NAV.slice(0, 4);
@@ -100,8 +126,12 @@ export function AppShell({
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
                 pathname === item.to
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-muted-foreground hover:bg-sidebar-accent/60",
+                  ? item.featured
+                    ? "bg-amber-500 text-amber-950 shadow-sm"
+                    : "bg-sidebar-accent text-sidebar-accent-foreground"
+                  : item.featured
+                    ? "bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 dark:text-amber-300"
+                    : "text-muted-foreground hover:bg-sidebar-accent/60",
               )}
             >
               <item.icon className="size-4" />
@@ -240,8 +270,12 @@ export function AppShell({
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition",
                       pathname === item.to
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground hover:bg-accent/60",
+                        ? item.featured
+                          ? "bg-amber-500 text-amber-950"
+                          : "bg-accent text-accent-foreground"
+                        : item.featured
+                          ? "bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 dark:text-amber-300"
+                          : "text-muted-foreground hover:bg-accent/60",
                     )}
                   >
                     <item.icon className="size-4" />
