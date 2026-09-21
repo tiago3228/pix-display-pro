@@ -1,8 +1,18 @@
 import { useMemo, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Building2, Check, MessageCircle, Search, Send, Store, Users, X } from "lucide-react";
+import {
+  Building2,
+  Check,
+  ExternalLink,
+  MessageCircle,
+  Search,
+  Send,
+  Store,
+  Users,
+  X,
+} from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -281,13 +291,28 @@ function AdminStores() {
                   <Badge variant={store.isActive ? "secondary" : "destructive"}>
                     {store.isActive ? "ativa" : "inativa"}
                   </Badge>
+                  <Button asChild size="sm" variant="outline">
+                    <Link
+                      to="/s/$slug"
+                      params={{ slug: store.slug }}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="mr-1.5 size-4" /> Ver loja pública
+                    </Link>
+                  </Button>
                   <Button
                     size="sm"
                     variant={wasSent ? "outline" : "default"}
+                    disabled={!store.whatsapp.trim()}
                     onClick={() => openWhatsApp(store)}
                   >
                     <MessageCircle className="mr-1.5 size-4" />
-                    {wasSent ? "Abrir novamente" : "Abrir WhatsApp"}
+                    {!store.whatsapp.trim()
+                      ? "WhatsApp não cadastrado"
+                      : wasSent
+                        ? "Abrir novamente"
+                        : "Abrir WhatsApp"}
                   </Button>
                 </div>
               );
