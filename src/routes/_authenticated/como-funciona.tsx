@@ -11,6 +11,7 @@ import {
   QrCode,
   Settings,
   ShoppingCart,
+  Shirt,
   Store,
   Users,
   Wallet,
@@ -41,6 +42,7 @@ type TutorialStep = {
     | "/minha-loja"
     | "/produtos"
     | "/produtos-ia"
+    | "/roupas-esportivas"
     | "/pedidos"
     | "/cobrancas"
     | "/qrcodes"
@@ -151,6 +153,81 @@ const SECTIONS: TutorialSection[] = [
   },
   {
     number: "3",
+    title: "Organize seu catálogo em Roupas Esportivas",
+    description:
+      "No plano PRO, crie uma estrutura esportiva própria para organizar clubes, seleções, campeonatos, categorias e coleções da sua loja.",
+    icon: Shirt,
+    steps: [
+      {
+        title: "Abra o módulo Roupas Esportivas",
+        description:
+          "Acesse o módulo pelo menu lateral. O recurso é exclusivo do Vitrini PRO e mantém os dados salvos mesmo se o plano for alterado.",
+        details: [
+          "No painel, clique em Roupas Esportivas.",
+          "Confira a visão geral com a quantidade de itens e produtos classificados.",
+          "Use a aba Estrutura para organizar a árvore do seu catálogo.",
+        ],
+        to: "/roupas-esportivas",
+        action: "Abrir Roupas Esportivas",
+      },
+      {
+        title: "Monte a estrutura de esportes e categorias",
+        description:
+          "Crie níveis para que o cliente encontre rapidamente camisas, clubes, seleções, retrô e outros itens.",
+        details: [
+          "Comece por um item principal, como Futebol ou Basquete.",
+          "Adicione categorias filhas, como Nacional, Internacional, Clubes ou Seleções.",
+          "Use Novo item para criar clubes, campeonatos e categorias personalizadas.",
+          "Edite o nome, cores, logo, banner, ordem e status de cada item.",
+        ],
+        to: "/roupas-esportivas",
+        action: "Configurar estrutura",
+      },
+      {
+        title: "Classifique os produtos esportivos",
+        description:
+          "Ao cadastrar ou editar um produto, selecione a classificação esportiva e a coleção correspondente.",
+        details: [
+          "Abra Produtos e crie um produto normalmente, com nome, preço, estoque e fotos.",
+          "Na seção Catálogo esportivo, escolha o tipo e o público do produto.",
+          "Marque Lançamento, Retrô ou Produto personalizado quando aplicável.",
+          "Selecione uma coleção, como Vasco 2026, Nova Temporada ou Ofertas.",
+          "Salve o produto para que ele apareça nos filtros da vitrine pública.",
+        ],
+        to: "/produtos",
+        action: "Classificar produtos",
+      },
+      {
+        title: "Configure ofertas e a apresentação da vitrine",
+        description:
+          "Destaque novidades, ofertas e coleções para deixar a loja mais fácil de navegar.",
+        details: [
+          "Na aba Personalização, defina nome, descrição e cores do módulo.",
+          "Ative ou desative blocos como Lançamentos, Ofertas, Coleções e Retrô.",
+          "Na aba Coleções, crie agrupamentos com descrição, imagem e banner.",
+          "Para uma oferta, informe o preço original e o preço promocional; o desconto será exibido na vitrine.",
+          "Use a aba Visão geral para revisar a quantidade de itens e produtos classificados.",
+        ],
+        to: "/roupas-esportivas",
+        action: "Personalizar módulo",
+      },
+      {
+        title: "Confira como o cliente encontra os produtos",
+        description:
+          "A vitrine pública apresenta busca e filtros para esportes, categorias, lançamentos, ofertas, retrô e coleções.",
+        details: [
+          "Abra Ver loja ou o link público da sua vitrine.",
+          "Teste a busca por clube, esporte, coleção ou tipo de produto.",
+          "Confira os selos de lançamento, oferta e desconto.",
+          "Faça um teste pelo celular antes de divulgar a loja.",
+        ],
+        to: "/minha-loja",
+        action: "Ver minha loja",
+      },
+    ],
+  },
+  {
+    number: "4",
     title: "Publique e divulgue sua vitrine",
     description:
       "O link público é a porta de entrada dos clientes. Use-o no Instagram, Facebook, WhatsApp, cartões e embalagens.",
@@ -194,7 +271,7 @@ const SECTIONS: TutorialSection[] = [
     ],
   },
   {
-    number: "4",
+    number: "5",
     title: "Receba e organize pedidos",
     description:
       "Acompanhe os pedidos desde a entrada até a entrega ou retirada, sem perder informações importantes.",
@@ -227,7 +304,7 @@ const SECTIONS: TutorialSection[] = [
     ],
   },
   {
-    number: "5",
+    number: "6",
     title: "Gerencie cobranças e pagamentos",
     description:
       "Registre valores, acompanhe recebimentos e mantenha o controle financeiro das vendas e serviços.",
@@ -259,7 +336,7 @@ const SECTIONS: TutorialSection[] = [
     ],
   },
   {
-    number: "6",
+    number: "7",
     title: "Escolha o plano e acompanhe os recursos",
     description:
       "Consulte o plano atual e veja os recursos disponíveis para o momento do seu negócio.",
