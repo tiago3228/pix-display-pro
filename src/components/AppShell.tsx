@@ -17,6 +17,7 @@ import {
   ShoppingCart,
   Sparkles,
   Store,
+  Trophy,
   Users,
   Wallet,
 } from "lucide-react";
@@ -53,6 +54,13 @@ const NAV = [
     featured: false,
   },
   { to: "/minha-loja", label: "Minha Loja", short: "Loja", icon: Store, featured: false },
+  {
+    to: "/roupas-esportivas",
+    label: "⚽ Roupas Esportivas",
+    short: "Esportes",
+    icon: Trophy,
+    featured: true,
+  },
   { to: "/qrcodes", label: "QR Codes", short: "QR Codes", icon: QrCode, featured: false },
   { to: "/clientes", label: "Clientes", short: "Clientes", icon: Users, featured: false },
   {

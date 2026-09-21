@@ -34,6 +34,36 @@ export type StorefrontProduct = {
   orderNotes: string | null;
   orderProgressivePricing: boolean;
   orderTiers: { minQuantity: number; unitPrice: number }[];
+  sportsNodeIds: string[];
+  sportsProductType: string | null;
+  sportsAudience: string | null;
+  sportsIsRetro: boolean;
+  sportsIsNewRelease: boolean;
+  sportsIsCustomized: boolean;
+  sportsOfferActive: boolean;
+  sportsOriginalPrice: number | null;
+  sportsOfferPrice: number | null;
+  sportsOfferPercent: number | null;
+  sportsCollectionNames: string[];
+};
+
+export type StorefrontSportsNode = {
+  id: string;
+  parent_id: string | null;
+  node_type: string;
+  name: string;
+  logo_url: string | null;
+  banner_url: string | null;
+  primary_color: string | null;
+  secondary_color: string | null;
+};
+export type StorefrontSportsCollection = {
+  id: string;
+  name: string;
+  description: string;
+  image_url: string | null;
+  banner_url: string | null;
+  is_featured: boolean;
 };
 
 export type Storefront = {
@@ -58,8 +88,50 @@ export type Storefront = {
     min_installment_amount: number;
   };
   categories: { id: string; name: string }[];
+  sports: {
+    settings: {
+      name: string;
+      description: string;
+      primary_node_id: string | null;
+      primary_color: string;
+      secondary_color: string;
+    } | null;
+    nodes: StorefrontSportsNode[];
+    collections: StorefrontSportsCollection[];
+  };
   products: StorefrontProduct[];
 } | null;
+
+type StorefrontProductDbRow = {
+  id: string;
+  name: string;
+  description: string;
+  price: number | string;
+  image_url: string | null;
+  stock: number;
+  track_stock: boolean;
+  is_available: boolean;
+  is_featured: boolean;
+  has_variants: boolean;
+  is_hidden: boolean;
+  category_id: string | null;
+  order_enabled: boolean;
+  order_unit_price: number | string | null;
+  order_min_quantity: number;
+  order_max_quantity: number | null;
+  order_lead_time: string | null;
+  order_notes: string | null;
+  order_progressive_pricing: boolean;
+  sports_product_type: string | null;
+  sports_audience: string | null;
+  sports_is_retro: boolean;
+  sports_is_new_release: boolean;
+  sports_is_customized: boolean;
+  sports_offer_active: boolean;
+  sports_original_price: number | string | null;
+  sports_offer_price: number | string | null;
+  sports_offer_percent: number | null;
+};
 
 export const getStorefront = createServerFn({ method: "GET" })
   .validator((data: { slug: string }) => z.object({ slug: z.string().min(1) }).parse(data))
@@ -72,7 +144,7 @@ export const getStorefront = createServerFn({ method: "GET" })
 
     if (!store) return null;
 
-    const [{ data: categories }, { data: products }] = await Promise.all([
+    const [{ data: categories }, { data: productsRaw }] = await Promise.all([
       supabase
         .from("categories")
         .select("id, name, position")
@@ -81,14 +153,58 @@ export const getStorefront = createServerFn({ method: "GET" })
       supabase
         .from("products")
         .select(
-          "id, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing",
+          "id, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent",
         )
         .eq("store_id", store.id)
         .eq("is_hidden", false)
         .order("position"),
     ]);
 
-    const productIds = (products ?? []).map((p) => p.id);
+    const products = (productsRaw ?? []) as unknown as StorefrontProductDbRow[];
+    const productIds = products.map((p) => p.id);
+    // These tables are introduced by the migrations in this change; generated
+    // Supabase types are refreshed by Lovable when the SQL is published.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const publicDb = supabase as unknown as { from: (table: string) => any };
+    const [
+      { data: sportsSettings },
+      { data: sportsNodes },
+      { data: productSports },
+      { data: sportsCollections },
+      { data: collectionProducts },
+    ] = await Promise.all([
+      publicDb
+        .from("sports_settings")
+        .select("name, description, primary_node_id, primary_color, secondary_color")
+        .eq("store_id", store.id)
+        .maybeSingle(),
+      publicDb
+        .from("sports_nodes")
+        .select(
+          "id, parent_id, node_type, name, logo_url, banner_url, primary_color, secondary_color",
+        )
+        .eq("store_id", store.id)
+        .eq("is_active", true)
+        .order("sort_order")
+        .order("name"),
+      productIds.length
+        ? publicDb.from("product_sports").select("product_id, node_id").in("product_id", productIds)
+        : Promise.resolve({ data: [] }),
+      publicDb
+        .from("sports_collections")
+        .select("id, name, description, image_url, banner_url, is_featured")
+        .eq("store_id", store.id)
+        .eq("is_active", true)
+        .order("sort_order")
+        .order("name"),
+      publicDb
+        .from("sports_collection_products")
+        .select("collection_id, product_id")
+        .in(
+          "product_id",
+          productIds.length ? productIds : ["00000000-0000-0000-0000-000000000000"],
+        ),
+    ]);
     const { data: gallery } = productIds.length
       ? await supabase
           .from("product_images")
@@ -170,6 +286,19 @@ export const getStorefront = createServerFn({ method: "GET" })
         min_installment_amount: Number(store.min_installment_amount),
       },
       categories: (categories ?? []).map((c) => ({ id: c.id, name: c.name })),
+      sports: {
+        settings: sportsSettings
+          ? {
+              name: sportsSettings.name,
+              description: sportsSettings.description,
+              primary_node_id: sportsSettings.primary_node_id,
+              primary_color: sportsSettings.primary_color,
+              secondary_color: sportsSettings.secondary_color,
+            }
+          : null,
+        nodes: (sportsNodes ?? []) as StorefrontSportsNode[],
+        collections: (sportsCollections ?? []) as StorefrontSportsCollection[],
+      },
       products: (products ?? []).map((p) => ({
         id: p.id,
         name: p.name,
@@ -223,6 +352,28 @@ export const getStorefront = createServerFn({ method: "GET" })
             minQuantity: Number(tier.min_quantity),
             unitPrice: Number(tier.unit_price),
           })),
+        sportsNodeIds: (productSports ?? [])
+          .filter((link: { product_id: string }) => link.product_id === p.id)
+          .map((link: { node_id: string }) => link.node_id),
+        sportsProductType: p.sports_product_type ?? null,
+        sportsAudience: p.sports_audience ?? null,
+        sportsIsRetro: Boolean(p.sports_is_retro),
+        sportsIsNewRelease: Boolean(p.sports_is_new_release),
+        sportsIsCustomized: Boolean(p.sports_is_customized),
+        sportsOfferActive: Boolean(p.sports_offer_active),
+        sportsOriginalPrice:
+          p.sports_original_price === null ? null : Number(p.sports_original_price),
+        sportsOfferPrice: p.sports_offer_price === null ? null : Number(p.sports_offer_price),
+        sportsOfferPercent: p.sports_offer_percent === null ? null : Number(p.sports_offer_percent),
+        sportsCollectionNames: (collectionProducts ?? [])
+          .filter((link: { product_id: string }) => link.product_id === p.id)
+          .map(
+            (link: { collection_id: string }) =>
+              (sportsCollections ?? []).find(
+                (collection: { id: string; name: string }) => collection.id === link.collection_id,
+              )?.name,
+          )
+          .filter((name: string | undefined): name is string => Boolean(name)),
       })),
     };
   });
@@ -269,15 +420,18 @@ export const submitOrder = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!store || !store.is_active) throw new Error("Loja indisponível");
 
-    const { data: products } = await supabaseAdmin
+    const { data: productsRaw } = await supabaseAdmin
       .from("products")
       .select(
-        "id, name, price, store_id, is_hidden, is_available, order_enabled, stock, track_stock, has_variants",
+        "id, name, price, store_id, is_hidden, is_available, order_enabled, stock, track_stock, has_variants, sports_offer_active, sports_offer_price",
       )
       .in(
         "id",
         data.items.map((i) => i.productId),
       );
+    const products = (productsRaw ?? []) as unknown as (StorefrontProductDbRow & {
+      store_id: string;
+    })[];
     const { data: variants } = await supabaseAdmin
       .from("product_variants")
       .select("id, product_id, label, price, stock, is_available")
@@ -305,7 +459,11 @@ export const submitOrder = createServerFn({ method: "POST" })
         throw new Error(`Selecione uma variação para "${product.name}".`);
       if (variant && !variant.is_available)
         throw new Error(`A variação "${variant.label}" está indisponível.`);
-      const unitPrice = Number(variant?.price ?? product.price);
+      const productPrice =
+        product.sports_offer_active && product.sports_offer_price !== null
+          ? product.sports_offer_price
+          : product.price;
+      const unitPrice = Number(variant?.price ?? productPrice);
       return {
         product_id: product.id,
         product_name: product.name,

@@ -10,6 +10,7 @@ import { AppShell } from "@/components/AppShell";
 import { ProductPhotos } from "@/components/ProductPhotos";
 import { getSignedAssetUrl } from "@/lib/images.functions";
 import { FREE_PLAN_PRODUCT_LIMIT, brl } from "@/lib/format";
+import { listSportsNodes, sportsDb, type SportsNode } from "@/lib/sports";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,6 +60,15 @@ type ProductRow = {
   order_notes: string | null;
   order_progressive_pricing: boolean;
   product_order_tiers?: { min_quantity: number; unit_price: number }[];
+  sports_product_type?: string | null;
+  sports_audience?: string | null;
+  sports_is_retro?: boolean;
+  sports_is_new_release?: boolean;
+  sports_is_customized?: boolean;
+  sports_offer_active?: boolean;
+  sports_original_price?: number | null;
+  sports_offer_price?: number | null;
+  sports_offer_percent?: number | null;
 };
 
 const emptyForm = {
@@ -77,6 +87,15 @@ const emptyForm = {
   order_lead_time: "",
   order_notes: "",
   order_progressive_pricing: false,
+  sports_node_id: "none",
+  sports_product_type: "none",
+  sports_audience: "none",
+  sports_is_retro: false,
+  sports_is_new_release: false,
+  sports_is_customized: false,
+  sports_offer_active: false,
+  sports_original_price: "",
+  sports_offer_price: "",
 };
 
 function Products() {
@@ -92,6 +111,8 @@ function Products() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newCategory, setNewCategory] = useState("");
+  const [sportsNodeId, setSportsNodeId] = useState("none");
+  const [sportsCollectionId, setSportsCollectionId] = useState("none");
 
   const { data: categories } = useQuery({
     queryKey: ["categories", store?.id],
@@ -114,12 +135,33 @@ function Products() {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, name, description, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, product_variants(id, label, price, stock), product_order_tiers(min_quantity, unit_price)",
+          "id, name, description, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, product_variants(id, label, price, stock), product_order_tiers(min_quantity, unit_price)",
         )
         .eq("store_id", store!.id)
         .order("created_at", { ascending: false });
       if (error) throw error;
-      return data as ProductRow[];
+      return data as unknown as ProductRow[];
+    },
+  });
+
+  const { data: sportsNodes } = useQuery<SportsNode[]>({
+    queryKey: ["sports-nodes", store?.id],
+    enabled: Boolean(store?.id && store.plan === "pro"),
+    queryFn: () => listSportsNodes(store!.id),
+  });
+  const { data: sportsCollections } = useQuery<{ id: string; name: string }[]>({
+    queryKey: ["sports-collections", store?.id],
+    enabled: Boolean(store?.id && store.plan === "pro"),
+    queryFn: async () => {
+      const { data, error } = await sportsDb
+        .from("sports_collections")
+        .select("id, name")
+        .eq("store_id", store!.id)
+        .eq("is_active", true)
+        .order("sort_order")
+        .order("name");
+      if (error) throw error;
+      return (data ?? []) as { id: string; name: string }[];
     },
   });
 
@@ -137,6 +179,8 @@ function Products() {
     setVariants([]);
     setOrderTiers([]);
     setPhotos([]);
+    setSportsNodeId("none");
+    setSportsCollectionId("none");
     setOpen(true);
   }
 
@@ -159,7 +203,36 @@ function Products() {
       order_lead_time: product.order_lead_time ?? "",
       order_notes: product.order_notes ?? "",
       order_progressive_pricing: product.order_progressive_pricing,
+      sports_node_id: "none",
+      sports_product_type: product.sports_product_type ?? "none",
+      sports_audience: product.sports_audience ?? "none",
+      sports_is_retro: Boolean(product.sports_is_retro),
+      sports_is_new_release: Boolean(product.sports_is_new_release),
+      sports_is_customized: Boolean(product.sports_is_customized),
+      sports_offer_active: Boolean(product.sports_offer_active),
+      sports_original_price:
+        product.sports_original_price == null ? "" : String(product.sports_original_price),
+      sports_offer_price:
+        product.sports_offer_price == null ? "" : String(product.sports_offer_price),
     });
+    setSportsNodeId("none");
+    setSportsCollectionId("none");
+    void sportsDb
+      .from("product_sports")
+      .select("node_id")
+      .eq("product_id", product.id)
+      .maybeSingle()
+      .then(({ data }: { data: { node_id?: string | null } | null }) =>
+        setSportsNodeId(data?.node_id ?? "none"),
+      );
+    void sportsDb
+      .from("sports_collection_products")
+      .select("collection_id")
+      .eq("product_id", product.id)
+      .maybeSingle()
+      .then(({ data }: { data: { collection_id?: string | null } | null }) =>
+        setSportsCollectionId(data?.collection_id ?? "none"),
+      );
     setVariants(
       product.product_variants.map((v) => ({
         id: v.id,
@@ -253,11 +326,46 @@ function Products() {
       order_lead_time: form.order_enabled ? form.order_lead_time.trim() || null : null,
       order_notes: form.order_enabled ? form.order_notes.trim() || null : null,
       order_progressive_pricing: form.order_enabled && form.order_progressive_pricing,
+      sports_product_type: form.sports_product_type === "none" ? null : form.sports_product_type,
+      sports_audience: form.sports_audience === "none" ? null : form.sports_audience,
+      sports_is_retro: Boolean(form.sports_is_retro),
+      sports_is_new_release: Boolean(form.sports_is_new_release),
+      sports_is_customized: Boolean(form.sports_is_customized),
+      sports_offer_active: Boolean(form.sports_offer_active),
+      sports_original_price:
+        form.sports_offer_active && form.sports_original_price
+          ? Number(String(form.sports_original_price).replace(",", "."))
+          : null,
+      sports_offer_price:
+        form.sports_offer_active && form.sports_offer_price
+          ? Number(String(form.sports_offer_price).replace(",", "."))
+          : null,
+      sports_offer_percent:
+        form.sports_offer_active && form.sports_original_price && form.sports_offer_price
+          ? Math.max(
+              0,
+              Math.round(
+                (1 -
+                  Number(String(form.sports_offer_price).replace(",", ".")) /
+                    Number(String(form.sports_original_price).replace(",", "."))) *
+                  100,
+              ),
+            )
+          : null,
     };
 
     const { data: saved, error } = editing
-      ? await supabase.from("products").update(payload).eq("id", editing.id).select("id").single()
-      : await supabase.from("products").insert(payload).select("id").single();
+      ? await supabase
+          .from("products")
+          .update(payload as never)
+          .eq("id", editing.id)
+          .select("id")
+          .single()
+      : await supabase
+          .from("products")
+          .insert(payload as never)
+          .select("id")
+          .single();
 
     if (error || !saved) {
       setSaving(false);
@@ -331,6 +439,26 @@ function Products() {
           stock: Number(v.stock) || 0,
         })),
       );
+    }
+
+    await sportsDb.from("product_sports").delete().eq("product_id", saved.id);
+    if (sportsNodeId !== "none" && store.plan === "pro") {
+      const { error: sportsError } = await sportsDb.from("product_sports").insert({
+        product_id: saved.id,
+        node_id: sportsNodeId,
+        is_primary: true,
+      });
+      if (sportsError) {
+        setSaving(false);
+        toast.error("Produto salvo, mas não foi possível vincular a classificação esportiva.");
+        return;
+      }
+    }
+    await sportsDb.from("sports_collection_products").delete().eq("product_id", saved.id);
+    if (sportsCollectionId !== "none" && store.plan === "pro") {
+      await sportsDb
+        .from("sports_collection_products")
+        .insert({ collection_id: sportsCollectionId, product_id: saved.id });
     }
 
     setSaving(false);
@@ -507,6 +635,152 @@ function Products() {
                 </SelectContent>
               </Select>
             </div>
+            {store?.plan === "pro" && sportsNodes?.length ? (
+              <div className="space-y-1.5 rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-900 dark:bg-emerald-950/20">
+                <Label>Classificação esportiva</Label>
+                <Select value={sportsNodeId} onValueChange={setSportsNodeId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sem classificação esportiva" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem classificação esportiva</SelectItem>
+                    {sportsNodes.map((node) => (
+                      <SelectItem key={node.id} value={node.id}>
+                        {node.parent_id ? "↳ " : ""}
+                        {node.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  O produto continua usando as categorias e o fluxo de pedidos atuais.
+                </p>
+              </div>
+            ) : null}
+            {store?.plan === "pro" && sportsCollections?.length ? (
+              <div className="space-y-1.5">
+                <Label>Coleção esportiva</Label>
+                <Select value={sportsCollectionId} onValueChange={setSportsCollectionId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sem coleção" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Sem coleção</SelectItem>
+                    {sportsCollections.map((collection) => (
+                      <SelectItem key={collection.id} value={collection.id}>
+                        {collection.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ) : null}
+            {store?.plan === "pro" ? (
+              <div className="space-y-3 rounded-lg border border-border p-3">
+                <p className="text-sm font-semibold">Catálogo esportivo</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Tipo</Label>
+                    <Select
+                      value={form.sports_product_type}
+                      onValueChange={(value) => setForm({ ...form, sports_product_type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Sem tipo</SelectItem>
+                        {[
+                          "Camisa",
+                          "Camiseta",
+                          "Regata",
+                          "Bermuda",
+                          "Calça",
+                          "Agasalho",
+                          "Moletom",
+                          "Boné",
+                          "Meia",
+                          "Chuteira",
+                          "Bolsa",
+                          "Mochila",
+                          "Bola",
+                          "Acessórios",
+                          "Personalizado",
+                          "Outros",
+                        ].map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Público</Label>
+                    <Select
+                      value={form.sports_audience}
+                      onValueChange={(value) => setForm({ ...form, sports_audience: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Sem público</SelectItem>
+                        {["Masculino", "Feminino", "Unissex", "Infantil", "Juvenil"].map(
+                          (audience) => (
+                            <SelectItem key={audience} value={audience}>
+                              {audience}
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <ToggleRow
+                  label="Retrô"
+                  checked={form.sports_is_retro}
+                  onChange={(value) => setForm({ ...form, sports_is_retro: value })}
+                />
+                <ToggleRow
+                  label="Lançamento"
+                  checked={form.sports_is_new_release}
+                  onChange={(value) => setForm({ ...form, sports_is_new_release: value })}
+                />
+                <ToggleRow
+                  label="Produto personalizado"
+                  checked={form.sports_is_customized}
+                  onChange={(value) => setForm({ ...form, sports_is_customized: value })}
+                />
+                <ToggleRow
+                  label="Oferta"
+                  checked={form.sports_offer_active}
+                  onChange={(value) => setForm({ ...form, sports_offer_active: value })}
+                />
+                {form.sports_offer_active ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label>Preço original</Label>
+                      <Input
+                        inputMode="decimal"
+                        value={form.sports_original_price}
+                        onChange={(e) =>
+                          setForm({ ...form, sports_original_price: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label>Preço promocional</Label>
+                      <Input
+                        inputMode="decimal"
+                        value={form.sports_offer_price}
+                        onChange={(e) => setForm({ ...form, sports_offer_price: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             <ProductPhotos
               paths={photos}
               onChange={setPhotos}

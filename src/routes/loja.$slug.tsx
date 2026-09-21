@@ -85,6 +85,24 @@ export function EmptyState({ title, text }: { title: string; text: string }) {
 
 type Step = "cart" | "checkout";
 
+function sportsBranchIds(
+  nodes: { id: string; parent_id: string | null }[],
+  rootId: string,
+): string[] {
+  const ids = [rootId];
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const node of nodes) {
+      if (node.parent_id && ids.includes(node.parent_id) && !ids.includes(node.id)) {
+        ids.push(node.id);
+        changed = true;
+      }
+    }
+  }
+  return ids;
+}
+
 export function StorePage() {
   const data = useLoaderData({ strict: false }) as Awaited<ReturnType<typeof getStorefront>>;
   const params = useParams({ strict: false }) as { slug: string };
@@ -93,6 +111,8 @@ export function StorePage() {
   const sendOrder = useServerFn(submitOrder);
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [activeSportsNode, setActiveSportsNode] = useState<string>("all");
+  const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<StorefrontProduct | null>(null);
   const [orderProduct, setOrderProduct] = useState<StorefrontProduct | null>(null);
   const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
@@ -114,8 +134,34 @@ export function StorePage() {
         ? data.products
         : activeCategory === "featured"
           ? data.products.filter((p) => p.is_featured)
-          : data.products.filter((p) => p.category_id === activeCategory);
-    return [...filtered].sort((a, b) => {
+          : activeCategory === "new-releases"
+            ? data.products.filter((p) => p.sportsIsNewRelease)
+            : activeCategory === "offers"
+              ? data.products.filter((p) => p.sportsOfferActive)
+              : activeCategory === "retro"
+                ? data.products.filter((p) => p.sportsIsRetro)
+                : data.products.filter((p) => p.category_id === activeCategory);
+    const sportsFiltered =
+      activeSportsNode === "all"
+        ? filtered
+        : filtered.filter((p) =>
+            sportsBranchIds(data.sports.nodes, activeSportsNode).some((id) =>
+              p.sportsNodeIds.includes(id),
+            ),
+          );
+    const term = search.trim().toLocaleLowerCase("pt-BR");
+    const searched = term
+      ? sportsFiltered.filter((product) => {
+          const nodeNames = data.sports.nodes
+            .filter((node) => product.sportsNodeIds.includes(node.id))
+            .map((node) => node.name)
+            .join(" ");
+          return `${product.name} ${product.description} ${nodeNames} ${product.sportsProductType ?? ""} ${product.sportsCollectionNames.join(" ")}`
+            .toLocaleLowerCase("pt-BR")
+            .includes(term);
+        })
+      : sportsFiltered;
+    return [...searched].sort((a, b) => {
       const stockA = a.track_stock ? stockOfProduct(a) : Number.POSITIVE_INFINITY;
       const stockB = b.track_stock ? stockOfProduct(b) : Number.POSITIVE_INFINITY;
       const availableA = a.is_available && (a.orderEnabled || stockA > 0);
@@ -124,7 +170,7 @@ export function StorePage() {
       if (stockA !== stockB) return stockB - stockA;
       return a.name.localeCompare(b.name, "pt-BR");
     });
-  }, [data, activeCategory]);
+  }, [data, activeCategory, activeSportsNode, search]);
 
   function stockOfProduct(product: StorefrontProduct) {
     if (!product.track_stock) return Number.POSITIVE_INFINITY;
@@ -276,7 +322,9 @@ export function StorePage() {
   return (
     <div
       className="vitrini-storefront min-h-screen pb-28"
-      style={{ ["--brand" as string]: "var(--vitrini-orange)" }}
+      style={{
+        ["--brand" as string]: data.sports.settings?.primary_color ?? "var(--vitrini-orange)",
+      }}
     >
       <header className="relative">
         <div
@@ -333,8 +381,65 @@ export function StorePage() {
         </div>
       </header>
 
+      <div className="mx-auto mt-4 max-w-3xl px-4">
+        <Input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Buscar produto, clube, esporte ou tipo..."
+          aria-label="Buscar na loja"
+        />
+      </div>
+      {data.sports.collections.length ? (
+        <section className="mx-auto mt-4 max-w-3xl px-4">
+          <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none]">
+            {data.sports.collections
+              .filter((collection) => collection.is_featured)
+              .map((collection) => (
+                <button
+                  key={collection.id}
+                  type="button"
+                  className="surface min-w-48 overflow-hidden text-left"
+                  onClick={() => setSearch(collection.name)}
+                >
+                  {collection.image_url ? (
+                    <img src={collection.image_url} alt="" className="h-20 w-full object-cover" />
+                  ) : null}
+                  <span className="block px-3 py-2 text-sm font-semibold">
+                    🏷️ {collection.name}
+                  </span>
+                </button>
+              ))}
+          </div>
+        </section>
+      ) : null}
+
       <div className="sticky top-0 z-20 mt-4 border-y border-orange-200/10 bg-[#21140f]/85 py-2 backdrop-blur">
         <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
+          {data.sports.nodes.length ? (
+            <>
+              <CategoryChip
+                label={data.sports.settings?.name ?? "Esportes"}
+                active={activeSportsNode === "all"}
+                onClick={() => setActiveSportsNode("all")}
+                color={data.sports.settings?.secondary_color ?? "var(--vitrini-orange)"}
+              />
+              {data.sports.nodes
+                .filter((node) => !node.parent_id)
+                .map((node) => (
+                  <CategoryChip
+                    key={node.id}
+                    label={node.name}
+                    active={activeSportsNode === node.id}
+                    onClick={() => setActiveSportsNode(node.id)}
+                    color={
+                      node.primary_color ??
+                      data.sports.settings?.secondary_color ??
+                      "var(--vitrini-orange)"
+                    }
+                  />
+                ))}
+            </>
+          ) : null}
           <CategoryChip
             label="Todos"
             active={activeCategory === "all"}
@@ -346,6 +451,30 @@ export function StorePage() {
               label="Destaques"
               active={activeCategory === "featured"}
               onClick={() => setActiveCategory("featured")}
+              color="var(--vitrini-orange)"
+            />
+          ) : null}
+          {data.products.some((p) => p.sportsIsNewRelease) ? (
+            <CategoryChip
+              label="🆕 Lançamentos"
+              active={activeCategory === "new-releases"}
+              onClick={() => setActiveCategory("new-releases")}
+              color="var(--vitrini-orange)"
+            />
+          ) : null}
+          {data.products.some((p) => p.sportsOfferActive) ? (
+            <CategoryChip
+              label="🔥 Ofertas"
+              active={activeCategory === "offers"}
+              onClick={() => setActiveCategory("offers")}
+              color="var(--vitrini-orange)"
+            />
+          ) : null}
+          {data.products.some((p) => p.sportsIsRetro) ? (
+            <CategoryChip
+              label="🕰️ Retrô"
+              active={activeCategory === "retro"}
+              onClick={() => setActiveCategory("retro")}
               color="var(--vitrini-orange)"
             />
           ) : null}
@@ -405,7 +534,24 @@ export function StorePage() {
                       {product.description}
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                      <span className="text-base font-bold">{brl(product.price)}</span>
+                      {product.sportsOfferActive && product.sportsOfferPrice !== null ? (
+                        <>
+                          <span className="text-xs text-muted-foreground line-through">
+                            {brl(product.sportsOriginalPrice ?? product.price)}
+                          </span>
+                          <span className="text-base font-bold text-emerald-600">
+                            {brl(product.sportsOfferPrice)}
+                          </span>
+                          {product.sportsOfferPercent ? (
+                            <Badge variant="secondary">{product.sportsOfferPercent}% OFF</Badge>
+                          ) : null}
+                        </>
+                      ) : (
+                        <span className="text-base font-bold">{brl(product.price)}</span>
+                      )}
+                      {product.sportsIsNewRelease ? (
+                        <Badge variant="secondary">🆕 Lançamento</Badge>
+                      ) : null}
                       {status === "last" ? <Badge variant="secondary">Última unidade</Badge> : null}
                       {status === "ok" && product.track_stock ? (
                         <Badge variant="secondary">{stockOf(product)} unidades disponíveis</Badge>
