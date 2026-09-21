@@ -78,6 +78,8 @@ const emptyForm: NodeForm = {
   sort_order: "0",
 };
 
+type SportsCompetitionLink = { node_id: string; competition_id: string };
+
 function SportsModule() {
   const { data: store, isLoading: storeLoading } = useMyStore();
   const queryClient = useQueryClient();
@@ -99,10 +101,22 @@ function SportsModule() {
     enabled: Boolean(store?.id && isPro),
     queryFn: () => getSportsSettings(store!.id),
   });
+  const competitionLinksQuery = useQuery({
+    queryKey: ["sports-competition-links", store?.id],
+    enabled: Boolean(store?.id && isPro),
+    queryFn: async () => {
+      const { data, error } = await sportsDb
+        .from("sports_node_competitions")
+        .select("node_id, competition_id");
+      if (error) throw error;
+      return (data ?? []) as SportsCompetitionLink[];
+    },
+  });
 
   const nodes = useMemo(() => nodesQuery.data ?? [], [nodesQuery.data]);
   const roots = useMemo(() => childrenOf(nodes, null), [nodes]);
   const settings = settingsQuery.data;
+  const competitionLinks = competitionLinksQuery.data ?? [];
 
   function refresh() {
     void queryClient.invalidateQueries({ queryKey: ["sports-nodes", store?.id] });
@@ -242,6 +256,7 @@ function SportsModule() {
           <StructureView
             nodes={nodes}
             roots={roots}
+            competitionLinks={competitionLinks}
             onAdd={openNew}
             onEdit={openEdit}
             onToggle={toggleNode}
@@ -469,6 +484,7 @@ function Overview({
 function StructureView({
   nodes,
   roots,
+  competitionLinks,
   onAdd,
   onEdit,
   onToggle,
@@ -476,6 +492,7 @@ function StructureView({
 }: {
   nodes: SportsNode[];
   roots: SportsNode[];
+  competitionLinks: SportsCompetitionLink[];
   onAdd: (parentId?: string) => void;
   onEdit: (node: SportsNode) => void;
   onToggle: (node: SportsNode) => void;
@@ -488,6 +505,7 @@ function StructureView({
           key={root.id}
           node={root}
           nodes={nodes}
+          competitionLinks={competitionLinks}
           onAdd={onAdd}
           onEdit={onEdit}
           onToggle={onToggle}
@@ -509,6 +527,7 @@ function StructureView({
 function NodeBranch({
   node,
   nodes,
+  competitionLinks,
   onAdd,
   onEdit,
   onToggle,
@@ -516,12 +535,22 @@ function NodeBranch({
 }: {
   node: SportsNode;
   nodes: SportsNode[];
+  competitionLinks: SportsCompetitionLink[];
   onAdd: (parentId?: string) => void;
   onEdit: (node: SportsNode) => void;
   onToggle: (node: SportsNode) => void;
   onRemove: (node: SportsNode) => void;
 }) {
-  const children = childrenOf(nodes, node.id);
+  const directChildren = childrenOf(nodes, node.id);
+  const linkedChildren = nodes.filter(
+    (candidate) =>
+      competitionLinks.some(
+        (link) => link.node_id === candidate.id && link.competition_id === node.id,
+      ) && !directChildren.some((child) => child.id === candidate.id),
+  );
+  const children = [...directChildren, ...linkedChildren].sort(
+    (a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name, "pt-BR"),
+  );
   const [expanded, setExpanded] = useState(false);
   return (
     <div className="surface p-3 sm:p-4">
@@ -574,6 +603,7 @@ function NodeBranch({
               key={child.id}
               node={child}
               nodes={nodes}
+              competitionLinks={competitionLinks}
               onAdd={onAdd}
               onEdit={onEdit}
               onToggle={onToggle}
