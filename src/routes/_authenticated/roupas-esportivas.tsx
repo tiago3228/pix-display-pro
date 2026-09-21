@@ -522,19 +522,31 @@ function NodeBranch({
   onRemove: (node: SportsNode) => void;
 }) {
   const children = childrenOf(nodes, node.id);
+  const [expanded, setExpanded] = useState(false);
   return (
-    <div className="surface p-4">
+    <div className="surface p-3 sm:p-4">
       <div className="flex items-center gap-2">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="font-semibold">{node.name}</p>
-            <Badge variant="secondary">{sportsTypeLabel(node.node_type)}</Badge>
-            {!node.is_active ? <Badge variant="outline">Inativo</Badge> : null}
+        <button
+          type="button"
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-lg p-1 text-left transition hover:bg-accent/60"
+          onClick={() => setExpanded((current) => !current)}
+          aria-expanded={expanded}
+          aria-label={`${expanded ? "Recolher" : "Expandir"} ${node.name}`}
+        >
+          <ChevronRight
+            className={`size-4 shrink-0 transition-transform ${expanded ? "rotate-90" : ""}`}
+          />
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-semibold">{node.name}</p>
+              <Badge variant="secondary">{sportsTypeLabel(node.node_type)}</Badge>
+              {!node.is_active ? <Badge variant="outline">Inativo</Badge> : null}
+            </div>
+            {node.description ? (
+              <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{node.description}</p>
+            ) : null}
           </div>
-          {node.description ? (
-            <p className="mt-1 text-xs text-muted-foreground">{node.description}</p>
-          ) : null}
-        </div>
+        </button>
         <Button size="icon" variant="ghost" aria-label="Editar" onClick={() => onEdit(node)}>
           <Edit3 className="size-4" />
         </Button>
@@ -555,22 +567,24 @@ function NodeBranch({
           <Trash2 className="size-4" />
         </Button>
       </div>
-      <div className="mt-3 space-y-2 border-l-2 border-primary/20 pl-3">
-        {children.map((child) => (
-          <NodeBranch
-            key={child.id}
-            node={child}
-            nodes={nodes}
-            onAdd={onAdd}
-            onEdit={onEdit}
-            onToggle={onToggle}
-            onRemove={onRemove}
-          />
-        ))}
-        <Button size="sm" variant="outline" onClick={() => onAdd(node.id)}>
-          <Plus className="mr-1 size-3.5" /> Adicionar abaixo
-        </Button>
-      </div>
+      {expanded ? (
+        <div className="mt-3 space-y-2 border-l-2 border-primary/20 pl-3">
+          {children.map((child) => (
+            <NodeBranch
+              key={child.id}
+              node={child}
+              nodes={nodes}
+              onAdd={onAdd}
+              onEdit={onEdit}
+              onToggle={onToggle}
+              onRemove={onRemove}
+            />
+          ))}
+          <Button size="sm" variant="outline" onClick={() => onAdd(node.id)}>
+            <Plus className="mr-1 size-3.5" /> Adicionar abaixo
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
