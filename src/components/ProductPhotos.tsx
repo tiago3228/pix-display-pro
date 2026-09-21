@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ImagePlus, Loader2, Star, Trash2 } from "lucide-react";
+import { Camera, ImagePlus, Loader2, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ export function ProductPhotos({
   onUploadingChange?: (uploading: boolean) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const uploadServer = useServerFn(uploadAssetServer);
 
@@ -81,18 +82,32 @@ export function ProductPhotos({
             onRemove={() => onChange(paths.filter((_, i) => i !== index))}
           />
         ))}
-        <button
-          type="button"
-          aria-label="Adicionar foto"
-          className="flex size-20 items-center justify-center rounded-lg border border-dashed border-border text-muted-foreground"
-          onClick={() => inputRef.current?.click()}
-        >
-          {uploading ? (
-            <Loader2 className="size-5 animate-spin" />
-          ) : (
-            <ImagePlus className="size-5" />
-          )}
-        </button>
+        <div className="flex min-w-40 flex-col gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 justify-start gap-2"
+            disabled={uploading}
+            onClick={() => inputRef.current?.click()}
+          >
+            {uploading ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <ImagePlus className="size-4" />
+            )}
+            Anexar do aparelho
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="h-9 justify-start gap-2"
+            disabled={uploading}
+            onClick={() => cameraInputRef.current?.click()}
+          >
+            <Camera className="size-4" />
+            Tirar foto com câmera
+          </Button>
+        </div>
       </div>
       <input
         ref={inputRef}
@@ -106,8 +121,21 @@ export function ProductPhotos({
           e.target.value = "";
         }}
       />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="sr-only"
+        aria-label="Tirar foto do produto com a câmera"
+        onChange={(e) => {
+          addFiles(e.target.files);
+          e.target.value = "";
+        }}
+      />
       <p className="text-xs text-muted-foreground">
-        A primeira foto é a principal e aparece na vitrine.
+        Você pode anexar uma imagem existente ou tirar uma foto com a câmera do celular. A primeira
+        foto é a principal e aparece na vitrine.
       </p>
     </div>
   );
