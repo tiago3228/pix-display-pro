@@ -114,6 +114,9 @@ export function StorePage() {
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [activeSportsNode, setActiveSportsNode] = useState<string>("all");
+  const [sportsTypeFilter, setSportsTypeFilter] = useState("all");
+  const [sportsAudienceFilter, setSportsAudienceFilter] = useState("all");
+  const [collectionFilter, setCollectionFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<StorefrontProduct | null>(null);
   const [orderProduct, setOrderProduct] = useState<StorefrontProduct | null>(null);
@@ -170,9 +173,15 @@ export function StorePage() {
               p.sportsNodeIds.includes(id),
             ),
           );
+    const metadataFiltered = sportsFiltered.filter(
+      (product) =>
+        (sportsTypeFilter === "all" || product.sportsProductType === sportsTypeFilter) &&
+        (sportsAudienceFilter === "all" || product.sportsAudience === sportsAudienceFilter) &&
+        (collectionFilter === "all" || product.sportsCollectionNames.includes(collectionFilter)),
+    );
     const term = search.trim().toLocaleLowerCase("pt-BR");
     const searched = term
-      ? sportsFiltered.filter((product) => {
+      ? metadataFiltered.filter((product) => {
           const nodeNames = data.sports.nodes
             .filter((node) => product.sportsNodeIds.includes(node.id))
             .map((node) => node.name)
@@ -181,7 +190,7 @@ export function StorePage() {
             .toLocaleLowerCase("pt-BR")
             .includes(term);
         })
-      : sportsFiltered;
+      : metadataFiltered;
     return [...searched].sort((a, b) => {
       const stockA = a.track_stock ? stockOfProduct(a) : Number.POSITIVE_INFINITY;
       const stockB = b.track_stock ? stockOfProduct(b) : Number.POSITIVE_INFINITY;
@@ -191,7 +200,49 @@ export function StorePage() {
       if (stockA !== stockB) return stockB - stockA;
       return a.name.localeCompare(b.name, "pt-BR");
     });
-  }, [data, activeCategory, activeSportsNode, search]);
+  }, [
+    data,
+    activeCategory,
+    activeSportsNode,
+    sportsTypeFilter,
+    sportsAudienceFilter,
+    collectionFilter,
+    search,
+  ]);
+
+  const availableSportsNodes = useMemo(() => {
+    if (!data) return [];
+    return data.sports.nodes.filter((node) =>
+      data.products.some((product) =>
+        sportsBranchIds(data.sports.nodes, node.id).some((id) =>
+          product.sportsNodeIds.includes(id),
+        ),
+      ),
+    );
+  }, [data]);
+  const availableSportsTypes = useMemo(
+    () =>
+      Array.from(
+        new Set((data?.products ?? []).map((product) => product.sportsProductType).filter(Boolean)),
+      ) as string[],
+    [data],
+  );
+  const availableSportsAudiences = useMemo(
+    () =>
+      Array.from(
+        new Set((data?.products ?? []).map((product) => product.sportsAudience).filter(Boolean)),
+      ) as string[],
+    [data],
+  );
+  const availableCollections = useMemo(
+    () =>
+      (data?.sports.collections ?? []).filter((collection) =>
+        (data?.products ?? []).some((product) =>
+          product.sportsCollectionNames.includes(collection.name),
+        ),
+      ),
+    [data],
+  );
 
   function stockOfProduct(product: StorefrontProduct) {
     if (!product.track_stock) return Number.POSITIVE_INFINITY;
@@ -468,6 +519,21 @@ export function StorePage() {
                     }
                   />
                 ))}
+              {availableSportsNodes
+                .filter((node) => node.parent_id)
+                .map((node) => (
+                  <CategoryChip
+                    key={node.id}
+                    label={node.name}
+                    active={activeSportsNode === node.id}
+                    onClick={() => setActiveSportsNode(node.id)}
+                    color={
+                      node.primary_color ??
+                      data.sports.settings?.secondary_color ??
+                      "var(--vitrini-orange)"
+                    }
+                  />
+                ))}
             </>
           ) : null}
           <CategoryChip
@@ -506,6 +572,57 @@ export function StorePage() {
               active={activeCategory === "retro"}
               onClick={() => setActiveCategory("retro")}
               color="var(--vitrini-orange)"
+            />
+          ) : null}
+          {availableSportsTypes.map((type) => (
+            <CategoryChip
+              key={`type-${type}`}
+              label={type}
+              active={sportsTypeFilter === type}
+              onClick={() => setSportsTypeFilter(type)}
+              color={data.sports.settings?.primary_color ?? "var(--vitrini-orange)"}
+            />
+          ))}
+          {availableSportsTypes.length ? (
+            <CategoryChip
+              label="Todos os tipos"
+              active={sportsTypeFilter === "all"}
+              onClick={() => setSportsTypeFilter("all")}
+              color={data.sports.settings?.primary_color ?? "var(--vitrini-orange)"}
+            />
+          ) : null}
+          {availableSportsAudiences.map((audience) => (
+            <CategoryChip
+              key={`audience-${audience}`}
+              label={audience}
+              active={sportsAudienceFilter === audience}
+              onClick={() => setSportsAudienceFilter(audience)}
+              color={data.sports.settings?.secondary_color ?? "var(--vitrini-orange)"}
+            />
+          ))}
+          {availableSportsAudiences.length ? (
+            <CategoryChip
+              label="Todos os públicos"
+              active={sportsAudienceFilter === "all"}
+              onClick={() => setSportsAudienceFilter("all")}
+              color={data.sports.settings?.secondary_color ?? "var(--vitrini-orange)"}
+            />
+          ) : null}
+          {availableCollections.map((collection) => (
+            <CategoryChip
+              key={`collection-${collection.id}`}
+              label={collection.name}
+              active={collectionFilter === collection.name}
+              onClick={() => setCollectionFilter(collection.name)}
+              color={data.sports.settings?.secondary_color ?? "var(--vitrini-orange)"}
+            />
+          ))}
+          {availableCollections.length ? (
+            <CategoryChip
+              label="Todas as coleções"
+              active={collectionFilter === "all"}
+              onClick={() => setCollectionFilter("all")}
+              color={data.sports.settings?.secondary_color ?? "var(--vitrini-orange)"}
             />
           ) : null}
           {data.categories.map((c) => (

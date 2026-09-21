@@ -57,9 +57,26 @@ type NodeForm = {
   node_type: SportsNodeType;
   parent_id: string;
   description: string;
+  short_name: string;
+  logo_url: string;
+  banner_url: string;
+  primary_color: string;
+  secondary_color: string;
+  sort_order: string;
 };
 
-const emptyForm: NodeForm = { name: "", node_type: "sport", parent_id: "none", description: "" };
+const emptyForm: NodeForm = {
+  name: "",
+  node_type: "sport",
+  parent_id: "none",
+  description: "",
+  short_name: "",
+  logo_url: "",
+  banner_url: "",
+  primary_color: "",
+  secondary_color: "",
+  sort_order: "0",
+};
 
 function SportsModule() {
   const { data: store, isLoading: storeLoading } = useMyStore();
@@ -105,6 +122,12 @@ function SportsModule() {
       node_type: node.node_type,
       parent_id: node.parent_id ?? "none",
       description: node.description,
+      short_name: node.short_name ?? "",
+      logo_url: node.logo_url ?? "",
+      banner_url: node.banner_url ?? "",
+      primary_color: node.primary_color ?? "",
+      secondary_color: node.secondary_color ?? "",
+      sort_order: String(node.sort_order ?? 0),
     });
     setDialogOpen(true);
   }
@@ -121,7 +144,12 @@ function SportsModule() {
       node_type: form.node_type,
       parent_id: form.parent_id === "none" ? null : form.parent_id,
       description: form.description.trim(),
-      short_name: form.name.trim(),
+      short_name: form.short_name.trim() || form.name.trim(),
+      logo_url: form.logo_url.trim() || null,
+      banner_url: form.banner_url.trim() || null,
+      primary_color: form.primary_color.trim() || null,
+      secondary_color: form.secondary_color.trim() || null,
+      sort_order: Number(form.sort_order) || 0,
     };
     const result = editing
       ? await sportsDb.from("sports_nodes").update(payload).eq("id", editing.id)
@@ -295,6 +323,59 @@ function SportsModule() {
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 placeholder="Descrição opcional"
               />
+            </div>
+            <div>
+              <Label htmlFor="sports-short-name">Nome curto</Label>
+              <Input
+                id="sports-short-name"
+                value={form.short_name}
+                onChange={(e) => setForm({ ...form, short_name: e.target.value })}
+                placeholder="Ex.: PSV"
+              />
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="sports-logo-url">URL do escudo/logo</Label>
+                <Input
+                  id="sports-logo-url"
+                  value={form.logo_url}
+                  onChange={(e) => setForm({ ...form, logo_url: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+              <div>
+                <Label htmlFor="sports-node-banner-url">URL do banner</Label>
+                <Input
+                  id="sports-node-banner-url"
+                  value={form.banner_url}
+                  onChange={(e) => setForm({ ...form, banner_url: e.target.value })}
+                  placeholder="https://..."
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <ColorField
+                label="Cor principal"
+                value={form.primary_color || "#14532d"}
+                onChange={(value) => setForm({ ...form, primary_color: value })}
+              />
+              <ColorField
+                label="Cor secundária"
+                value={form.secondary_color || "#facc15"}
+                onChange={(value) => setForm({ ...form, secondary_color: value })}
+              />
+            </div>
+            <div>
+              <Label htmlFor="sports-sort-order">Ordem manual</Label>
+              <Input
+                id="sports-sort-order"
+                inputMode="numeric"
+                value={form.sort_order}
+                onChange={(e) => setForm({ ...form, sort_order: e.target.value })}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Itens com a mesma ordem aparecem alfabeticamente.
+              </p>
             </div>
           </div>
           <DialogFooter>
