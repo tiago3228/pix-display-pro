@@ -93,8 +93,12 @@ export type Storefront = {
       name: string;
       description: string;
       primary_node_id: string | null;
+      logo_url: string | null;
+      banner_url: string | null;
       primary_color: string;
       secondary_color: string;
+      background_color: string;
+      text_color: string;
     } | null;
     nodes: StorefrontSportsNode[];
     collections: StorefrontSportsCollection[];
@@ -175,7 +179,9 @@ export const getStorefront = createServerFn({ method: "GET" })
     ] = await Promise.all([
       publicDb
         .from("sports_settings")
-        .select("name, description, primary_node_id, primary_color, secondary_color")
+        .select(
+          "name, description, primary_node_id, logo_url, banner_url, primary_color, secondary_color, background_color, text_color",
+        )
         .eq("store_id", store.id)
         .maybeSingle(),
       publicDb
@@ -238,6 +244,8 @@ export const getStorefront = createServerFn({ method: "GET" })
     const paths = [
       store.logo_url,
       store.banner_url,
+      sportsSettings?.logo_url,
+      sportsSettings?.banner_url,
       ...(products ?? []).map((p) => p.image_url),
       ...(gallery ?? []).map((g) => g.image_url),
     ].filter((p): p is string => Boolean(p) && !p!.startsWith("http"));
@@ -292,8 +300,12 @@ export const getStorefront = createServerFn({ method: "GET" })
               name: sportsSettings.name,
               description: sportsSettings.description,
               primary_node_id: sportsSettings.primary_node_id,
+              logo_url: resolve(sportsSettings.logo_url),
+              banner_url: resolve(sportsSettings.banner_url),
               primary_color: sportsSettings.primary_color,
               secondary_color: sportsSettings.secondary_color,
+              background_color: sportsSettings.background_color,
+              text_color: sportsSettings.text_color,
             }
           : null,
         nodes: (sportsNodes ?? []) as StorefrontSportsNode[],

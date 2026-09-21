@@ -345,22 +345,31 @@ export function StorePage() {
       className="vitrini-storefront min-h-screen pb-28"
       style={{
         ["--brand" as string]: data.sports.settings?.primary_color ?? "var(--vitrini-orange)",
+        ["--sports-primary" as string]:
+          data.sports.settings?.primary_color ?? "var(--vitrini-orange)",
+        ["--sports-secondary" as string]:
+          data.sports.settings?.secondary_color ?? "var(--vitrini-orange)",
+        backgroundColor: data.sports.settings?.background_color,
+        color: data.sports.settings?.text_color,
       }}
     >
       <header className="relative">
         <div
           className="h-36 w-full sm:h-52"
           style={{
-            background: store.banner
-              ? `center/cover url(${store.banner})`
-              : "linear-gradient(120deg, #160d09 0%, #6b2d13 52%, #f47b20 150%)",
+            background:
+              data.sports.settings?.banner_url || store.banner
+                ? `center/cover url(${data.sports.settings?.banner_url || store.banner})`
+                : "linear-gradient(120deg, #160d09 0%, #6b2d13 52%, #f47b20 150%)",
           }}
         />
         <div className="mx-auto max-w-3xl px-4">
           <div className="surface vitrini-glow -mt-12 flex items-start gap-4 p-4 sm:p-5">
             <div
               className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-2xl font-bold text-white sm:size-20"
-              style={{ backgroundColor: "var(--vitrini-orange)" }}
+              style={{
+                backgroundColor: data.sports.settings?.primary_color ?? "var(--vitrini-orange)",
+              }}
             >
               {store.logo ? (
                 <img src={store.logo} alt={store.name} className="size-full object-cover" />
@@ -465,14 +474,14 @@ export function StorePage() {
             label="Todos"
             active={activeCategory === "all"}
             onClick={() => setActiveCategory("all")}
-            color="var(--vitrini-orange)"
+            color={data.sports.settings?.primary_color ?? "var(--vitrini-orange)"}
           />
           {data.products.some((p) => p.is_featured) ? (
             <CategoryChip
               label="Destaques"
               active={activeCategory === "featured"}
               onClick={() => setActiveCategory("featured")}
-              color="var(--vitrini-orange)"
+              color={data.sports.settings?.primary_color ?? "var(--vitrini-orange)"}
             />
           ) : null}
           {data.products.some((p) => p.sportsIsNewRelease) ? (

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -508,8 +508,22 @@ function Customize({
   const [name, setName] = useState(settings?.name ?? "Roupas Esportivas");
   const [description, setDescription] = useState(settings?.description ?? "");
   const [primaryNode, setPrimaryNode] = useState(settings?.primary_node_id ?? "none");
+  const [bannerUrl, setBannerUrl] = useState(settings?.banner_url ?? "");
   const [primaryColor, setPrimaryColor] = useState(settings?.primary_color ?? "#14532d");
   const [secondaryColor, setSecondaryColor] = useState(settings?.secondary_color ?? "#facc15");
+  const [backgroundColor, setBackgroundColor] = useState(settings?.background_color ?? "#f7fee7");
+  const [textColor, setTextColor] = useState(settings?.text_color ?? "#172015");
+  useEffect(() => {
+    if (!settings) return;
+    setName(settings.name);
+    setDescription(settings.description);
+    setPrimaryNode(settings.primary_node_id ?? "none");
+    setBannerUrl(settings.banner_url ?? "");
+    setPrimaryColor(settings.primary_color);
+    setSecondaryColor(settings.secondary_color);
+    setBackgroundColor(settings.background_color);
+    setTextColor(settings.text_color);
+  }, [settings]);
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_0.8fr]">
       <div className="surface space-y-4 p-5">
@@ -555,8 +569,11 @@ function Customize({
               name,
               description,
               primary_node_id: primaryNode === "none" ? null : primaryNode,
+              banner_url: bannerUrl.trim() || null,
               primary_color: primaryColor,
               secondary_color: secondaryColor,
+              background_color: backgroundColor,
+              text_color: textColor,
             })
           }
         >
@@ -571,6 +588,26 @@ function Customize({
         <div className="mt-5 grid grid-cols-2 gap-4">
           <ColorField label="Cor principal" value={primaryColor} onChange={setPrimaryColor} />
           <ColorField label="Cor secundária" value={secondaryColor} onChange={setSecondaryColor} />
+          <ColorField
+            label="Fundo da área esportiva"
+            value={backgroundColor}
+            onChange={setBackgroundColor}
+          />
+          <ColorField label="Cor do texto" value={textColor} onChange={setTextColor} />
+        </div>
+        <div className="mt-5 space-y-1.5">
+          <Label htmlFor="sports-banner-url">Banner do módulo (URL da imagem)</Label>
+          <Input
+            id="sports-banner-url"
+            value={bannerUrl}
+            onChange={(event) => setBannerUrl(event.target.value)}
+            placeholder="https://.../banner-esportivo.jpg"
+          />
+          <p className="text-xs text-muted-foreground">
+            Esse banner aparece no topo esportivo da vitrine pública. Para usar uma imagem do
+            computador, envie-a primeiro em um serviço de imagens ou use o banner geral de Minha
+            Loja.
+          </p>
         </div>
         <div className="mt-5 rounded-xl p-5" style={{ background: primaryColor, color: "white" }}>
           <p className="text-xs uppercase tracking-widest opacity-80">Prévia</p>
