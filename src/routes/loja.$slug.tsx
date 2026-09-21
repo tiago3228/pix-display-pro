@@ -638,7 +638,26 @@ export function StorePage() {
       </div>
 
       <main className="mx-auto mt-5 max-w-3xl px-4">
-        {products.length === 0 ? (
+        {selected ? (
+          <ProductDetail
+            product={selected}
+            categoryName={
+              data.categories.find((category) => category.id === selected.category_id)?.name
+            }
+            color={data.sports.settings?.primary_color ?? "var(--vitrini-orange)"}
+            onBack={() => setSelected(null)}
+            onOrder={() => setOrderProduct(selected)}
+            onOpenGallery={openGallery}
+            onAdd={(item, quantity) => {
+              cart.add(item, quantity);
+              void track({
+                data: { storeId: store.id, type: "add_to_cart", productId: item.productId },
+              });
+              toast.success("Adicionado ao carrinho!");
+              setSelected(null);
+            }}
+          />
+        ) : products.length === 0 ? (
           <div className="surface p-8 text-center text-sm text-muted-foreground">
             Nenhum produto por aqui ainda.
           </div>
@@ -655,7 +674,7 @@ export function StorePage() {
                     type="button"
                     aria-label={`Ver fotos de ${product.name}`}
                     className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-muted sm:size-28"
-                    onClick={() => product.images.length > 0 && openGallery(product)}
+                    onClick={() => setSelected(product)}
                   >
                     {product.image ? (
                       <img
@@ -966,21 +985,6 @@ export function StorePage() {
         </DialogContent>
       </Dialog>
 
-      <VariantDialog
-        product={selected}
-        color="var(--vitrini-orange)"
-        onClose={() => setSelected(null)}
-        onOpenGallery={openGallery}
-        onAdd={(item) => {
-          cart.add(item);
-          void track({
-            data: { storeId: store.id, type: "add_to_cart", productId: item.productId },
-          });
-          toast.success("Adicionado ao carrinho!");
-          setSelected(null);
-        }}
-      />
-
       <Sheet
         open={cartOpen}
         onOpenChange={(open) => {
@@ -1273,6 +1277,220 @@ function CategoryChip({
     >
       {label}
     </button>
+  );
+}
+
+function ProductDetail({
+  product,
+  categoryName,
+  color,
+  onBack,
+  onOrder,
+  onOpenGallery,
+  onAdd,
+}: {
+  product: StorefrontProduct;
+  categoryName?: string;
+  color: string;
+  onBack: () => void;
+  onOrder: () => void;
+  onOpenGallery: (product: StorefrontProduct, index?: number) => void;
+  onAdd: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
+}) {
+  const [choices, setChoices] = useState<Record<string, string>>({});
+  const [quantity, setQuantity] = useState(1);
+  const images = product.images.length ? product.images : product.image ? [product.image] : [];
+  const label = product.options
+    .map((option) => choices[option.name])
+    .filter(Boolean)
+    .join(" / ");
+  const variant = product.variants.find((item) => item.label === label) ?? null;
+  const complete = product.options.every((option) => choices[option.name]);
+  const simpleProduct = product.options.length === 0;
+  const outOfStock =
+    !product.is_available ||
+    (simpleProduct
+      ? product.track_stock && product.stock <= 0
+      : !complete || !variant || variant.stock <= 0 || !variant.is_available);
+  const unitPrice =
+    variant?.price ??
+    (product.sportsOfferActive && product.sportsOfferPrice !== null
+      ? product.sportsOfferPrice
+      : product.price);
+  const maxQuantity = simpleProduct && product.track_stock ? product.stock : (variant?.stock ?? 99);
+
+  function addToCart() {
+    if (outOfStock || (!simpleProduct && !variant)) return;
+    onAdd(
+      {
+        key: simpleProduct ? product.id : `${product.id}:${variant!.id}`,
+        productId: product.id,
+        variantId: simpleProduct ? undefined : variant!.id,
+        variantLabel: simpleProduct ? undefined : variant!.label,
+        name: product.name,
+        description: product.description,
+        unitPrice,
+        imageUrl: product.image,
+        maxQuantity: product.track_stock || !simpleProduct ? maxQuantity : null,
+      },
+      quantity,
+    );
+  }
+
+  return (
+    <section className="space-y-5">
+      <Button type="button" variant="ghost" className="-ml-3 gap-2" onClick={onBack}>
+        <ArrowLeft className="size-4" /> Voltar para os produtos
+      </Button>
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
+        <div className="space-y-3">
+          <button
+            type="button"
+            className="group relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-muted text-left"
+            onClick={() => images.length > 0 && onOpenGallery(product, 0)}
+            aria-label={`Ampliar foto de ${product.name}`}
+          >
+            {images[0] ? (
+              <img
+                src={images[0]}
+                alt={product.name}
+                className="size-full object-cover transition duration-500 group-hover:scale-[1.02]"
+              />
+            ) : (
+              <div className="flex size-full items-center justify-center text-muted-foreground">
+                <ShoppingBag className="size-12" />
+              </div>
+            )}
+            {images.length > 1 ? (
+              <span className="absolute bottom-3 right-3 rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-white">
+                {images.length} fotos · ampliar
+              </span>
+            ) : null}
+          </button>
+          {images.length > 1 ? (
+            <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Fotos do produto">
+              {images.map((url, index) => (
+                <button
+                  key={url}
+                  type="button"
+                  onClick={() => onOpenGallery(product, index)}
+                  className="size-20 shrink-0 overflow-hidden rounded-lg border-2 border-transparent transition hover:border-orange-500 sm:size-24"
+                >
+                  <img
+                    src={url}
+                    alt={`${product.name} — foto ${index + 1}`}
+                    className="size-full object-cover"
+                    loading="lazy"
+                  />
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="space-y-5 lg:pt-2">
+          <div className="flex flex-wrap gap-2">
+            {product.is_available && (!product.track_stock || product.stock > 0) ? (
+              <Badge className="bg-emerald-600 hover:bg-emerald-600">Em estoque</Badge>
+            ) : (
+              <Badge variant="outline">Esgotado</Badge>
+            )}
+            {product.sportsIsNewRelease ? <Badge variant="secondary">🆕 Lançamento</Badge> : null}
+            {product.sportsOfferActive ? <Badge variant="secondary">🔥 Oferta</Badge> : null}
+          </div>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{product.name}</h1>
+            <div className="mt-3 flex flex-wrap items-baseline gap-3">
+              {product.sportsOfferActive && product.sportsOfferPrice !== null ? (
+                <>
+                  <span className="text-2xl font-bold">{brl(product.sportsOfferPrice)}</span>
+                  <span className="text-sm text-muted-foreground line-through">
+                    {brl(product.sportsOriginalPrice ?? product.price)}
+                  </span>
+                </>
+              ) : (
+                <span className="text-2xl font-bold">{brl(unitPrice)}</span>
+              )}
+            </div>
+          </div>
+          {categoryName ? (
+            <p className="text-sm">
+              <strong>Categoria:</strong> {categoryName}
+            </p>
+          ) : null}
+          {product.description ? (
+            <p className="whitespace-pre-line text-sm leading-6 text-muted-foreground">
+              {product.description}
+            </p>
+          ) : null}
+
+          {product.options.map((option) => (
+            <div key={option.id} className="space-y-2">
+              <p className="text-sm font-semibold">{option.name}</p>
+              <div className="flex flex-wrap gap-2">
+                {option.values.map((value) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setChoices((current) => ({ ...current, [option.name]: value }))}
+                    className={cn(
+                      "min-w-14 rounded-lg border px-4 py-2.5 text-sm font-medium transition",
+                      choices[option.name] === value
+                        ? "border-transparent text-white"
+                        : "border-border bg-card hover:border-foreground",
+                    )}
+                    style={choices[option.name] === value ? { backgroundColor: color } : undefined}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div className="flex items-center justify-between rounded-xl border p-3">
+            <span className="text-sm font-semibold">Quantidade</span>
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                className="size-9"
+                disabled={quantity <= 1}
+                onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+              >
+                <Minus className="size-4" />
+              </Button>
+              <span className="w-7 text-center font-semibold">{quantity}</span>
+              <Button
+                type="button"
+                size="icon"
+                variant="outline"
+                className="size-9"
+                disabled={quantity >= maxQuantity}
+                onClick={() => setQuantity((current) => Math.min(maxQuantity, current + 1))}
+              >
+                <Plus className="size-4" />
+              </Button>
+            </div>
+          </div>
+          <Button
+            type="button"
+            className="h-12 w-full text-sm uppercase tracking-wide"
+            style={{ backgroundColor: color }}
+            disabled={outOfStock}
+            onClick={addToCart}
+          >
+            {simpleProduct || complete ? "Adicionar ao carrinho" : "Escolha as opções"}
+          </Button>
+          {product.orderEnabled ? (
+            <Button type="button" variant="outline" className="h-11 w-full" onClick={onOrder}>
+              <PackageOpen className="mr-2 size-4" /> Encomendar pelo WhatsApp
+            </Button>
+          ) : null}
+        </div>
+      </div>
+    </section>
   );
 }
 
