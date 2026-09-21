@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/minha-loja")({
   component: MyStore,
 });
 
-const COLORS = ["#0f766e", "#e11d48", "#7c3aed", "#ea580c", "#2563eb", "#16a34a", "#111827"];
+const COLORS = ["#111827", "#0f766e", "#e11d48", "#7c3aed", "#ea580c", "#2563eb", "#16a34a"];
 
 function MyStore() {
   const { data: store, refetch } = useMyStore();
@@ -50,7 +50,7 @@ function MyStore() {
     instagram: "",
     welcome_message: "",
     share_message: DEFAULT_SHARE_MESSAGE,
-    primary_color: "#0f766e",
+    primary_color: "#111827",
     pix_key_type: "email",
     pix_key: "",
     is_active: true,

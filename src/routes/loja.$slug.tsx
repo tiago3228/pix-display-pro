@@ -417,7 +417,7 @@ export function StorePage() {
             background:
               data.sports.settings?.banner_url || store.banner
                 ? `center/cover url(${data.sports.settings?.banner_url || store.banner})`
-                : "linear-gradient(120deg, #160d09 0%, #6b2d13 52%, #f47b20 150%)",
+                : "linear-gradient(120deg, #ffffff 0%, #f8fafc 52%, #e2e8f0 150%)",
           }}
         />
         <div className="mx-auto max-w-3xl px-4">
