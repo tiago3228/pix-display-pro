@@ -115,32 +115,39 @@ function Products() {
   const [newCategory, setNewCategory] = useState("");
   const [sportsNodeId, setSportsNodeId] = useState("none");
   const [sportsCollectionId, setSportsCollectionId] = useState("none");
+  const [trainingOnly, setTrainingOnly] = useState(false);
+
+  useEffect(() => {
+    setTrainingOnly(
+      typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("module") === "roupas_treino",
+    );
+  }, []);
 
   const { data: categories } = useQuery({
-    queryKey: ["categories", store?.id],
+    queryKey: ["categories", store?.id, trainingOnly],
     enabled: Boolean(store?.id),
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("id, name")
-        .eq("store_id", store!.id)
-        .order("position");
+      let query = supabase.from("categories").select("id, name").eq("store_id", store!.id);
+      if (trainingOnly) query = query.eq("module", "roupas_treino");
+      const { data, error } = await query.order("position");
       if (error) throw error;
       return data;
     },
   });
 
   const { data: products } = useQuery({
-    queryKey: ["products", store?.id],
+    queryKey: ["products", store?.id, trainingOnly],
     enabled: Boolean(store?.id),
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("products")
         .select(
           "id, module, name, description, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, product_variants(id, label, price, stock), product_order_tiers(min_quantity, unit_price)",
         )
-        .eq("store_id", store!.id)
-        .order("created_at", { ascending: false });
+        .eq("store_id", store!.id);
+      if (trainingOnly) query = query.eq("module", "roupas_treino");
+      const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
       return data as unknown as ProductRow[];
     },
@@ -177,7 +184,7 @@ function Products() {
       return;
     }
     setEditing(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, module: trainingOnly ? "roupas_treino" : "roupas" });
     setVariants([]);
     setOrderTiers([]);
     setPhotos([]);
@@ -308,7 +315,7 @@ function Products() {
     const cleanVariants = variants.filter((v) => v.label.trim());
     const payload = {
       store_id: store.id,
-      module: form.module,
+      module: trainingOnly ? "roupas_treino" : form.module,
       name: form.name.trim(),
       description: form.description ?? "",
       price: Number(String(form.price).replace(",", ".")) || 0,
@@ -584,21 +591,27 @@ function Products() {
           <div className="space-y-4">
             <div className="space-y-1.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
               <Label>Módulo da loja</Label>
-              <Select
-                value={form.module}
-                onValueChange={(value: "roupas" | "roupas_esportivas" | "roupas_treino") =>
-                  setForm({ ...form, module: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="roupas">👕 Roupas</SelectItem>
-                  <SelectItem value="roupas_esportivas">⚽ Roupas Esportivas</SelectItem>
-                  <SelectItem value="roupas_treino">🏋️ Roupas de Treino / Academia</SelectItem>
-                </SelectContent>
-              </Select>
+              {trainingOnly ? (
+                <div className="rounded-md border bg-background px-3 py-2 text-sm font-medium">
+                  🏋️ Roupas de Treino / Academia
+                </div>
+              ) : (
+                <Select
+                  value={form.module}
+                  onValueChange={(value: "roupas" | "roupas_esportivas" | "roupas_treino") =>
+                    setForm({ ...form, module: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="roupas">👕 Roupas</SelectItem>
+                    <SelectItem value="roupas_esportivas">⚽ Roupas Esportivas</SelectItem>
+                    <SelectItem value="roupas_treino">🏋️ Roupas de Treino / Academia</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
               <p className="text-xs text-muted-foreground">
                 O produto aparecerá somente no módulo escolhido.
               </p>

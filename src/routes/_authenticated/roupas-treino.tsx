@@ -71,7 +71,7 @@ function TrainingModule() {
       description="Módulo independente para academia, fitness, corrida e performance"
       action={
         <Button size="sm" asChild>
-          <a href="/produtos">
+          <a href="/produtos?module=roupas_treino">
             <Plus className="mr-1.5 size-4" /> Novo produto
           </a>
         </Button>
@@ -110,7 +110,7 @@ function TrainingModule() {
             <p className="text-sm text-muted-foreground">Independentes de Roupas Esportivas.</p>
           </div>
           <Button size="sm" variant="outline" asChild>
-            <a href="/produtos">Gerenciar categorias</a>
+            <a href="/produtos?module=roupas_treino">Gerenciar categorias</a>
           </Button>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
