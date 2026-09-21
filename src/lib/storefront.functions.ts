@@ -13,6 +13,7 @@ export type StorefrontVariant = {
 
 export type StorefrontProduct = {
   id: string;
+  module: "roupas" | "roupas_esportivas" | "roupas_treino";
   name: string;
   description: string;
   price: number;
@@ -87,7 +88,7 @@ export type Storefront = {
     max_installments: number;
     min_installment_amount: number;
   };
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; module?: string }[];
   sports: {
     settings: {
       name: string;
@@ -108,6 +109,7 @@ export type Storefront = {
 
 type StorefrontProductDbRow = {
   id: string;
+  module: "roupas" | "roupas_esportivas" | "roupas_treino";
   name: string;
   description: string;
   price: number | string;
@@ -151,13 +153,13 @@ export const getStorefront = createServerFn({ method: "GET" })
     const [{ data: categories }, { data: productsRaw }] = await Promise.all([
       supabase
         .from("categories")
-        .select("id, name, position")
+        .select("id, name, module, position")
         .eq("store_id", store.id)
         .order("position"),
       supabase
         .from("products")
         .select(
-          "id, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent",
+          "id, module, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent",
         )
         .eq("store_id", store.id)
         .eq("is_hidden", false)
@@ -293,7 +295,10 @@ export const getStorefront = createServerFn({ method: "GET" })
         max_installments: store.max_installments,
         min_installment_amount: Number(store.min_installment_amount),
       },
-      categories: (categories ?? []).map((c) => ({ id: c.id, name: c.name })),
+      categories: (categories ?? []).map((c) => {
+        const category = c as unknown as { id: string; name: string; module?: string };
+        return { id: category.id, name: category.name, module: category.module };
+      }),
       sports: {
         settings: sportsSettings
           ? {
@@ -313,6 +318,7 @@ export const getStorefront = createServerFn({ method: "GET" })
       },
       products: (products ?? []).map((p) => ({
         id: p.id,
+        module: p.module ?? "roupas",
         name: p.name,
         description: p.description,
         price: Number(p.price),

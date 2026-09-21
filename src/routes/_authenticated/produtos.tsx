@@ -41,6 +41,7 @@ type OrderTierDraft = { minQuantity: string; unitPrice: string };
 
 type ProductRow = {
   id: string;
+  module: "roupas" | "roupas_esportivas" | "roupas_treino";
   name: string;
   description: string;
   price: number;
@@ -72,6 +73,7 @@ type ProductRow = {
 };
 
 const emptyForm = {
+  module: "roupas" as "roupas" | "roupas_esportivas" | "roupas_treino",
   name: "",
   description: "",
   price: "",
@@ -135,7 +137,7 @@ function Products() {
       const { data, error } = await supabase
         .from("products")
         .select(
-          "id, name, description, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, product_variants(id, label, price, stock), product_order_tiers(min_quantity, unit_price)",
+          "id, module, name, description, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, product_variants(id, label, price, stock), product_order_tiers(min_quantity, unit_price)",
         )
         .eq("store_id", store!.id)
         .order("created_at", { ascending: false });
@@ -187,6 +189,7 @@ function Products() {
   function openEdit(product: ProductRow) {
     setEditing(product);
     setForm({
+      module: product.module ?? "roupas",
       name: product.name,
       description: product.description,
       price: String(product.price),
@@ -305,6 +308,7 @@ function Products() {
     const cleanVariants = variants.filter((v) => v.label.trim());
     const payload = {
       store_id: store.id,
+      module: form.module,
       name: form.name.trim(),
       description: form.description ?? "",
       price: Number(String(form.price).replace(",", ".")) || 0,
@@ -578,6 +582,27 @@ function Products() {
           </DialogHeader>
 
           <div className="space-y-4">
+            <div className="space-y-1.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
+              <Label>Módulo da loja</Label>
+              <Select
+                value={form.module}
+                onValueChange={(value: "roupas" | "roupas_esportivas" | "roupas_treino") =>
+                  setForm({ ...form, module: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="roupas">👕 Roupas</SelectItem>
+                  <SelectItem value="roupas_esportivas">⚽ Roupas Esportivas</SelectItem>
+                  <SelectItem value="roupas_treino">🏋️ Roupas de Treino / Academia</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                O produto aparecerá somente no módulo escolhido.
+              </p>
+            </div>
             <div className="space-y-1.5">
               <Label>Nome</Label>
               <Input

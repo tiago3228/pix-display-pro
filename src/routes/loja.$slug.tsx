@@ -113,6 +113,7 @@ export function StorePage() {
   const sendOrder = useServerFn(submitOrder);
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [moduleFilter, setModuleFilter] = useState<string>("all");
   const [activeSportsNode, setActiveSportsNode] = useState<string>("all");
   const [sportsTypeFilter, setSportsTypeFilter] = useState("all");
   const [sportsAudienceFilter, setSportsAudienceFilter] = useState("all");
@@ -153,18 +154,22 @@ export function StorePage() {
 
   const products = useMemo(() => {
     if (!data) return [];
+    const moduleProducts =
+      moduleFilter === "all"
+        ? data.products
+        : data.products.filter((product) => product.module === moduleFilter);
     const filtered =
       activeCategory === "all"
-        ? data.products
+        ? moduleProducts
         : activeCategory === "featured"
-          ? data.products.filter((p) => p.is_featured)
+          ? moduleProducts.filter((p) => p.is_featured)
           : activeCategory === "new-releases"
-            ? data.products.filter((p) => p.sportsIsNewRelease)
+            ? moduleProducts.filter((p) => p.sportsIsNewRelease)
             : activeCategory === "offers"
-              ? data.products.filter((p) => p.sportsOfferActive)
+              ? moduleProducts.filter((p) => p.sportsOfferActive)
               : activeCategory === "retro"
-                ? data.products.filter((p) => p.sportsIsRetro)
-                : data.products.filter((p) => p.category_id === activeCategory);
+                ? moduleProducts.filter((p) => p.sportsIsRetro)
+                : moduleProducts.filter((p) => p.category_id === activeCategory);
     const sportsFiltered =
       activeSportsNode === "all"
         ? filtered
@@ -203,6 +208,7 @@ export function StorePage() {
   }, [
     data,
     activeCategory,
+    moduleFilter,
     activeSportsNode,
     sportsTypeFilter,
     sportsAudienceFilter,
@@ -496,7 +502,36 @@ export function StorePage() {
 
       <div className="sticky top-0 z-20 mt-4 border-y border-orange-200/10 bg-[#21140f]/85 py-2 backdrop-blur">
         <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
-          {data.sports.nodes.length ? (
+          {(["roupas", "roupas_esportivas", "roupas_treino"] as const).map((module) => {
+            const labels = {
+              roupas: "👕 Roupas",
+              roupas_esportivas: "⚽ Roupas Esportivas",
+              roupas_treino: "🏋️ Roupas de Treino / Academia",
+            };
+            return data.products.some((product) => product.module === module) ? (
+              <CategoryChip
+                key={module}
+                label={labels[module]}
+                active={moduleFilter === module}
+                onClick={() => {
+                  setModuleFilter(module);
+                  setActiveCategory("all");
+                  setActiveSportsNode("all");
+                }}
+                color={data.sports.settings?.primary_color ?? "var(--vitrini-orange)"}
+              />
+            ) : null;
+          })}
+          {moduleFilter !== "all" ? (
+            <CategoryChip
+              label="Todos os módulos"
+              active={false}
+              onClick={() => setModuleFilter("all")}
+              color="var(--vitrini-orange)"
+            />
+          ) : null}
+          {data.sports.nodes.length &&
+          (moduleFilter === "all" || moduleFilter === "roupas_esportivas") ? (
             <>
               <CategoryChip
                 label={data.sports.settings?.name ?? "Esportes"}
@@ -625,15 +660,20 @@ export function StorePage() {
               color={data.sports.settings?.secondary_color ?? "var(--vitrini-orange)"}
             />
           ) : null}
-          {data.categories.map((c) => (
-            <CategoryChip
-              key={c.id}
-              label={c.name}
-              active={activeCategory === c.id}
-              onClick={() => setActiveCategory(c.id)}
-              color="var(--vitrini-orange)"
-            />
-          ))}
+          {data.categories
+            .filter(
+              (category) =>
+                moduleFilter === "all" || !category.module || category.module === moduleFilter,
+            )
+            .map((c) => (
+              <CategoryChip
+                key={c.id}
+                label={c.name}
+                active={activeCategory === c.id}
+                onClick={() => setActiveCategory(c.id)}
+                color="var(--vitrini-orange)"
+              />
+            ))}
         </div>
       </div>
 
