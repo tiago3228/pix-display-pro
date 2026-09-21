@@ -1,10 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useLoaderData, useParams } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import {
   ArrowLeft,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Copy,
   ExternalLink,
   Instagram,
@@ -117,6 +119,7 @@ export function StorePage() {
   const [orderProduct, setOrderProduct] = useState<StorefrontProduct | null>(null);
   const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
   const [gallery, setGallery] = useState<StorefrontProduct | null>(null);
+  const [galleryIndex, setGalleryIndex] = useState(0);
   const [cartOpen, setCartOpen] = useState(false);
   const [step, setStep] = useState<Step>("cart");
   const [paid, setPaid] = useState(false);
@@ -126,6 +129,24 @@ export function StorePage() {
   const uploadReceipt = useServerFn(uploadOrderReceipt);
   const [receipt, setReceipt] = useState<{ name: string; path: string } | null>(null);
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
+
+  function openGallery(product: StorefrontProduct, index = 0) {
+    setGallery(product);
+    setGalleryIndex(index);
+  }
+
+  useEffect(() => {
+    if (!gallery || gallery.images.length < 2) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft") {
+        setGalleryIndex((current) => (current - 1 + gallery.images.length) % gallery.images.length);
+      } else if (event.key === "ArrowRight") {
+        setGalleryIndex((current) => (current + 1) % gallery.images.length);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [gallery]);
 
   const products = useMemo(() => {
     if (!data) return [];
@@ -508,7 +529,7 @@ export function StorePage() {
                     type="button"
                     aria-label={`Ver fotos de ${product.name}`}
                     className="relative size-24 shrink-0 overflow-hidden rounded-xl bg-muted sm:size-28"
-                    onClick={() => product.images.length > 0 && setGallery(product)}
+                    onClick={() => product.images.length > 0 && openGallery(product)}
                   >
                     {product.image ? (
                       <img
@@ -729,21 +750,89 @@ export function StorePage() {
       ) : null}
 
       <EncomendaDialog product={orderProduct} onClose={() => setOrderProduct(null)} />
-      <Dialog open={Boolean(gallery)} onOpenChange={(open) => !open && setGallery(null)}>
-        <DialogContent className="max-h-[90dvh] overflow-y-auto">
+      <Dialog
+        open={Boolean(gallery)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setGallery(null);
+            setGalleryIndex(0);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[94dvh] max-w-5xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{gallery?.name}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-3">
-            {(gallery?.images ?? []).map((url, index) => (
-              <img
-                key={url}
-                src={url}
-                alt={`${gallery?.name} — foto ${index + 1}`}
-                loading="lazy"
-                className="w-full rounded-lg object-cover"
-              />
-            ))}
+          <div className="space-y-4">
+            {gallery ? (
+              <>
+                <div className="relative flex min-h-[45dvh] items-center justify-center overflow-hidden rounded-xl bg-black/90 p-2 sm:min-h-[60dvh]">
+                  <img
+                    src={gallery.images[galleryIndex]}
+                    alt={`${gallery.name} — foto ${galleryIndex + 1}`}
+                    className="max-h-[58dvh] max-w-full object-contain"
+                  />
+                  {gallery.images.length > 1 ? (
+                    <>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="secondary"
+                        className="absolute left-3 top-1/2 size-10 -translate-y-1/2 rounded-full shadow-lg"
+                        aria-label="Foto anterior"
+                        onClick={() =>
+                          setGalleryIndex(
+                            (current) =>
+                              (current - 1 + gallery.images.length) % gallery.images.length,
+                          )
+                        }
+                      >
+                        <ChevronLeft className="size-5" />
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="secondary"
+                        className="absolute right-3 top-1/2 size-10 -translate-y-1/2 rounded-full shadow-lg"
+                        aria-label="Próxima foto"
+                        onClick={() =>
+                          setGalleryIndex((current) => (current + 1) % gallery.images.length)
+                        }
+                      >
+                        <ChevronRight className="size-5" />
+                      </Button>
+                      <span className="absolute bottom-3 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-xs font-medium text-white">
+                        {galleryIndex + 1} / {gallery.images.length}
+                      </span>
+                    </>
+                  ) : null}
+                </div>
+                {gallery.images.length > 1 ? (
+                  <div
+                    className="flex gap-2 overflow-x-auto pb-1"
+                    aria-label="Miniaturas das fotos"
+                  >
+                    {gallery.images.map((url, index) => (
+                      <button
+                        key={url}
+                        type="button"
+                        aria-label={`Abrir foto ${index + 1}`}
+                        aria-current={galleryIndex === index}
+                        onClick={() => setGalleryIndex(index)}
+                        className={cn(
+                          "size-20 shrink-0 overflow-hidden rounded-lg border-2 transition sm:size-24",
+                          galleryIndex === index
+                            ? "border-orange-500"
+                            : "border-transparent opacity-70 hover:opacity-100",
+                        )}
+                      >
+                        <img src={url} alt="" className="size-full object-cover" loading="lazy" />
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </>
+            ) : null}
             {gallery?.description ? (
               <p className="text-sm text-muted-foreground">{gallery.description}</p>
             ) : null}
@@ -755,6 +844,7 @@ export function StorePage() {
         product={selected}
         color="var(--vitrini-orange)"
         onClose={() => setSelected(null)}
+        onOpenGallery={openGallery}
         onAdd={(item) => {
           cart.add(item);
           void track({
@@ -1064,11 +1154,13 @@ function VariantDialog({
   product,
   color,
   onClose,
+  onOpenGallery,
   onAdd,
 }: {
   product: StorefrontProduct | null;
   color: string;
   onClose: () => void;
+  onOpenGallery: (product: StorefrontProduct, index?: number) => void;
   onAdd: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
 }) {
   const [choices, setChoices] = useState<Record<string, string>>({});
@@ -1104,13 +1196,20 @@ function VariantDialog({
             {product.images.length > 1 ? (
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {product.images.map((url, index) => (
-                  <img
+                  <button
                     key={url}
-                    src={url}
-                    alt={`${product.name} — foto ${index + 1}`}
-                    loading="lazy"
-                    className="size-24 shrink-0 rounded-lg object-cover"
-                  />
+                    type="button"
+                    onClick={() => onOpenGallery(product, index)}
+                    aria-label={`Abrir foto ${index + 1} de ${product.name}`}
+                    className="size-24 shrink-0 overflow-hidden rounded-lg border-2 border-transparent transition hover:border-orange-500"
+                  >
+                    <img
+                      src={url}
+                      alt={`${product.name} — foto ${index + 1}`}
+                      loading="lazy"
+                      className="size-full object-cover"
+                    />
+                  </button>
                 ))}
               </div>
             ) : null}
