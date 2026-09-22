@@ -41,6 +41,32 @@ const VITRINI_PALETTE = {
   text_color: "#111827",
   button_color: "#111827",
 };
+const ADVANCED_PALETTE = {
+  text_secondary: "#64748b",
+  header: "#111827",
+  menu: "#ffffff",
+  links: "#0f766e",
+  prices: "#111827",
+  offers: "#dc2626",
+  badges: "#f59e0b",
+  cards: "#ffffff",
+  borders: "#e2e8f0",
+  footer: "#111827",
+  filters: "#f1f5f9",
+};
+const PALETTE_LABELS: Record<keyof typeof ADVANCED_PALETTE, string> = {
+  text_secondary: "Cor do texto secundário",
+  header: "Cor do cabeçalho",
+  menu: "Cor do menu",
+  links: "Cor dos links",
+  prices: "Cor dos preços",
+  offers: "Cor das ofertas",
+  badges: "Cor dos badges",
+  cards: "Cor dos cards",
+  borders: "Cor das bordas",
+  footer: "Cor do rodapé",
+  filters: "Cor dos filtros",
+};
 
 const BANNER_SUGGESTIONS = [
   {
@@ -93,6 +119,8 @@ function MyStore() {
     null,
   );
   const [palettePreview, setPalettePreview] = useState(false);
+  const [customColorName, setCustomColorName] = useState("");
+  const [customColorHex, setCustomColorHex] = useState("#90ee90");
   const isPro = store?.plan === "pro";
   const [form, setForm] = useState({
     name: "",
@@ -117,6 +145,7 @@ function MyStore() {
     background_color: VITRINI_PALETTE.background_color,
     text_color: VITRINI_PALETTE.text_color,
     button_color: VITRINI_PALETTE.button_color,
+    theme_palette: { ...ADVANCED_PALETTE, custom_colors: [] as { name: string; hex: string }[] },
   });
   const banners = useQuery({
     queryKey: ["storefront-banners", store?.id],
@@ -167,6 +196,12 @@ function MyStore() {
       button_color:
         (store as typeof store & { button_color?: string }).button_color ??
         VITRINI_PALETTE.button_color,
+      theme_palette: {
+        ...ADVANCED_PALETTE,
+        custom_colors: [],
+        ...((store as typeof store & { theme_palette?: Record<string, unknown> }).theme_palette ??
+          {}),
+      },
     });
   }, [store]);
 
@@ -265,7 +300,11 @@ function MyStore() {
       .update(VITRINI_PALETTE as never)
       .eq("id", store.id);
     if (error) return toast.error("Não foi possível restaurar a paleta.");
-    setForm((current) => ({ ...current, ...VITRINI_PALETTE }));
+    setForm((current) => ({
+      ...current,
+      ...VITRINI_PALETTE,
+      theme_palette: { ...ADVANCED_PALETTE, custom_colors: [] },
+    }));
     setPalettePreview(false);
     queryClient.invalidateQueries({ queryKey: ["my-store"] });
     toast.success("Paleta padrão Vitrini aplicada.");
@@ -499,6 +538,115 @@ function MyStore() {
               </div>
             </div>
           ) : null}
+          <div className="mt-4 space-y-3 rounded-lg border p-3">
+            <div>
+              <p className="text-sm font-semibold">🎨 Paleta da minha marca</p>
+              <p className="text-xs text-muted-foreground">
+                Escolha qualquer cor e defina onde ela será usada. As alterações são salvas junto
+                com a loja.
+              </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {Object.entries(PALETTE_LABELS).map(([key, label]) => {
+                const paletteKey = key as keyof typeof ADVANCED_PALETTE;
+                const value = String(
+                  form.theme_palette[paletteKey] ?? ADVANCED_PALETTE[paletteKey],
+                );
+                return (
+                  <div key={key} className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={value}
+                      aria-label={label}
+                      className="size-9 cursor-pointer rounded border p-0.5"
+                      onChange={(event) =>
+                        setForm((current) => ({
+                          ...current,
+                          theme_palette: {
+                            ...current.theme_palette,
+                            [paletteKey]: event.target.value,
+                          },
+                        }))
+                      }
+                    />
+                    <div className="min-w-0 flex-1">
+                      <Label className="text-xs">{label}</Label>
+                      <Input
+                        value={value}
+                        maxLength={7}
+                        className="h-8 font-mono text-xs uppercase"
+                        onChange={(event) => {
+                          const next = event.target.value;
+                          if (/^#[0-9a-f]{0,6}$/i.test(next))
+                            setForm((current) => ({
+                              ...current,
+                              theme_palette: { ...current.theme_palette, [paletteKey]: next },
+                            }));
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="rounded-lg bg-muted/40 p-3">
+              <p className="mb-2 text-xs font-semibold">➕ Adicionar código de cor</p>
+              <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                <Input
+                  placeholder="#90EE90"
+                  value={customColorHex}
+                  onChange={(event) => setCustomColorHex(event.target.value)}
+                />
+                <Input
+                  placeholder="Nome da cor"
+                  value={customColorName}
+                  onChange={(event) => setCustomColorName(event.target.value)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(customColorHex))
+                      return toast.error("Informe um código HEX válido.");
+                    setForm((current) => ({
+                      ...current,
+                      theme_palette: {
+                        ...current.theme_palette,
+                        custom_colors: [
+                          ...(current.theme_palette.custom_colors ?? []),
+                          {
+                            name: customColorName.trim() || "Cor personalizada",
+                            hex: customColorHex.toUpperCase(),
+                          },
+                        ],
+                      },
+                    }));
+                    setCustomColorName("");
+                  }}
+                >
+                  Adicionar
+                </Button>
+              </div>
+              {form.theme_palette.custom_colors?.length ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {form.theme_palette.custom_colors.map(
+                    (color: { name: string; hex: string }, index: number) => (
+                      <span
+                        key={`${color.hex}-${index}`}
+                        className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs"
+                      >
+                        <span
+                          className="size-3 rounded-full"
+                          style={{ backgroundColor: color.hex }}
+                        />
+                        {color.name} {color.hex}
+                      </span>
+                    ),
+                  )}
+                </div>
+              ) : null}
+            </div>
+          </div>
         </CollapsibleSection>
 
         <CollapsibleSection title="🖼️ Banners" description="Sugestões por nicho e cópias editáveis">

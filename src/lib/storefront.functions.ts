@@ -85,6 +85,7 @@ export type Storefront = {
     background_color: string;
     text_color: string;
     button_color: string;
+    theme_palette: Record<string, string>;
     welcome_message: string;
     pix_key: string;
     pix_key_type: string;
@@ -160,6 +161,12 @@ export const getStorefront = createServerFn({ method: "GET" })
     const store = stores?.[0] ?? null;
 
     if (!store) return null;
+
+    const { data: themeRow } = await supabase
+      .from("stores")
+      .select("theme_palette")
+      .eq("id", store.id)
+      .maybeSingle();
 
     const [{ data: categories }, { data: productsRaw }] = await Promise.all([
       supabase
@@ -301,6 +308,7 @@ export const getStorefront = createServerFn({ method: "GET" })
         background_color: store.background_color ?? "#f8fafc",
         text_color: store.text_color ?? "#111827",
         button_color: store.button_color ?? store.primary_color,
+        theme_palette: (themeRow?.theme_palette as Record<string, string> | null) ?? {},
         welcome_message: store.welcome_message,
         pix_key: store.pix_key,
         pix_key_type: store.pix_key_type,
