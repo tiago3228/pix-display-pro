@@ -42,7 +42,7 @@ type OrderTierDraft = { minQuantity: string; unitPrice: string };
 
 type ProductRow = {
   id: string;
-  module: "roupas" | "roupas_esportivas" | "roupas_treino";
+  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados";
   name: string;
   description: string;
   price: number;
@@ -71,10 +71,16 @@ type ProductRow = {
   sports_original_price?: number | null;
   sports_offer_price?: number | null;
   sports_offer_percent?: number | null;
+  shoe_brand_id?: string | null;
+  shoe_model_id?: string | null;
+  shoe_authenticity?: "original" | "replica" | null;
+  shoe_gender?: string | null;
+  shoe_size?: string | null;
+  shoe_color?: string | null;
 };
 
 const emptyForm = {
-  module: "roupas" as "roupas" | "roupas_esportivas" | "roupas_treino",
+  module: "roupas" as "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados",
   name: "",
   description: "",
   price: "",
@@ -117,6 +123,7 @@ function Products() {
   const [sportsNodeId, setSportsNodeId] = useState("none");
   const [sportsCollectionId, setSportsCollectionId] = useState("none");
   const [trainingOnly, setTrainingOnly] = useState(false);
+  const [shoesOnly, setShoesOnly] = useState(false);
 
   useEffect(() => {
     setTrainingOnly(
@@ -125,29 +132,70 @@ function Products() {
     );
   }, []);
 
+  useEffect(() => {
+    setShoesOnly(
+      typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("module") === "calcados",
+    );
+  }, []);
+
   const { data: categories } = useQuery({
-    queryKey: ["categories", store?.id, trainingOnly],
+    queryKey: ["categories", store?.id, trainingOnly, shoesOnly],
     enabled: Boolean(store?.id),
     queryFn: async () => {
       let query = supabase.from("categories").select("id, name").eq("store_id", store!.id);
       if (trainingOnly) query = query.eq("module", "roupas_treino");
+      if (shoesOnly) query = query.eq("module", "calcados");
       const { data, error } = await query.order("position");
       if (error) throw error;
       return data;
     },
   });
 
+  const { data: shoeBrands } = useQuery({
+    queryKey: ["shoe-brands", store?.id],
+    enabled: Boolean(store?.id && shoesOnly),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("shoe_brands")
+        .select("id, name")
+        .eq("store_id", store!.id)
+        .eq("is_active", true)
+        .order("position")
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const { data: shoeModels } = useQuery({
+    queryKey: ["shoe-models", store?.id, form.shoe_brand_id],
+    enabled: Boolean(store?.id && shoesOnly && form.shoe_brand_id !== "none"),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("shoe_models")
+        .select("id, name")
+        .eq("store_id", store!.id)
+        .eq("brand_id", form.shoe_brand_id)
+        .eq("is_active", true)
+        .order("position")
+        .order("name");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const { data: products } = useQuery({
-    queryKey: ["products", store?.id, trainingOnly],
+    queryKey: ["products", store?.id, trainingOnly, shoesOnly],
     enabled: Boolean(store?.id),
     queryFn: async () => {
       let query = supabase
         .from("products")
         .select(
-          "id, module, name, description, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, product_variants(id, label, price, stock), product_order_tiers(min_quantity, unit_price)",
+          "id, module, name, description, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, product_variants(id, label, price, stock), product_order_tiers(min_quantity, unit_price)",
         )
         .eq("store_id", store!.id);
       if (trainingOnly) query = query.eq("module", "roupas_treino");
+      if (shoesOnly) query = query.eq("module", "calcados");
       const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
       return data as unknown as ProductRow[];
@@ -175,7 +223,9 @@ function Products() {
     },
   });
 
-  const limitReached = store?.plan !== "pro" && (products?.length ?? 0) >= FREE_PLAN_PRODUCT_LIMIT;
+  const limitReached =
+    store?.plan !== "pro" &&
+    (products?.filter((product) => !product.is_hidden).length ?? 0) >= FREE_PLAN_PRODUCT_LIMIT;
 
   function openNew() {
     if (limitReached) {
@@ -185,7 +235,10 @@ function Products() {
       return;
     }
     setEditing(null);
-    setForm({ ...emptyForm, module: trainingOnly ? "roupas_treino" : "roupas" });
+    setForm({
+      ...emptyForm,
+      module: trainingOnly ? "roupas_treino" : shoesOnly ? "calcados" : "roupas",
+    });
     setVariants([]);
     setOrderTiers([]);
     setPhotos([]);
@@ -225,6 +278,12 @@ function Products() {
         product.sports_original_price == null ? "" : String(product.sports_original_price),
       sports_offer_price:
         product.sports_offer_price == null ? "" : String(product.sports_offer_price),
+      shoe_brand_id: product.shoe_brand_id ?? "none",
+      shoe_model_id: product.shoe_model_id ?? "none",
+      shoe_authenticity: product.shoe_authenticity ?? "original",
+      shoe_gender: product.shoe_gender ?? "unissex",
+      shoe_size: product.shoe_size ?? "",
+      shoe_color: product.shoe_color ?? "",
     });
     setSportsNodeId("none");
     setSportsCollectionId("none");
@@ -316,7 +375,7 @@ function Products() {
     const cleanVariants = variants.filter((v) => v.label.trim());
     const payload = {
       store_id: store.id,
-      module: trainingOnly ? "roupas_treino" : form.module,
+      module: trainingOnly ? "roupas_treino" : shoesOnly ? "calcados" : form.module,
       name: form.name.trim(),
       description: form.description ?? "",
       price: Number(String(form.price).replace(",", ".")) || 0,
@@ -352,6 +411,14 @@ function Products() {
         form.sports_offer_active && form.sports_offer_price
           ? Number(String(form.sports_offer_price).replace(",", "."))
           : null,
+      shoe_brand_id:
+        form.module === "calcados" && form.shoe_brand_id !== "none" ? form.shoe_brand_id : null,
+      shoe_model_id:
+        form.module === "calcados" && form.shoe_model_id !== "none" ? form.shoe_model_id : null,
+      shoe_authenticity: form.module === "calcados" ? form.shoe_authenticity : "original",
+      shoe_gender: form.module === "calcados" ? form.shoe_gender : null,
+      shoe_size: form.module === "calcados" ? form.shoe_size.trim() || null : null,
+      shoe_color: form.module === "calcados" ? form.shoe_color.trim() || null : null,
       sports_offer_percent:
         form.sports_offer_active && form.sports_original_price && form.sports_offer_price
           ? Math.max(
@@ -612,16 +679,16 @@ function Products() {
             >
               <div className="space-y-1.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
                 <Label>Módulo da loja</Label>
-                {trainingOnly ? (
+                {trainingOnly || shoesOnly ? (
                   <div className="rounded-md border bg-background px-3 py-2 text-sm font-medium">
-                    🏋️ Roupas de Treino / Academia
+                    {trainingOnly ? "🏋️ Roupas de Treino / Academia" : "👟 Calçados"}
                   </div>
                 ) : (
                   <Select
                     value={form.module}
-                    onValueChange={(value: "roupas" | "roupas_esportivas" | "roupas_treino") =>
-                      setForm({ ...form, module: value })
-                    }
+                    onValueChange={(
+                      value: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados",
+                    ) => setForm({ ...form, module: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -630,6 +697,7 @@ function Products() {
                       <SelectItem value="roupas">👕 Roupas</SelectItem>
                       <SelectItem value="roupas_esportivas">⚽ Roupas Esportivas</SelectItem>
                       <SelectItem value="roupas_treino">🏋️ Roupas de Treino / Academia</SelectItem>
+                      <SelectItem value="calcados">👟 Calçados</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -697,6 +765,116 @@ function Products() {
                 </Select>
               </div>
             </CollapsibleSection>
+            {form.module === "calcados" ? (
+              <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900 dark:bg-amber-950/20">
+                <p className="text-sm font-semibold">👟 Dados do Calçado</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Marca</Label>
+                    <Select
+                      value={form.shoe_brand_id}
+                      onValueChange={(value) =>
+                        setForm({ ...form, shoe_brand_id: value, shoe_model_id: "none" })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Marca" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Marca manual</SelectItem>
+                        {(shoeBrands ?? []).map((brand) => (
+                          <SelectItem key={brand.id} value={brand.id}>
+                            {brand.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Modelo</Label>
+                    <Select
+                      value={form.shoe_model_id}
+                      onValueChange={(value) => setForm({ ...form, shoe_model_id: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Modelo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Modelo manual</SelectItem>
+                        {(shoeModels ?? []).map((model) => (
+                          <SelectItem key={model.id} value={model.id}>
+                            {model.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Tamanho</Label>
+                    <Input
+                      value={form.shoe_size}
+                      placeholder="BR 38 ou personalizado"
+                      onChange={(e) => setForm({ ...form, shoe_size: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Cor</Label>
+                    <Input
+                      value={form.shoe_color}
+                      placeholder="Ex.: Preto"
+                      onChange={(e) => setForm({ ...form, shoe_color: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Gênero</Label>
+                    <Select
+                      value={form.shoe_gender}
+                      onValueChange={(value) => setForm({ ...form, shoe_gender: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["Masculino", "Feminino", "Unissex", "Infantil", "Juvenil"].map(
+                          (value) => (
+                            <SelectItem key={value} value={value.toLowerCase()}>
+                              {value}
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Tipo</Label>
+                    <Select
+                      value={form.shoe_authenticity}
+                      onValueChange={(value) =>
+                        setForm({ ...form, shoe_authenticity: value as "original" | "replica" })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="original">Original</SelectItem>
+                        <SelectItem value="replica">Réplica</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  O Vitrini registra a declaração do vendedor e não autentica automaticamente.{" "}
+                  {form.shoe_authenticity === "original"
+                    ? "A declaração de originalidade é responsabilidade do vendedor."
+                    : "Informe corretamente a natureza do produto e observe a legislação aplicável."}
+                </p>
+              </div>
+            ) : null}
             {store?.plan === "pro" && sportsNodes?.length ? (
               <div className="space-y-1.5 rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-900 dark:bg-emerald-950/20">
                 <Label>Classificação esportiva</Label>

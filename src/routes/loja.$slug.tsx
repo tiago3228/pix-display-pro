@@ -502,11 +502,12 @@ export function StorePage() {
 
       <div className="sticky top-0 z-20 mt-4 border-y border-orange-200/10 bg-[#21140f]/85 py-2 backdrop-blur">
         <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
-          {(["roupas", "roupas_esportivas", "roupas_treino"] as const).map((module) => {
+          {(["roupas", "roupas_esportivas", "roupas_treino", "calcados"] as const).map((module) => {
             const labels = {
               roupas: "👕 Roupas",
               roupas_esportivas: "⚽ Roupas Esportivas",
               roupas_treino: "🏋️ Roupas de Treino / Academia",
+              calcados: "👟 Calçados",
             };
             return data.products.some((product) => product.module === module) ? (
               <CategoryChip

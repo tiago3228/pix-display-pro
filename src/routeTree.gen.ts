@@ -20,6 +20,7 @@ import { Route as SuporteRouteImport } from './routes/suporte'
 import { Route as TermosRouteImport } from './routes/termos'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedAssinaturaRouteImport } from './routes/_authenticated/assinatura'
+import { Route as AuthenticatedCalcadosRouteImport } from './routes/_authenticated/calcados'
 import { Route as AuthenticatedCalculadoraRouteImport } from './routes/_authenticated/calculadora'
 import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
 import { Route as AuthenticatedCobrancasRouteImport } from './routes/_authenticated/cobrancas'
@@ -99,6 +100,11 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
 const AuthenticatedAssinaturaRoute = AuthenticatedAssinaturaRouteImport.update({
   id: '/assinatura',
   path: '/assinatura',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCalcadosRoute = AuthenticatedCalcadosRouteImport.update({
+  id: '/calcados',
+  path: '/calcados',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedCalculadoraRoute =
@@ -255,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/termos': typeof TermosRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/assinatura': typeof AuthenticatedAssinaturaRoute
+  '/calcados': typeof AuthenticatedCalcadosRoute
   '/calculadora': typeof AuthenticatedCalculadoraRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/cobrancas': typeof AuthenticatedCobrancasRoute
@@ -293,6 +300,7 @@ export interface FileRoutesByTo {
   '/termos': typeof TermosRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/assinatura': typeof AuthenticatedAssinaturaRoute
+  '/calcados': typeof AuthenticatedCalcadosRoute
   '/calculadora': typeof AuthenticatedCalculadoraRoute
   '/clientes': typeof AuthenticatedClientesRoute
   '/cobrancas': typeof AuthenticatedCobrancasRoute
@@ -333,6 +341,7 @@ export interface FileRoutesById {
   '/termos': typeof TermosRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/assinatura': typeof AuthenticatedAssinaturaRoute
+  '/_authenticated/calcados': typeof AuthenticatedCalcadosRoute
   '/_authenticated/calculadora': typeof AuthenticatedCalculadoraRoute
   '/_authenticated/clientes': typeof AuthenticatedClientesRoute
   '/_authenticated/cobrancas': typeof AuthenticatedCobrancasRoute
@@ -373,6 +382,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/admin'
     | '/assinatura'
+    | '/calcados'
     | '/calculadora'
     | '/clientes'
     | '/cobrancas'
@@ -411,6 +421,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/admin'
     | '/assinatura'
+    | '/calcados'
     | '/calculadora'
     | '/clientes'
     | '/cobrancas'
@@ -450,6 +461,7 @@ export interface FileRouteTypes {
     | '/termos'
     | '/_authenticated/admin'
     | '/_authenticated/assinatura'
+    | '/_authenticated/calcados'
     | '/_authenticated/calculadora'
     | '/_authenticated/clientes'
     | '/_authenticated/cobrancas'
@@ -571,6 +583,13 @@ declare module '@tanstack/react-router' {
       path: '/assinatura'
       fullPath: '/assinatura'
       preLoaderRoute: typeof AuthenticatedAssinaturaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/calcados': {
+      id: '/_authenticated/calcados'
+      path: '/calcados'
+      fullPath: '/calcados'
+      preLoaderRoute: typeof AuthenticatedCalcadosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/calculadora': {
@@ -761,6 +780,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
   AuthenticatedAssinaturaRoute: typeof AuthenticatedAssinaturaRoute
+  AuthenticatedCalcadosRoute: typeof AuthenticatedCalcadosRoute
   AuthenticatedCalculadoraRoute: typeof AuthenticatedCalculadoraRoute
   AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
   AuthenticatedCobrancasRoute: typeof AuthenticatedCobrancasRoute
@@ -788,6 +808,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedAssinaturaRoute: AuthenticatedAssinaturaRoute,
+  AuthenticatedCalcadosRoute: AuthenticatedCalcadosRoute,
   AuthenticatedCalculadoraRoute: AuthenticatedCalculadoraRoute,
   AuthenticatedClientesRoute: AuthenticatedClientesRoute,
   AuthenticatedCobrancasRoute: AuthenticatedCobrancasRoute,

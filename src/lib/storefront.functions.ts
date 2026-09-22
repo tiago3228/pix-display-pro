@@ -13,7 +13,7 @@ export type StorefrontVariant = {
 
 export type StorefrontProduct = {
   id: string;
-  module: "roupas" | "roupas_esportivas" | "roupas_treino";
+  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados";
   name: string;
   description: string;
   price: number;
@@ -109,7 +109,7 @@ export type Storefront = {
 
 type StorefrontProductDbRow = {
   id: string;
-  module: "roupas" | "roupas_esportivas" | "roupas_treino";
+  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados";
   name: string;
   description: string;
   price: number | string;
@@ -137,6 +137,12 @@ type StorefrontProductDbRow = {
   sports_original_price: number | string | null;
   sports_offer_price: number | string | null;
   sports_offer_percent: number | null;
+  shoe_brand_id: string | null;
+  shoe_model_id: string | null;
+  shoe_authenticity: "original" | "replica";
+  shoe_gender: string | null;
+  shoe_size: string | null;
+  shoe_color: string | null;
 };
 
 export const getStorefront = createServerFn({ method: "GET" })
@@ -159,7 +165,7 @@ export const getStorefront = createServerFn({ method: "GET" })
       supabase
         .from("products")
         .select(
-          "id, module, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent",
+          "id, module, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color",
         )
         .eq("store_id", store.id)
         .eq("is_hidden", false)
