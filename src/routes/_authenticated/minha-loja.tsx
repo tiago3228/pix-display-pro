@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyStore } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { uploadAsset } from "@/lib/images";
 import { PIX_KEY_TYPES, STORE_CATEGORIES, slugify } from "@/lib/format";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -31,6 +33,57 @@ export const Route = createFileRoute("/_authenticated/minha-loja")({
 });
 
 const COLORS = ["#111827", "#0f766e", "#e11d48", "#7c3aed", "#ea580c", "#2563eb", "#16a34a"];
+const VITRINI_PALETTE = {
+  primary_color: "#111827",
+  secondary_color: "#0f766e",
+  accent_color: "#f59e0b",
+  background_color: "#f8fafc",
+  text_color: "#111827",
+  button_color: "#111827",
+};
+
+const BANNER_SUGGESTIONS = [
+  {
+    key: "clothing-new",
+    niche: "👕 Roupas",
+    title: "Nova coleção",
+    subtitle: "Descubra as novidades da loja",
+    cta: "Ver coleção",
+    gradient: "linear-gradient(120deg,#111827,#0f766e)",
+  },
+  {
+    key: "clothing-offers",
+    niche: "👕 Roupas",
+    title: "Ofertas especiais",
+    subtitle: "Escolhas especiais para você",
+    cta: "Ver ofertas",
+    gradient: "linear-gradient(120deg,#7c2d12,#f59e0b)",
+  },
+  {
+    key: "sports-season",
+    niche: "⚽ Roupas Esportivas",
+    title: "Nova temporada",
+    subtitle: "Vista sua paixão pelo esporte",
+    cta: "Explorar agora",
+    gradient: "linear-gradient(120deg,#172554,#2563eb)",
+  },
+  {
+    key: "training-performance",
+    niche: "🏋️ Treino / Academia",
+    title: "Performance em movimento",
+    subtitle: "Prepare-se para o seu próximo desafio",
+    cta: "Ver coleção",
+    gradient: "linear-gradient(120deg,#14532d,#16a34a)",
+  },
+  {
+    key: "shoes-launch",
+    niche: "👟 Calçados",
+    title: "Novidades",
+    subtitle: "Encontre seu próximo par",
+    cta: "Ver novidades",
+    gradient: "linear-gradient(120deg,#3b0764,#a855f7)",
+  },
+];
 
 function MyStore() {
   const { data: store, refetch } = useMyStore();
@@ -39,6 +92,7 @@ function MyStore() {
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(
     null,
   );
+  const [palettePreview, setPalettePreview] = useState(false);
   const isPro = store?.plan === "pro";
   const [form, setForm] = useState({
     name: "",
@@ -58,6 +112,25 @@ function MyStore() {
     allow_installments: false,
     max_installments: 3,
     min_installment_amount: 20,
+    secondary_color: VITRINI_PALETTE.secondary_color,
+    accent_color: VITRINI_PALETTE.accent_color,
+    background_color: VITRINI_PALETTE.background_color,
+    text_color: VITRINI_PALETTE.text_color,
+    button_color: VITRINI_PALETTE.button_color,
+  });
+  const banners = useQuery({
+    queryKey: ["storefront-banners", store?.id],
+    enabled: Boolean(store?.id),
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("storefront_banners")
+        .select("*")
+        .eq("store_id", store!.id)
+        .order("position")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
   });
 
   useEffect(() => {
@@ -80,6 +153,20 @@ function MyStore() {
       allow_installments: store.allow_installments,
       max_installments: store.max_installments,
       min_installment_amount: Number(store.min_installment_amount),
+      secondary_color:
+        (store as typeof store & { secondary_color?: string }).secondary_color ??
+        VITRINI_PALETTE.secondary_color,
+      accent_color:
+        (store as typeof store & { accent_color?: string }).accent_color ??
+        VITRINI_PALETTE.accent_color,
+      background_color:
+        (store as typeof store & { background_color?: string }).background_color ??
+        VITRINI_PALETTE.background_color,
+      text_color:
+        (store as typeof store & { text_color?: string }).text_color ?? VITRINI_PALETTE.text_color,
+      button_color:
+        (store as typeof store & { button_color?: string }).button_color ??
+        VITRINI_PALETTE.button_color,
     });
   }, [store]);
 
@@ -133,7 +220,7 @@ function MyStore() {
     if (current) {
       const res = await supabase
         .from("stores")
-        .update({ ...payload, slug: payload.slug || current.slug })
+        .update({ ...payload, slug: payload.slug || current.slug } as never)
         .eq("id", current.id);
       error = res.error;
     } else {
@@ -163,6 +250,41 @@ function MyStore() {
     setFeedback({ type: "success", text: "Alterações salvas com sucesso." });
     toast.success("Loja atualizada!");
     queryClient.invalidateQueries({ queryKey: ["my-store"] });
+  }
+
+  async function restorePalette() {
+    if (
+      !store ||
+      !window.confirm(
+        "Restaurar cores padrão? Suas cores personalizadas serão substituídas pela paleta padrão Vitrini.",
+      )
+    )
+      return;
+    const { error } = await supabase
+      .from("stores")
+      .update(VITRINI_PALETTE as never)
+      .eq("id", store.id);
+    if (error) return toast.error("Não foi possível restaurar a paleta.");
+    setForm((current) => ({ ...current, ...VITRINI_PALETTE }));
+    setPalettePreview(false);
+    queryClient.invalidateQueries({ queryKey: ["my-store"] });
+    toast.success("Paleta padrão Vitrini aplicada.");
+  }
+
+  async function addBannerSuggestion(suggestion: (typeof BANNER_SUGGESTIONS)[number]) {
+    if (!store) return;
+    const { error } = await supabase.from("storefront_banners").insert({
+      store_id: store.id,
+      title: suggestion.title,
+      subtitle: suggestion.subtitle,
+      cta_label: suggestion.cta,
+      template_key: suggestion.key,
+      is_active: false,
+      position: banners.data?.length ?? 0,
+    });
+    if (error) return toast.error("Não foi possível adicionar o banner.");
+    await queryClient.invalidateQueries({ queryKey: ["storefront-banners", store.id] });
+    toast.success("Banner copiado para sua loja. Agora você pode editá-lo.");
   }
 
   return (
@@ -299,6 +421,139 @@ function MyStore() {
             ))}
           </div>
         </div>
+
+        <CollapsibleSection
+          title="🎨 Aparência"
+          description="Cores da marca e padrão visual Vitrini"
+        >
+          <div
+            className="rounded-xl border p-4"
+            style={{ backgroundColor: form.background_color, color: form.text_color }}
+          >
+            <div
+              className="flex items-center justify-between rounded-lg p-3"
+              style={{ backgroundColor: form.primary_color, color: "#fff" }}
+            >
+              <span className="font-semibold">Prévia da sua loja</span>
+              <button
+                type="button"
+                className="rounded-md px-3 py-1 text-xs font-semibold"
+                style={{ backgroundColor: form.accent_color }}
+              >
+                Comprar
+              </button>
+            </div>
+            <div className="mt-3 rounded-lg border p-3">
+              <p className="font-semibold">Produto em destaque</p>
+              <p className="mt-1 text-sm" style={{ color: form.secondary_color }}>
+                Nova coleção disponível
+              </p>
+              <p className="mt-2 font-bold">R$ 129,90</p>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-300/50 bg-amber-50 p-3 dark:bg-amber-950/20">
+            <div>
+              <p className="text-sm font-semibold">🎨 Usar padrão Vitrini</p>
+              <p className="text-xs text-muted-foreground">
+                Aplique automaticamente uma combinação moderna e vistosa para sua loja.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setPalettePreview((value) => !value)}
+            >
+              🔄 Aplicar padrão
+            </Button>
+          </div>
+          {palettePreview ? (
+            <div className="mt-3 space-y-3 rounded-lg border p-3">
+              <p className="text-sm font-semibold">Prévia da paleta padrão</p>
+              <div className="grid grid-cols-3 gap-2 text-center text-[11px]">
+                <div
+                  className="rounded p-3 text-white"
+                  style={{ backgroundColor: VITRINI_PALETTE.primary_color }}
+                >
+                  Cabeçalho
+                </div>
+                <div
+                  className="rounded p-3 text-white"
+                  style={{ backgroundColor: VITRINI_PALETTE.secondary_color }}
+                >
+                  Menu
+                </div>
+                <div
+                  className="rounded p-3"
+                  style={{ backgroundColor: VITRINI_PALETTE.accent_color }}
+                >
+                  Destaque
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="ghost" onClick={() => setPalettePreview(false)}>
+                  Cancelar
+                </Button>
+                <Button type="button" onClick={() => void restorePalette()}>
+                  Restaurar padrão
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </CollapsibleSection>
+
+        <CollapsibleSection title="🖼️ Banners" description="Sugestões por nicho e cópias editáveis">
+          <p className="mb-3 text-sm text-muted-foreground">
+            Sem problema. Encontramos algumas sugestões para o seu tipo de loja. Usar uma sugestão
+            cria uma cópia editável e não altera o modelo original.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {BANNER_SUGGESTIONS.map((suggestion) => (
+              <article key={suggestion.key} className="overflow-hidden rounded-xl border">
+                <div
+                  className="flex min-h-28 flex-col justify-end p-4 text-white"
+                  style={{ background: suggestion.gradient }}
+                >
+                  <p className="text-lg font-bold uppercase">{suggestion.title}</p>
+                  <p className="text-xs opacity-90">{suggestion.subtitle}</p>
+                </div>
+                <div className="space-y-2 p-3">
+                  <p className="text-xs text-muted-foreground">
+                    {suggestion.niche} · Banner promocional
+                  </p>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void addBannerSuggestion(suggestion)}
+                  >
+                    Usar este banner
+                  </Button>
+                </div>
+              </article>
+            ))}
+          </div>
+          {banners.data?.length ? (
+            <div className="mt-4 space-y-2">
+              <p className="text-sm font-semibold">Banners da sua loja</p>
+              {banners.data.map((banner) => (
+                <div
+                  key={banner.id}
+                  className="flex items-center justify-between gap-3 rounded-lg border p-3"
+                >
+                  <div>
+                    <p className="text-sm font-medium">{banner.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Cópia editável · {banner.is_active ? "Ativo" : "Rascunho"}
+                    </p>
+                  </div>
+                  <Badge variant={banner.is_active ? "default" : "outline"}>
+                    {banner.is_active ? "Ativo" : "Editar"}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </CollapsibleSection>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">

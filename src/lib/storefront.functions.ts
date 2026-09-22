@@ -80,6 +80,11 @@ export type Storefront = {
     logo: string | null;
     banner: string | null;
     primary_color: string;
+    secondary_color: string;
+    accent_color: string;
+    background_color: string;
+    text_color: string;
+    button_color: string;
     welcome_message: string;
     pix_key: string;
     pix_key_type: string;
@@ -291,6 +296,11 @@ export const getStorefront = createServerFn({ method: "GET" })
         logo: resolve(store.logo_url),
         banner: resolve(store.banner_url),
         primary_color: store.primary_color,
+        secondary_color: store.secondary_color ?? "#0f766e",
+        accent_color: store.accent_color ?? "#f59e0b",
+        background_color: store.background_color ?? "#f8fafc",
+        text_color: store.text_color ?? "#111827",
+        button_color: store.button_color ?? store.primary_color,
         welcome_message: store.welcome_message,
         pix_key: store.pix_key,
         pix_key_type: store.pix_key_type,

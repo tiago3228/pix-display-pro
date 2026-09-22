@@ -402,12 +402,15 @@ export function StorePage() {
       className="vitrini-storefront min-h-screen pb-28"
       style={{
         ["--brand" as string]: data.sports.settings?.primary_color ?? "var(--vitrini-orange)",
+        ["--store-secondary" as string]: store.secondary_color,
+        ["--store-accent" as string]: store.accent_color,
+        ["--store-button" as string]: store.button_color,
         ["--sports-primary" as string]:
           data.sports.settings?.primary_color ?? "var(--vitrini-orange)",
         ["--sports-secondary" as string]:
           data.sports.settings?.secondary_color ?? "var(--vitrini-orange)",
-        backgroundColor: data.sports.settings?.background_color,
-        color: data.sports.settings?.text_color,
+        backgroundColor: store.background_color,
+        color: store.text_color,
       }}
     >
       <header className="relative">
@@ -425,7 +428,7 @@ export function StorePage() {
             <div
               className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-2xl font-bold text-white sm:size-20"
               style={{
-                backgroundColor: data.sports.settings?.primary_color ?? "var(--vitrini-orange)",
+                backgroundColor: store.primary_color,
               }}
             >
               {store.logo ? (
@@ -445,7 +448,8 @@ export function StorePage() {
                   href={whatsappLink(store.whatsapp, `Olá, ${store.seller_name || store.name}!`)}
                   target="_blank"
                   rel="noopener"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[var(--whatsapp)] px-3 py-1 text-xs font-semibold text-[var(--whatsapp-foreground)]"
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold text-white"
+                  style={{ backgroundColor: store.button_color }}
                 >
                   <MessageCircle className="size-3.5" /> WhatsApp
                 </a>
