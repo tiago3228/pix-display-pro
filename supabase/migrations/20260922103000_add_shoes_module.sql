@@ -103,7 +103,7 @@ BEGIN
   END LOOP;
   INSERT INTO public.categories(store_id, name, module, position)
   SELECT target_store_id, value, 'calcados', ordinality
-  FROM unnest(ARRAY['Tênis','Botas','Sapatos','Sandálias','Femininos','Sapatilhas','Botas Femininas','Sociais','Chinelos','Infantil','Esportivos','Personalizados']) WITH ORDINALITY
+  FROM unnest(ARRAY['Tênis','Botas','Sapatos','Sandálias','Femininos','Sapatilhas','Botas Femininas','Sociais','Chinelos','Infantil','Esportivos','Personalizados']) WITH ORDINALITY AS category_seed(value, ordinality)
   ON CONFLICT DO NOTHING;
   FOR brand_name, model_name IN
     SELECT * FROM (VALUES
