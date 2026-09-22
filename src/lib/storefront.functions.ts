@@ -321,7 +321,11 @@ export const getStorefront = createServerFn({ method: "GET" })
       },
       categories: (categories ?? []).map((c) => {
         const category = c as unknown as { id: string; name: string; module?: string };
-        return { id: category.id, name: category.name, module: category.module };
+        return {
+          id: category.id,
+          name: category.name,
+          ...(category.module === undefined ? {} : { module: category.module }),
+        };
       }),
       sports: {
         settings: sportsSettings
@@ -486,11 +490,7 @@ export const submitOrder = createServerFn({ method: "POST" })
     const items = data.items.map((item) => {
       const product = (products ?? []).find(
         (p) =>
-          p.id === item.productId &&
-          p.store_id === store.id &&
-          !p.is_hidden &&
-          p.is_available &&
-          p.order_enabled,
+          p.id === item.productId && p.store_id === store.id && !p.is_hidden && p.is_available,
       );
       if (!product) throw new Error("Produto indisponível para pedido");
       const variant = item.variantId

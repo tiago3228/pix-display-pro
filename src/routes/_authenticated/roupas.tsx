@@ -143,7 +143,7 @@ function ClothingStore() {
     value: boolean,
   ) {
     if (!store) return;
-    await supabase.from("clothing_store_settings").upsert({ store_id: store.id, [field]: value });
+    await supabase.from("clothing_store_settings").upsert({ store_id: store.id, [field]: value } as never);
     await client.invalidateQueries({ queryKey: ["clothing-settings", store.id] });
   }
   const active = (products.data ?? []).filter((p) => !p.is_hidden).length;

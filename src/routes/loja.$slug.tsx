@@ -405,17 +405,17 @@ export function StorePage() {
         ["--store-secondary" as string]: store.secondary_color,
         ["--store-accent" as string]: store.accent_color,
         ["--store-button" as string]: store.button_color,
-        ["--store-text-secondary" as string]: store.theme_palette.text_secondary ?? "#64748b",
-        ["--store-header" as string]: store.theme_palette.header ?? store.primary_color,
-        ["--store-menu" as string]: store.theme_palette.menu ?? "#ffffff",
-        ["--store-links" as string]: store.theme_palette.links ?? store.secondary_color,
-        ["--store-prices" as string]: store.theme_palette.prices ?? store.primary_color,
-        ["--store-offers" as string]: store.theme_palette.offers ?? "#dc2626",
-        ["--store-badges" as string]: store.theme_palette.badges ?? store.accent_color,
-        ["--store-cards" as string]: store.theme_palette.cards ?? "#ffffff",
-        ["--store-borders" as string]: store.theme_palette.borders ?? "#e2e8f0",
-        ["--store-footer" as string]: store.theme_palette.footer ?? store.primary_color,
-        ["--store-filters" as string]: store.theme_palette.filters ?? "#f1f5f9",
+        ["--store-text-secondary" as string]: store.theme_palette['text_secondary'] ?? "#64748b",
+        ["--store-header" as string]: store.theme_palette['header'] ?? store.primary_color,
+        ["--store-menu" as string]: store.theme_palette['menu'] ?? "#ffffff",
+        ["--store-links" as string]: store.theme_palette['links'] ?? store.secondary_color,
+        ["--store-prices" as string]: store.theme_palette['prices'] ?? store.primary_color,
+        ["--store-offers" as string]: store.theme_palette['offers'] ?? "#dc2626",
+        ["--store-badges" as string]: store.theme_palette['badges'] ?? store.accent_color,
+        ["--store-cards" as string]: store.theme_palette['cards'] ?? "#ffffff",
+        ["--store-borders" as string]: store.theme_palette['borders'] ?? "#e2e8f0",
+        ["--store-footer" as string]: store.theme_palette['footer'] ?? store.primary_color,
+        ["--store-filters" as string]: store.theme_palette['filters'] ?? "#f1f5f9",
         ["--sports-primary" as string]:
           data.sports.settings?.primary_color ?? "var(--vitrini-orange)",
         ["--sports-secondary" as string]:
@@ -748,7 +748,7 @@ export function StorePage() {
           <ProductDetail
             product={selected}
             categoryName={
-              data.categories.find((category) => category.id === selected.category_id)?.name
+              data.categories.find((category) => category.id === selected.category_id)?.name ?? ""
             }
             color={data.sports.settings?.primary_color ?? "var(--vitrini-orange)"}
             onBack={() => setSelected(null)}
@@ -1479,8 +1479,8 @@ function ProductDetail({
       {
         key: simpleProduct ? product.id : `${product.id}:${variant!.id}`,
         productId: product.id,
-        variantId: simpleProduct ? undefined : variant!.id,
-        variantLabel: simpleProduct ? undefined : variant!.label,
+        variantId: simpleProduct ? null : variant!.id,
+        variantLabel: simpleProduct ? null : variant!.label,
         name: product.name,
         description: product.description,
         unitPrice,

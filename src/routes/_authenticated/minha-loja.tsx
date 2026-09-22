@@ -299,7 +299,10 @@ function MyStore() {
       .from("stores")
       .update(VITRINI_PALETTE as never)
       .eq("id", store.id);
-    if (error) return toast.error("Não foi possível restaurar a paleta.");
+    if (error) {
+      toast.error("Não foi possível restaurar a paleta.");
+      return;
+    }
     setForm((current) => ({
       ...current,
       ...VITRINI_PALETTE,
@@ -321,7 +324,10 @@ function MyStore() {
       is_active: false,
       position: banners.data?.length ?? 0,
     });
-    if (error) return toast.error("Não foi possível adicionar o banner.");
+    if (error) {
+      toast.error("Não foi possível adicionar o banner.");
+      return;
+    }
     await queryClient.invalidateQueries({ queryKey: ["storefront-banners", store.id] });
     toast.success("Banner copiado para sua loja. Agora você pode editá-lo.");
   }
@@ -606,8 +612,10 @@ function MyStore() {
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(customColorHex))
-                      return toast.error("Informe um código HEX válido.");
+                    if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(customColorHex)) {
+                      toast.error("Informe um código HEX válido.");
+                      return;
+                    }
                     setForm((current) => ({
                       ...current,
                       theme_palette: {

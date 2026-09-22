@@ -57,7 +57,8 @@ function mapRequest(row: Record<string, unknown>, storeName?: string | null): Pr
 }
 
 type RpcClient = {
-  rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: boolean | null }>;
+  /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+  rpc: (fn: any, args: any) => PromiseLike<{ data: unknown }>;
 };
 
 async function requireAdmin(context: { supabase: RpcClient; userId: string }) {

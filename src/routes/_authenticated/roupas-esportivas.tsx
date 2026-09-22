@@ -232,7 +232,7 @@ function SportsModule() {
       action={
         <div className="flex gap-1.5">
           <Button size="sm" variant="outline" asChild>
-            <Link to="/produtos?module=roupas_esportivas&guided=1">
+            <Link to={"/produtos?module=roupas_esportivas&guided=1" as never}>
               <Plus className="mr-1.5 size-4" /> Novo produto
             </Link>
           </Button>
