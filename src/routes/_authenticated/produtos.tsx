@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useMyStore } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
 import { ProductPhotos } from "@/components/ProductPhotos";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { getSignedAssetUrl } from "@/lib/images.functions";
 import { FREE_PLAN_PRODUCT_LIMIT, brl } from "@/lib/format";
 import { listSportsNodes, sportsDb, type SportsNode } from "@/lib/sports";
@@ -589,90 +590,99 @@ function Products() {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="space-y-1.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
-              <Label>Módulo da loja</Label>
-              {trainingOnly ? (
-                <div className="rounded-md border bg-background px-3 py-2 text-sm font-medium">
-                  🏋️ Roupas de Treino / Academia
+            <CollapsibleSection
+              title="Informações básicas"
+              description="Módulo, nome, descrição, preço, estoque e categoria"
+              icon={<Package className="size-4" />}
+              defaultOpen
+            >
+              <div className="space-y-1.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                <Label>Módulo da loja</Label>
+                {trainingOnly ? (
+                  <div className="rounded-md border bg-background px-3 py-2 text-sm font-medium">
+                    🏋️ Roupas de Treino / Academia
+                  </div>
+                ) : (
+                  <Select
+                    value={form.module}
+                    onValueChange={(value: "roupas" | "roupas_esportivas" | "roupas_treino") =>
+                      setForm({ ...form, module: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="roupas">👕 Roupas</SelectItem>
+                      <SelectItem value="roupas_esportivas">⚽ Roupas Esportivas</SelectItem>
+                      <SelectItem value="roupas_treino">🏋️ Roupas de Treino / Academia</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  O produto aparecerá somente no módulo escolhido.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Nome</Label>
+                <Input
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label>Descrição</Label>
+                  <span className="text-xs text-muted-foreground">
+                    {form.description.length}/300
+                  </span>
                 </div>
-              ) : (
+                <Textarea
+                  rows={4}
+                  maxLength={300}
+                  placeholder="Ex.: Anel de prata 925 com zircônia, tamanho ajustável"
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>Preço (R$)</Label>
+                  <Input
+                    inputMode="decimal"
+                    value={form.price}
+                    onChange={(e) => setForm({ ...form, price: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Estoque</Label>
+                  <Input
+                    inputMode="numeric"
+                    value={form.stock}
+                    onChange={(e) => setForm({ ...form, stock: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label>Categoria</Label>
                 <Select
-                  value={form.module}
-                  onValueChange={(value: "roupas" | "roupas_esportivas" | "roupas_treino") =>
-                    setForm({ ...form, module: value })
-                  }
+                  value={form.category_id}
+                  onValueChange={(v) => setForm({ ...form, category_id: v })}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="roupas">👕 Roupas</SelectItem>
-                    <SelectItem value="roupas_esportivas">⚽ Roupas Esportivas</SelectItem>
-                    <SelectItem value="roupas_treino">🏋️ Roupas de Treino / Academia</SelectItem>
+                    <SelectItem value="none">Sem categoria</SelectItem>
+                    {(categories ?? []).map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-              )}
-              <p className="text-xs text-muted-foreground">
-                O produto aparecerá somente no módulo escolhido.
-              </p>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Nome</Label>
-              <Input
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <Label>Descrição</Label>
-                <span className="text-xs text-muted-foreground">{form.description.length}/300</span>
               </div>
-              <Textarea
-                rows={4}
-                maxLength={300}
-                placeholder="Ex.: Anel de prata 925 com zircônia, tamanho ajustável"
-                value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>Preço (R$)</Label>
-                <Input
-                  inputMode="decimal"
-                  value={form.price}
-                  onChange={(e) => setForm({ ...form, price: e.target.value })}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Estoque</Label>
-                <Input
-                  inputMode="numeric"
-                  value={form.stock}
-                  onChange={(e) => setForm({ ...form, stock: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Categoria</Label>
-              <Select
-                value={form.category_id}
-                onValueChange={(v) => setForm({ ...form, category_id: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Sem categoria</SelectItem>
-                  {(categories ?? []).map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            </CollapsibleSection>
             {store?.plan === "pro" && sportsNodes?.length ? (
               <div className="space-y-1.5 rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-900 dark:bg-emerald-950/20">
                 <Label>Classificação esportiva</Label>
@@ -819,11 +829,17 @@ function Products() {
                 ) : null}
               </div>
             ) : null}
-            <ProductPhotos
-              paths={photos}
-              onChange={setPhotos}
-              onUploadingChange={setUploadingPhoto}
-            />
+            <CollapsibleSection
+              title="Fotos do produto"
+              description="Anexe imagens ou tire uma foto com a câmera do celular"
+              icon={<ImageIcon className="size-4" />}
+            >
+              <ProductPhotos
+                paths={photos}
+                onChange={setPhotos}
+                onUploadingChange={setUploadingPhoto}
+              />
+            </CollapsibleSection>
 
             <div className="space-y-3 rounded-lg border border-border p-3">
               <div className="flex items-center justify-between">

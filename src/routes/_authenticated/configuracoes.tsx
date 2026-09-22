@@ -6,6 +6,8 @@ import { AppShell } from "@/components/AppShell";
 import { useMyStore } from "@/hooks/useAuth";
 import { DEFAULT_SHARE_MESSAGE, StoreWhatsAppShare } from "@/components/StoreWhatsAppShare";
 import { Button } from "@/components/ui/button";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
+import { Bell, Megaphone, Shield, UserRound } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Label } from "@/components/ui/label";
@@ -21,6 +23,7 @@ function Settings() {
   const [shareMessage, setShareMessage] = useState(DEFAULT_SHARE_MESSAGE);
   const [passwords, setPasswords] = useState({ current: "", next: "" });
   const [saving, setSaving] = useState(false);
+  const [openSection, setOpenSection] = useState("profile");
 
   useEffect(() => {
     (async () => {
@@ -96,76 +99,108 @@ function Settings() {
 
   return (
     <AppShell title="Configurações" description="Sua conta">
-      <div className="surface space-y-4 p-5">
-        <p className="font-semibold">Dados pessoais</p>
-        <div className="space-y-1.5">
-          <Label>Nome</Label>
-          <Input
-            value={profile.name}
-            onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>WhatsApp</Label>
-          <Input
-            value={profile.whatsapp}
-            onChange={(e) => setProfile({ ...profile, whatsapp: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>E-mail</Label>
-          <Input value={profile.email} disabled />
-        </div>
-        <Button disabled={saving} onClick={saveProfile}>
-          Salvar dados
-        </Button>
-      </div>
+      <div className="space-y-3">
+        <CollapsibleSection
+          title="Dados pessoais"
+          description="Nome, WhatsApp e e-mail da conta"
+          icon={<UserRound className="size-4" />}
+          open={openSection === "profile"}
+          onOpenChange={(open) => setOpenSection(open ? "profile" : "")}
+        >
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Nome</Label>
+              <Input
+                value={profile.name}
+                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>WhatsApp</Label>
+              <Input
+                value={profile.whatsapp}
+                onChange={(e) => setProfile({ ...profile, whatsapp: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>E-mail</Label>
+              <Input value={profile.email} disabled />
+            </div>
+            <Button disabled={saving} onClick={saveProfile}>
+              Salvar dados
+            </Button>
+          </div>
+        </CollapsibleSection>
 
-      <div className="surface mt-4 space-y-4 p-5">
-        <div>
-          <p className="font-semibold">Divulgação</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Configure a frase padrão usada ao compartilhar o link da sua vitrine pelo WhatsApp.
-          </p>
-        </div>
-        <div className="space-y-1.5">
-          <Label>Mensagem para compartilhar no WhatsApp</Label>
-          <Textarea
-            rows={3}
-            value={shareMessage}
-            onChange={(e) => setShareMessage(e.target.value)}
-            placeholder={DEFAULT_SHARE_MESSAGE}
-          />
-          <p className="text-xs text-muted-foreground">
-            O link da loja será incluído automaticamente. Se apagar a frase, a mensagem padrão será
-            usada novamente.
-          </p>
-        </div>
-        {store ? <StoreWhatsAppShare slug={store.slug} message={shareMessage} /> : null}
-        <Button disabled={saving || !store} onClick={saveShareMessage}>
-          Salvar mensagem
-        </Button>
-      </div>
+        <CollapsibleSection
+          title="Divulgação"
+          description="Mensagem e compartilhamento da vitrine"
+          icon={<Megaphone className="size-4" />}
+          open={openSection === "sharing"}
+          onOpenChange={(open) => setOpenSection(open ? "sharing" : "")}
+        >
+          <div className="space-y-4">
+            <div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Configure a frase padrão usada ao compartilhar o link da sua vitrine pelo WhatsApp.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Mensagem para compartilhar no WhatsApp</Label>
+              <Textarea
+                rows={3}
+                value={shareMessage}
+                onChange={(e) => setShareMessage(e.target.value)}
+                placeholder={DEFAULT_SHARE_MESSAGE}
+              />
+              <p className="text-xs text-muted-foreground">
+                O link da loja será incluído automaticamente. Se apagar a frase, a mensagem padrão
+                será usada novamente.
+              </p>
+            </div>
+            {store ? <StoreWhatsAppShare slug={store.slug} message={shareMessage} /> : null}
+            <Button disabled={saving || !store} onClick={saveShareMessage}>
+              Salvar mensagem
+            </Button>
+          </div>
+        </CollapsibleSection>
 
-      <div className="surface mt-4 space-y-4 p-5">
-        <p className="font-semibold">Alterar senha</p>
-        <div className="space-y-1.5">
-          <Label>Senha atual</Label>
-          <PasswordInput
-            value={passwords.current}
-            onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
-          />
-        </div>
-        <div className="space-y-1.5">
-          <Label>Nova senha</Label>
-          <PasswordInput
-            value={passwords.next}
-            onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
-          />
-        </div>
-        <Button variant="outline" disabled={saving} onClick={changePassword}>
-          Alterar senha
-        </Button>
+        <CollapsibleSection
+          title="Alterar senha"
+          description="Atualize a senha de acesso à conta"
+          icon={<Shield className="size-4" />}
+          open={openSection === "password"}
+          onOpenChange={(open) => setOpenSection(open ? "password" : "")}
+        >
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Senha atual</Label>
+              <PasswordInput
+                value={passwords.current}
+                onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Nova senha</Label>
+              <PasswordInput
+                value={passwords.next}
+                onChange={(e) => setPasswords({ ...passwords, next: e.target.value })}
+              />
+            </div>
+            <Button variant="outline" disabled={saving} onClick={changePassword}>
+              Alterar senha
+            </Button>
+          </div>
+        </CollapsibleSection>
+        <CollapsibleSection
+          title="Notificações"
+          description="Preferências de alertas serão adicionadas aqui"
+          icon={<Bell className="size-4" />}
+        >
+          <p className="text-sm text-muted-foreground">
+            As notificações da conta permanecem disponíveis conforme forem ativadas pelo sistema.
+          </p>
+        </CollapsibleSection>
       </div>
     </AppShell>
   );
