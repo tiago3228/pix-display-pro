@@ -36,6 +36,7 @@ import { Route as AuthenticatedPedidosRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedProdutosRouteImport } from './routes/_authenticated/produtos'
 import { Route as AuthenticatedProdutosIaRouteImport } from './routes/_authenticated/produtos-ia'
 import { Route as AuthenticatedQrcodesRouteImport } from './routes/_authenticated/qrcodes'
+import { Route as AuthenticatedRoupasRouteImport } from './routes/_authenticated/roupas'
 import { Route as AuthenticatedRoupasEsportivasRouteImport } from './routes/_authenticated/roupas-esportivas'
 import { Route as AuthenticatedRoupasTreinoRouteImport } from './routes/_authenticated/roupas-treino'
 import { Route as CobrancaTokenRouteImport } from './routes/cobranca.$token'
@@ -188,6 +189,11 @@ const AuthenticatedQrcodesRoute = AuthenticatedQrcodesRouteImport.update({
   path: '/qrcodes',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRoupasRoute = AuthenticatedRoupasRouteImport.update({
+  id: '/roupas',
+  path: '/roupas',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedRoupasEsportivasRoute =
   AuthenticatedRoupasEsportivasRouteImport.update({
     id: '/roupas-esportivas',
@@ -284,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/produtos': typeof AuthenticatedProdutosRoute
   '/produtos-ia': typeof AuthenticatedProdutosIaRoute
   '/qrcodes': typeof AuthenticatedQrcodesRoute
+  '/roupas': typeof AuthenticatedRoupasRoute
   '/roupas-esportivas': typeof AuthenticatedRoupasEsportivasRoute
   '/roupas-treino': typeof AuthenticatedRoupasTreinoRoute
   '/cobranca/$token': typeof CobrancaTokenRoute
@@ -324,6 +331,7 @@ export interface FileRoutesByTo {
   '/produtos': typeof AuthenticatedProdutosRoute
   '/produtos-ia': typeof AuthenticatedProdutosIaRoute
   '/qrcodes': typeof AuthenticatedQrcodesRoute
+  '/roupas': typeof AuthenticatedRoupasRoute
   '/roupas-esportivas': typeof AuthenticatedRoupasEsportivasRoute
   '/roupas-treino': typeof AuthenticatedRoupasTreinoRoute
   '/cobranca/$token': typeof CobrancaTokenRoute
@@ -366,6 +374,7 @@ export interface FileRoutesById {
   '/_authenticated/produtos': typeof AuthenticatedProdutosRoute
   '/_authenticated/produtos-ia': typeof AuthenticatedProdutosIaRoute
   '/_authenticated/qrcodes': typeof AuthenticatedQrcodesRoute
+  '/_authenticated/roupas': typeof AuthenticatedRoupasRoute
   '/_authenticated/roupas-esportivas': typeof AuthenticatedRoupasEsportivasRoute
   '/_authenticated/roupas-treino': typeof AuthenticatedRoupasTreinoRoute
   '/cobranca/$token': typeof CobrancaTokenRoute
@@ -408,6 +417,7 @@ export interface FileRouteTypes {
     | '/produtos'
     | '/produtos-ia'
     | '/qrcodes'
+    | '/roupas'
     | '/roupas-esportivas'
     | '/roupas-treino'
     | '/cobranca/$token'
@@ -448,6 +458,7 @@ export interface FileRouteTypes {
     | '/produtos'
     | '/produtos-ia'
     | '/qrcodes'
+    | '/roupas'
     | '/roupas-esportivas'
     | '/roupas-treino'
     | '/cobranca/$token'
@@ -489,6 +500,7 @@ export interface FileRouteTypes {
     | '/_authenticated/produtos'
     | '/_authenticated/produtos-ia'
     | '/_authenticated/qrcodes'
+    | '/_authenticated/roupas'
     | '/_authenticated/roupas-esportivas'
     | '/_authenticated/roupas-treino'
     | '/cobranca/$token'
@@ -710,6 +722,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedQrcodesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/roupas': {
+      id: '/_authenticated/roupas'
+      path: '/roupas'
+      fullPath: '/roupas'
+      preLoaderRoute: typeof AuthenticatedRoupasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/roupas-esportivas': {
       id: '/_authenticated/roupas-esportivas'
       path: '/roupas-esportivas'
@@ -816,6 +835,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRoute
   AuthenticatedProdutosIaRoute: typeof AuthenticatedProdutosIaRoute
   AuthenticatedQrcodesRoute: typeof AuthenticatedQrcodesRoute
+  AuthenticatedRoupasRoute: typeof AuthenticatedRoupasRoute
   AuthenticatedRoupasEsportivasRoute: typeof AuthenticatedRoupasEsportivasRoute
   AuthenticatedRoupasTreinoRoute: typeof AuthenticatedRoupasTreinoRoute
   AuthenticatedAdminAssinaturasRoute: typeof AuthenticatedAdminAssinaturasRoute
@@ -845,6 +865,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProdutosRoute: AuthenticatedProdutosRoute,
   AuthenticatedProdutosIaRoute: AuthenticatedProdutosIaRoute,
   AuthenticatedQrcodesRoute: AuthenticatedQrcodesRoute,
+  AuthenticatedRoupasRoute: AuthenticatedRoupasRoute,
   AuthenticatedRoupasEsportivasRoute: AuthenticatedRoupasEsportivasRoute,
   AuthenticatedRoupasTreinoRoute: AuthenticatedRoupasTreinoRoute,
   AuthenticatedAdminAssinaturasRoute: AuthenticatedAdminAssinaturasRoute,
