@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Dumbbell, Package, Plus } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useMyStore } from "@/hooks/useAuth";
@@ -103,7 +104,11 @@ function TrainingModule() {
         </div>
       </div>
 
-      <section className="surface mt-4 p-4">
+      <CollapsibleSection
+        title="📂 Categorias de treino"
+        description={`${data?.categories.length || defaultCategories.length} categorias do módulo`}
+        className="mt-4"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-semibold">Categorias de treino</h2>
@@ -123,9 +128,13 @@ function TrainingModule() {
             </Badge>
           ))}
         </div>
-      </section>
+      </CollapsibleSection>
 
-      <section className="surface mt-4 overflow-hidden">
+      <CollapsibleSection
+        title="📦 Produtos de Treino / Academia"
+        description={`${products.length} produtos · ${active.length} ativos`}
+        className="mt-4"
+      >
         <div className="border-b border-border p-4">
           <h2 className="font-semibold">Produtos de Treino / Academia</h2>
           <p className="text-sm text-muted-foreground">
@@ -162,7 +171,7 @@ function TrainingModule() {
             Academia”.
           </div>
         )}
-      </section>
+      </CollapsibleSection>
     </AppShell>
   );
 }

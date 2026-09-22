@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Package, Search, Trash2, Pencil, Footprints } from "lucide-react";
 import { useState } from "react";
 import { AppShell } from "@/components/AppShell";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -146,7 +147,11 @@ function ShoesModule() {
           <p className="text-xl font-bold">{categories.length}</p>
         </div>
       </div>
-      <section className="surface mt-4 p-4">
+      <CollapsibleSection
+        title="🏷️ Marcas"
+        description={`${brands.data?.length ?? 0} marcas cadastradas`}
+        className="mt-4"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-semibold">Marcas editáveis</h2>
@@ -190,8 +195,12 @@ function ShoesModule() {
             </div>
           ))}
         </div>
-      </section>
-      <section className="surface mt-4 p-4">
+      </CollapsibleSection>
+      <CollapsibleSection
+        title="👟 Modelos sugeridos e personalizados"
+        description={`${models.data?.length ?? 0} modelos · escolha uma marca para filtrar`}
+        className="mt-4"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-semibold">Modelos sugeridos e personalizados</h2>
@@ -222,8 +231,12 @@ function ShoesModule() {
             </div>
           ))}
         </div>
-      </section>
-      <section className="surface mt-4 p-4">
+      </CollapsibleSection>
+      <CollapsibleSection
+        title="📂 Categorias"
+        description={`${categories.length} categorias iniciais`}
+        className="mt-4"
+      >
         <h2 className="font-semibold">Categorias</h2>
         <p className="mb-3 text-sm text-muted-foreground">
           Categorias iniciais do módulo; o cadastro de produtos permite usar qualquer classificação
@@ -236,7 +249,62 @@ function ShoesModule() {
             </Badge>
           ))}
         </div>
-      </section>
+      </CollapsibleSection>
+      <CollapsibleSection
+        title="🎨 Cores"
+        description="Cores sugeridas e personalizadas"
+        className="mt-4"
+      >
+        <div className="flex flex-wrap gap-2">
+          {[
+            "Preto",
+            "Branco",
+            "Azul",
+            "Vermelho",
+            "Verde",
+            "Amarelo",
+            "Rosa",
+            "Cinza",
+            "Marrom",
+            "Roxo",
+            "Laranja",
+          ].map((color) => (
+            <Badge key={color} variant="secondary">
+              {color}
+            </Badge>
+          ))}
+        </div>
+        <Button size="sm" variant="outline" className="mt-3">
+          {" "}
+          <Plus className="mr-1.5 size-4" /> Adicionar cor
+        </Button>
+      </CollapsibleSection>
+      <CollapsibleSection
+        title="📏 Tamanhos"
+        description="Numeração Brasil e personalizados"
+        className="mt-4"
+      >
+        <div className="flex flex-wrap gap-2">
+          {Array.from({ length: 16 }, (_, index) => index + 33).map((size) => (
+            <Badge key={size} variant="secondary">
+              {size}
+            </Badge>
+          ))}
+        </div>
+        <Button size="sm" variant="outline" className="mt-3">
+          <Plus className="mr-1.5 size-4" /> Adicionar tamanho
+        </Button>
+      </CollapsibleSection>
+      <CollapsibleSection
+        title="⚙️ Configurações avançadas"
+        description="Filtros, coleções, destaques e ofertas"
+        className="mt-4"
+      >
+        <p className="text-sm text-muted-foreground">
+          As configurações avançadas do módulo permanecem disponíveis aqui e podem ser expandidas
+          quando necessário.
+        </p>
+      </CollapsibleSection>
       <Dialog open={dialog !== null} onOpenChange={(open) => !open && setDialog(null)}>
         <DialogContent>
           <DialogHeader>
