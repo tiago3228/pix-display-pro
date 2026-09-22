@@ -2,7 +2,18 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Camera, Eye, EyeOff, ImageIcon, Package, Pencil, Plus, Star, Trash2 } from "lucide-react";
+import {
+  Camera,
+  Eye,
+  EyeOff,
+  ImageIcon,
+  Package,
+  Pencil,
+  Plus,
+  Sparkles,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyStore } from "@/hooks/useAuth";
@@ -39,6 +50,98 @@ export const Route = createFileRoute("/_authenticated/produtos")({
 
 type VariantDraft = { id?: string; label: string; price: string; stock: string };
 type OrderTierDraft = { minQuantity: string; unitPrice: string };
+type SmartSuggestion = {
+  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados";
+  brand: string | null;
+  model: string | null;
+  category: string;
+  color: string | null;
+  gender: string | null;
+  size: string | null;
+  name: string;
+};
+
+function interpretProductText(input: string): SmartSuggestion {
+  const text = input.trim();
+  const lower = text.toLocaleLowerCase("pt-BR");
+  const module =
+    /tênis|tenis|sapato|bota|sandália|sandalia|ch sinelo|nike|adidas|mizuno|puma|vans|olympikus|asics/.test(
+      lower,
+    )
+      ? "calcados"
+      : /fitness|academia|legging|top|treino|dry fit/.test(lower)
+        ? "roupas_treino"
+        : /flamengo|vasco|corinthians|seleção|selecao|camisa de futebol|futebol/.test(lower)
+          ? "roupas_esportivas"
+          : "roupas";
+  const brands = [
+    "Nike",
+    "adidas",
+    "Mizuno",
+    "Puma",
+    "Vans",
+    "Olympikus",
+    "ASICS",
+    "New Balance",
+    "Flamengo",
+    "Vasco",
+  ];
+  const brand = brands.find((item) => lower.includes(item.toLocaleLowerCase("pt-BR"))) ?? null;
+  const colors = [
+    "preto",
+    "branco",
+    "vermelho",
+    "azul",
+    "verde",
+    "rosa",
+    "cinza",
+    "bege",
+    "marrom",
+    "amarelo",
+    "roxo",
+    "laranja",
+  ];
+  const color = colors.find((item) => lower.includes(item));
+  const gender = /feminina|feminino/.test(lower)
+    ? "feminino"
+    : /masculina|masculino/.test(lower)
+      ? "masculino"
+      : null;
+  const sizeMatch = text.match(/(?:tamanho|tam\.?|nº|número)?\s*([0-9]{2}|\b[pmg]\b)/i);
+  const size = sizeMatch?.[1]?.toUpperCase() ?? null;
+  const model = brand
+    ? text
+        .replace(new RegExp(brand, "i"), "")
+        .replace(
+          /\b(preto|branco|vermelho|azul|verde|rosa|cinza|bege|marrom|amarelo|roxo|laranja|masculino|masculina|feminino|feminina|tamanho|tam\.?|[0-9]{2}|\b[pmg]\b)\b/gi,
+          " ",
+        )
+        .replace(/\s+/g, " ")
+        .trim() || null
+    : null;
+  const category =
+    module === "calcados"
+      ? "Tênis"
+      : module === "roupas_treino"
+        ? "Conjuntos / Performance"
+        : module === "roupas_esportivas"
+          ? "Camisas"
+          : "A definir";
+  const name =
+    [brand, model, color ? color[0].toUpperCase() + color.slice(1) : null]
+      .filter(Boolean)
+      .join(" ") || text;
+  return {
+    module,
+    brand,
+    model,
+    category,
+    color: color ? color[0].toUpperCase() + color.slice(1) : null,
+    gender,
+    size,
+    name,
+  };
+}
 
 type ProductRow = {
   id: string;
@@ -124,6 +227,9 @@ function Products() {
   const [sportsCollectionId, setSportsCollectionId] = useState("none");
   const [trainingOnly, setTrainingOnly] = useState(false);
   const [shoesOnly, setShoesOnly] = useState(false);
+  const [smartOpen, setSmartOpen] = useState(false);
+  const [smartText, setSmartText] = useState("");
+  const [smartSuggestion, setSmartSuggestion] = useState<SmartSuggestion | null>(null);
 
   useEffect(() => {
     setTrainingOnly(
@@ -599,6 +705,19 @@ function Products() {
       description={`${products?.length ?? 0} produto(s) na sua vitrine`}
       action={
         <div className="flex shrink-0 gap-1.5">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setSmartText("");
+              setSmartSuggestion(null);
+              setSmartOpen(true);
+            }}
+            aria-label="Cadastro inteligente"
+          >
+            <Sparkles className="size-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Cadastro rápido</span>
+          </Button>
           <Button size="sm" variant="outline" asChild>
             <Link to="/produtos-ia" aria-label="Cadastrar com IA">
               <Camera className="size-4 sm:mr-1.5" />
@@ -663,6 +782,103 @@ function Products() {
           </div>
         ) : null}
       </div>
+
+      <Dialog open={smartOpen} onOpenChange={setSmartOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>✨ Vamos cadastrar seu produto</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>O que você está vendendo?</Label>
+              <Textarea
+                className="mt-1.5"
+                rows={3}
+                autoFocus
+                placeholder="Ex.: Nike Air Force 1 branco feminino 37"
+                value={smartText}
+                onChange={(event) => {
+                  setSmartText(event.target.value);
+                  setSmartSuggestion(null);
+                }}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Escreva do seu jeito. O Vitrini vai organizar as informações sem inventar dados.
+              </p>
+            </div>
+            {smartSuggestion ? (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                <p className="mb-3 text-sm font-semibold">
+                  ✨ Entendemos estas informações. Está correto?
+                </p>
+                <div className="grid gap-2 text-sm sm:grid-cols-2">
+                  {[
+                    [
+                      "Módulo",
+                      smartSuggestion.module === "calcados"
+                        ? "👟 Calçados"
+                        : smartSuggestion.module === "roupas_treino"
+                          ? "🏋️ Treino"
+                          : smartSuggestion.module === "roupas_esportivas"
+                            ? "⚽ Esportivas"
+                            : "👕 Roupas",
+                    ],
+                    ["Marca", smartSuggestion.brand],
+                    ["Modelo", smartSuggestion.model],
+                    ["Categoria", smartSuggestion.category],
+                    ["Cor", smartSuggestion.color],
+                    ["Público", smartSuggestion.gender],
+                    ["Tamanho", smartSuggestion.size],
+                  ]
+                    .filter(([, value]) => value)
+                    .map(([label, value]) => (
+                      <div key={label}>
+                        <span className="text-muted-foreground">{label}:</span> {value}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            ) : null}
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSmartOpen(false);
+                  openNew();
+                }}
+              >
+                ⚙️ Cadastro manual
+              </Button>
+              {smartSuggestion ? (
+                <Button
+                  onClick={() => {
+                    setForm({
+                      ...emptyForm,
+                      module: smartSuggestion.module,
+                      name: smartSuggestion.name,
+                      shoe_authenticity: "original",
+                      shoe_size: smartSuggestion.size ?? "",
+                      shoe_color: smartSuggestion.color ?? "",
+                      shoe_gender: smartSuggestion.gender ?? "unissex",
+                    });
+                    setSmartOpen(false);
+                    setOpen(true);
+                  }}
+                >
+                  ✓ Usar sugestões e continuar
+                </Button>
+              ) : (
+                <Button
+                  disabled={!smartText.trim()}
+                  onClick={() => setSmartSuggestion(interpretProductText(smartText))}
+                >
+                  Continuar <span className="ml-1">→</span>
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
