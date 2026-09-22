@@ -22,6 +22,7 @@ import { ProductPhotos } from "@/components/ProductPhotos";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { getSignedAssetUrl } from "@/lib/images.functions";
 import { FREE_PLAN_PRODUCT_LIMIT, brl } from "@/lib/format";
+import { searchProductDiscovery, type DiscoveryResult } from "@/lib/product-discovery.functions";
 import { listSportsNodes, sportsDb, type SportsNode } from "@/lib/sports";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -230,6 +231,12 @@ function Products() {
   const [smartOpen, setSmartOpen] = useState(false);
   const [smartText, setSmartText] = useState("");
   const [smartSuggestion, setSmartSuggestion] = useState<SmartSuggestion | null>(null);
+  const [internetOpen, setInternetOpen] = useState(false);
+  const [internetQuery, setInternetQuery] = useState("");
+  const [internetResults, setInternetResults] = useState<DiscoveryResult[]>([]);
+  const [internetSearching, setInternetSearching] = useState(false);
+  const [importedDiscovery, setImportedDiscovery] = useState<DiscoveryResult | null>(null);
+  const discover = useServerFn(searchProductDiscovery);
 
   useEffect(() => {
     setTrainingOnly(
@@ -525,6 +532,18 @@ function Products() {
       shoe_gender: form.module === "calcados" ? form.shoe_gender : null,
       shoe_size: form.module === "calcados" ? form.shoe_size.trim() || null : null,
       shoe_color: form.module === "calcados" ? form.shoe_color.trim() || null : null,
+      discovery_source_name: importedDiscovery?.sourceName ?? null,
+      discovery_source_url: importedDiscovery?.sourceUrl ?? null,
+      discovery_imported_at: importedDiscovery ? new Date().toISOString() : null,
+      discovery_imported_fields: importedDiscovery
+        ? {
+            name: true,
+            brand: Boolean(importedDiscovery.brand),
+            model: Boolean(importedDiscovery.model),
+            category: Boolean(importedDiscovery.category),
+            description: Boolean(importedDiscovery.description),
+          }
+        : {},
       sports_offer_percent:
         form.sports_offer_active && form.sports_original_price && form.sports_offer_price
           ? Math.max(
@@ -782,6 +801,125 @@ function Products() {
           </div>
         ) : null}
       </div>
+
+      <Dialog open={internetOpen} onOpenChange={setInternetOpen}>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>🌐 Buscar produto na Internet</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>O que você está procurando?</Label>
+              <Textarea
+                className="mt-1.5"
+                rows={3}
+                placeholder="Nike Air Force 1 branco, Camisa Flamengo 2026..."
+                value={internetQuery}
+                onChange={(event) => setInternetQuery(event.target.value)}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                A busca mostra sugestões. Você escolherá o resultado e revisará tudo antes de
+                salvar.
+              </p>
+            </div>
+            <Button
+              disabled={internetSearching || internetQuery.trim().length < 2}
+              onClick={async () => {
+                setInternetSearching(true);
+                try {
+                  const result = await discover({ data: { query: internetQuery } });
+                  setInternetResults(result.results);
+                  if (!result.results.length)
+                    toast.info(
+                      "Não encontramos uma correspondência confiável. Tente outra busca ou cadastre manualmente.",
+                    );
+                } catch {
+                  toast.error("Não foi possível buscar agora. Tente novamente.");
+                } finally {
+                  setInternetSearching(false);
+                }
+              }}
+            >
+              {internetSearching ? "Buscando..." : "🔎 Buscar produto"}
+            </Button>
+            {internetResults.length ? (
+              <div>
+                <p className="mb-2 text-sm font-semibold">🔎 Encontramos estes produtos</p>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {internetResults.map((result) => (
+                    <article key={result.id} className="rounded-xl border p-3">
+                      <div className="flex gap-3">
+                        {result.image ? (
+                          <img
+                            src={result.image}
+                            alt=""
+                            className="size-16 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="flex size-16 shrink-0 items-center justify-center rounded-lg bg-muted text-2xl">
+                            📦
+                          </div>
+                        )}
+                        <div className="min-w-0">
+                          <p className="font-medium">{result.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {result.category ?? "Categoria a confirmar"}
+                          </p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            Fonte: {result.sourceName}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between gap-2">
+                        <span className="text-[11px] text-muted-foreground">Sugestão editável</span>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            const suggestion = interpretProductText(result.name);
+                            setForm({
+                              ...emptyForm,
+                              module: suggestion.module,
+                              name: result.name,
+                              description: result.description ?? "",
+                              shoe_size: suggestion.size ?? "",
+                              shoe_color: suggestion.color ?? "",
+                              shoe_gender: suggestion.gender ?? "unissex",
+                              shoe_authenticity: "original",
+                            });
+                            setInternetOpen(false);
+                            setOpen(true);
+                            toast.success(
+                              "Dados importados para revisão. Nada foi publicado automaticamente.",
+                            );
+                          }}
+                        >
+                          Usar este produto
+                        </Button>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+            <p className="text-xs text-muted-foreground">
+              Imagens e informações encontradas na internet podem ter restrições de uso. Confira a
+              fonte e prefira fotos próprias. O Vitrini não confirma autenticidade, preço ou
+              autorização comercial.
+            </p>
+            <div className="flex justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setInternetOpen(false);
+                  openNew();
+                }}
+              >
+                ✍️ Fazer manualmente
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={smartOpen} onOpenChange={setSmartOpen}>
         <DialogContent className="sm:max-w-lg">
