@@ -500,6 +500,56 @@ export function StorePage() {
         </section>
       ) : null}
 
+      <main className="mx-auto mt-5 max-w-3xl space-y-5 px-4">
+        {data.products.some((product) => product.is_featured) ? (
+          <StorefrontShelf
+            title="⭐ Destaques"
+            products={data.products.filter((product) => product.is_featured).slice(0, 6)}
+            onSelect={setSelected}
+          />
+        ) : null}
+        {data.products.some((product) => product.sportsIsNewRelease) ? (
+          <StorefrontShelf
+            title="🆕 Novidades"
+            products={data.products.filter((product) => product.sportsIsNewRelease).slice(0, 6)}
+            onSelect={setSelected}
+          />
+        ) : null}
+        {data.products.some((product) => product.sportsOfferActive) ? (
+          <StorefrontShelf
+            title="🔥 Ofertas"
+            products={data.products.filter((product) => product.sportsOfferActive).slice(0, 6)}
+            onSelect={setSelected}
+          />
+        ) : null}
+        {data.categories.length ? (
+          <section>
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-sm font-bold">📂 Categorias</h2>
+              <span className="text-xs text-muted-foreground">
+                {data.categories.length} disponíveis
+              </span>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
+              {data.categories.slice(0, 12).map((category) => (
+                <button
+                  key={category.id}
+                  type="button"
+                  className="surface shrink-0 rounded-xl px-3 py-2 text-xs font-semibold transition hover:border-orange-300/50"
+                  onClick={() => {
+                    setActiveCategory(category.id);
+                    setModuleFilter(category.module ?? "all");
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                >
+                  {category.name}
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </main>
+
       <div className="sticky top-0 z-20 mt-4 border-y border-orange-200/10 bg-[#21140f]/85 py-2 backdrop-blur">
         <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
           {(["roupas", "roupas_esportivas", "roupas_treino", "calcados"] as const).map((module) => {
@@ -1318,6 +1368,54 @@ function CategoryChip({
     >
       {label}
     </button>
+  );
+}
+
+function StorefrontShelf({
+  title,
+  products,
+  onSelect,
+}: {
+  title: string;
+  products: StorefrontProduct[];
+  onSelect: (product: StorefrontProduct) => void;
+}) {
+  return (
+    <section>
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-sm font-bold">{title}</h2>
+        <span className="text-xs text-muted-foreground">Ver todos</span>
+      </div>
+      <div className="flex gap-3 overflow-x-auto pb-1 [scrollbar-width:none]">
+        {products.map((product) => (
+          <button
+            key={product.id}
+            type="button"
+            className="surface group w-36 shrink-0 overflow-hidden text-left transition hover:-translate-y-0.5 sm:w-40"
+            onClick={() => onSelect(product)}
+          >
+            <div className="aspect-square bg-muted">
+              {product.image ? (
+                <img
+                  src={product.image}
+                  alt={product.name}
+                  loading="lazy"
+                  className="size-full object-cover transition duration-300 group-hover:scale-105"
+                />
+              ) : (
+                <div className="flex size-full items-center justify-center text-muted-foreground">
+                  <ShoppingBag className="size-6" />
+                </div>
+              )}
+            </div>
+            <div className="p-2.5">
+              <p className="truncate text-xs font-semibold">{product.name}</p>
+              <p className="mt-1 text-sm font-bold">{brl(product.price)}</p>
+            </div>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
 
