@@ -34,7 +34,7 @@ const ProviderResult = z.object({
 });
 
 async function configuredProvider(query: string): Promise<DiscoveryResult[]> {
-  const endpoint = process.env.PRODUCT_DISCOVERY_PROVIDER_URL;
+  const endpoint = process.env['PRODUCT_DISCOVERY_PROVIDER_URL'];
   if (!endpoint) return [];
   try {
     const response = await fetch(

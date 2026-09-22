@@ -129,7 +129,7 @@ function interpretProductText(input: string): SmartSuggestion {
           ? "Camisas"
           : "A definir";
   const name =
-    [brand, model, color ? color[0].toUpperCase() + color.slice(1) : null]
+    [brand, model, color ? color.charAt(0).toUpperCase() + color.slice(1) : null]
       .filter(Boolean)
       .join(" ") || text;
   return {
@@ -137,7 +137,7 @@ function interpretProductText(input: string): SmartSuggestion {
     brand,
     model,
     category,
-    color: color ? color[0].toUpperCase() + color.slice(1) : null,
+    color: color ? color.charAt(0).toUpperCase() + color.slice(1) : null,
     gender,
     size,
     name,
@@ -859,7 +859,7 @@ function Products() {
                     ["🧶", "Moletom"],
                     ["✨", "Personalizado"],
                   ]
-            ).map(([icon, label]) => (
+            ).map(([icon, label]) => [icon ?? "", label ?? ""] as const).map(([icon, label]) => (
               <button
                 key={label}
                 type="button"
