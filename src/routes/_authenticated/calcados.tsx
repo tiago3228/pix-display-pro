@@ -119,7 +119,7 @@ function ShoesModule() {
       description="Central independente para tênis, botas, sapatos e outros calçados"
       action={
         <Button size="sm" asChild>
-          <a href="/produtos?module=calcados">
+          <a href="/produtos?module=calcados\produtos?module=calcadosguided=1">
             <Plus className="mr-1.5 size-4" /> Novo produto
           </a>
         </Button>

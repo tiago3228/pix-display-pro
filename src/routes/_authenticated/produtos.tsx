@@ -228,6 +228,9 @@ function Products() {
   const [sportsCollectionId, setSportsCollectionId] = useState("none");
   const [trainingOnly, setTrainingOnly] = useState(false);
   const [shoesOnly, setShoesOnly] = useState(false);
+  const [sportsOnly, setSportsOnly] = useState(false);
+  const [guidedOpen, setGuidedOpen] = useState(false);
+  const [guidedType, setGuidedType] = useState("");
   const [smartOpen, setSmartOpen] = useState(false);
   const [smartText, setSmartText] = useState("");
   const [smartSuggestion, setSmartSuggestion] = useState<SmartSuggestion | null>(null);
@@ -250,6 +253,13 @@ function Products() {
       typeof window !== "undefined" &&
         new URLSearchParams(window.location.search).get("module") === "calcados",
     );
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    setSportsOnly(params.get("module") === "roupas_esportivas");
+    if (params.get("guided") === "1") setGuidedOpen(true);
   }, []);
 
   const { data: categories } = useQuery({
@@ -801,6 +811,99 @@ function Products() {
           </div>
         ) : null}
       </div>
+
+      <Dialog open={guidedOpen} onOpenChange={setGuidedOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>✨ O que você deseja cadastrar?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Escolha o tipo e mostraremos somente as informações relevantes para esta loja.
+          </p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            {(shoesOnly
+              ? [
+                  ["👟", "Tênis"],
+                  ["👢", "Botas"],
+                  ["👞", "Sapatos"],
+                  ["🩴", "Sandálias"],
+                  ["🥿", "Sapatilhas"],
+                  ["🧒", "Infantil"],
+                  ["⚽", "Esportivos"],
+                  ["🎯", "Personalizados"],
+                ]
+              : trainingOnly
+                ? [
+                    ["👕", "Camiseta de treino"],
+                    ["💨", "Camiseta Dry Fit"],
+                    ["🏃", "Regata"],
+                    ["👚", "Top"],
+                    ["🩳", "Shorts"],
+                    ["🦵", "Legging"],
+                    ["🏋️", "Conjunto Fitness"],
+                    ["🎯", "Personalizado"],
+                  ]
+                : [
+                    ["👕", "Camisa"],
+                    ["👚", "Blusa"],
+                    ["👗", "Vestido"],
+                    ["👖", "Calça"],
+                    ["🩳", "Shorts"],
+                    ["🧥", "Jaqueta"],
+                    ["🧶", "Moletom"],
+                    ["✨", "Personalizado"],
+                  ]
+            ).map(([icon, label]) => (
+              <button
+                key={label}
+                type="button"
+                className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-xl border p-2 text-center text-sm transition hover:border-primary hover:bg-primary/5"
+                onClick={() => {
+                  setGuidedType(label);
+                  const module = shoesOnly
+                    ? "calcados"
+                    : sportsOnly
+                      ? "roupas_esportivas"
+                      : trainingOnly
+                        ? "roupas_treino"
+                        : "roupas";
+                  const matchingCategory = categories?.find((category) =>
+                    category.name
+                      .toLocaleLowerCase("pt-BR")
+                      .includes(label.toLocaleLowerCase("pt-BR")),
+                  );
+                  setForm({
+                    ...emptyForm,
+                    module,
+                    category_id: matchingCategory?.id ?? "none",
+                    sports_product_type: label,
+                  });
+                  setEditing(null);
+                  setVariants([]);
+                  setOrderTiers([]);
+                  setPhotos([]);
+                  setGuidedOpen(false);
+                  setOpen(true);
+                }}
+              >
+                {icon}
+                <span>{label}</span>
+              </button>
+            ))}
+          </div>
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setGuidedOpen(false);
+                openNew();
+              }}
+            >
+              ✍️ Cadastrar manualmente
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={internetOpen} onOpenChange={setInternetOpen}>
         <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">

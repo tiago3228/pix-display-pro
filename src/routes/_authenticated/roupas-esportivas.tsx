@@ -230,9 +230,16 @@ function SportsModule() {
       title="⚽ Roupas Esportivas"
       description="Ecossistema configurável da sua loja PRO"
       action={
-        <Button size="sm" onClick={() => openNew()}>
-          <Plus className="mr-1.5 size-4" /> Novo item
-        </Button>
+        <div className="flex gap-1.5">
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/produtos?module=roupas_esportivas&guided=1">
+              <Plus className="mr-1.5 size-4" /> Novo produto
+            </Link>
+          </Button>
+          <Button size="sm" onClick={() => openNew()}>
+            <Plus className="mr-1.5 size-4" /> Novo item
+          </Button>
+        </div>
       }
     >
       <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
