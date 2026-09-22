@@ -321,7 +321,11 @@ export const getStorefront = createServerFn({ method: "GET" })
       },
       categories: (categories ?? []).map((c) => {
         const category = c as unknown as { id: string; name: string; module?: string };
-        return { id: category.id, name: category.name, module: category.module };
+        return {
+          id: category.id,
+          name: category.name,
+          ...(category.module === undefined ? {} : { module: category.module }),
+        };
       }),
       sports: {
         settings: sportsSettings
