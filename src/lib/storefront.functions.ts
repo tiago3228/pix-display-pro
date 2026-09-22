@@ -486,11 +486,7 @@ export const submitOrder = createServerFn({ method: "POST" })
     const items = data.items.map((item) => {
       const product = (products ?? []).find(
         (p) =>
-          p.id === item.productId &&
-          p.store_id === store.id &&
-          !p.is_hidden &&
-          p.is_available &&
-          p.order_enabled,
+          p.id === item.productId && p.store_id === store.id && !p.is_hidden && p.is_available,
       );
       if (!product) throw new Error("Produto indisponível para pedido");
       const variant = item.variantId
