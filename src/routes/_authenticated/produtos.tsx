@@ -483,11 +483,25 @@ function Products() {
   async function remove(product: ProductRow) {
     if (!confirm(`Excluir "${product.name}"?`)) return;
     const { error } = await supabase.from("products").delete().eq("id", product.id);
-    if (error) {
-      toast.error("Não foi possível excluir.");
+    if (!error) {
+      toast.success("Produto excluído.");
+      queryClient.invalidateQueries({ queryKey: ["products", store?.id] });
       return;
     }
-    toast.success("Produto excluído.");
+
+    // Produtos presentes em pedidos não podem ser apagados sem quebrar o
+    // histórico. Nesse caso, arquivamos o produto e o retiramos da vitrine.
+    const { error: archiveError } = await supabase
+      .from("products")
+      .update({ is_hidden: true } as never)
+      .eq("id", product.id);
+    if (archiveError) {
+      toast.error(`Não foi possível excluir o produto: ${archiveError.message}`);
+      return;
+    }
+    toast.success(
+      "Produto arquivado e removido da vitrine. O histórico de pedidos foi preservado.",
+    );
     queryClient.invalidateQueries({ queryKey: ["products", store?.id] });
   }
 
