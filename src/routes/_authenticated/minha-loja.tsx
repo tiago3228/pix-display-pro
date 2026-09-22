@@ -646,6 +646,11 @@ function MyStore() {
                 </div>
               ) : null}
             </div>
+            <div className="flex justify-end border-t pt-3">
+              <Button type="button" onClick={() => void save()} disabled={saving}>
+                {saving ? "Salvando paleta..." : "💾 Salvar modificações"}
+              </Button>
+            </div>
           </div>
         </CollapsibleSection>
 
