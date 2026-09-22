@@ -209,6 +209,12 @@ const emptyForm = {
   sports_offer_active: false,
   sports_original_price: "",
   sports_offer_price: "",
+  shoe_brand_id: "none",
+  shoe_model_id: "none",
+  shoe_authenticity: "original",
+  shoe_gender: "none",
+  shoe_size: "",
+  shoe_color: "",
 };
 
 function Products() {
