@@ -57,14 +57,14 @@ function mapRequest(row: Record<string, unknown>, storeName?: string | null): Pr
 }
 
 type RpcClient = {
-  rpc: (fn: string, args: Record<string, unknown>) => Promise<{ data: boolean | null }>;
+  rpc: (fn: never, args: never) => Promise<{ data: unknown }>;
 };
 
 async function requireAdmin(context: { supabase: RpcClient; userId: string }) {
-  const { data } = await context.supabase.rpc("has_role", {
+  const { data } = await context.supabase.rpc("has_role" as never, {
     _user_id: context.userId,
     _role: "admin",
-  });
+  } as never);
   if (!data) throw new Error("Acesso restrito a administradores.");
 }
 
