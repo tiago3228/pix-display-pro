@@ -96,6 +96,19 @@ function Dashboard() {
         <StatCard label="Visitas na vitrine" value={String(data?.views ?? 0)} icon={Eye} />
       </div>
 
+      <div className="surface mt-4 flex flex-wrap items-center justify-between gap-3 border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900 dark:bg-amber-950/20">
+        <div>
+          <p className="text-sm font-semibold">⭐ Lojas Premium</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Expanda sua loja com segmentos especializados.
+          </p>
+          <p className="mt-2 text-sm">⚽ Esportivas · 🏋️ Academia · 👟 Calçados</p>
+        </div>
+        <Button size="sm" variant="outline" asChild>
+          <Link to="/lojas-premium">Explorar Lojas Premium</Link>
+        </Button>
+      </div>
+
       <div className="surface mt-4 p-4">
         <p className="text-sm font-semibold">Link da sua vitrine</p>
         <p className="mt-1 font-mono text-xs break-all text-muted-foreground">{storeUrl}</p>

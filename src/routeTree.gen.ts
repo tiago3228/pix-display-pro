@@ -29,6 +29,7 @@ import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authen
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEncomendasRouteImport } from './routes/_authenticated/encomendas'
 import { Route as AuthenticatedFaturamentoRouteImport } from './routes/_authenticated/faturamento'
+import { Route as AuthenticatedLojasPremiumRouteImport } from './routes/_authenticated/lojas-premium'
 import { Route as AuthenticatedMinhaLojaRouteImport } from './routes/_authenticated/minha-loja'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedPedidosRouteImport } from './routes/_authenticated/pedidos'
@@ -151,6 +152,12 @@ const AuthenticatedFaturamentoRoute =
     path: '/faturamento',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedLojasPremiumRoute =
+  AuthenticatedLojasPremiumRouteImport.update({
+    id: '/lojas-premium',
+    path: '/lojas-premium',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedMinhaLojaRoute = AuthenticatedMinhaLojaRouteImport.update({
   id: '/minha-loja',
   path: '/minha-loja',
@@ -270,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/encomendas': typeof AuthenticatedEncomendasRoute
   '/faturamento': typeof AuthenticatedFaturamentoRoute
+  '/lojas-premium': typeof AuthenticatedLojasPremiumRoute
   '/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pedidos': typeof AuthenticatedPedidosRoute
@@ -309,6 +317,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/encomendas': typeof AuthenticatedEncomendasRoute
   '/faturamento': typeof AuthenticatedFaturamentoRoute
+  '/lojas-premium': typeof AuthenticatedLojasPremiumRoute
   '/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pedidos': typeof AuthenticatedPedidosRoute
@@ -350,6 +359,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/encomendas': typeof AuthenticatedEncomendasRoute
   '/_authenticated/faturamento': typeof AuthenticatedFaturamentoRoute
+  '/_authenticated/lojas-premium': typeof AuthenticatedLojasPremiumRoute
   '/_authenticated/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/pedidos': typeof AuthenticatedPedidosRoute
@@ -391,6 +401,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/encomendas'
     | '/faturamento'
+    | '/lojas-premium'
     | '/minha-loja'
     | '/onboarding'
     | '/pedidos'
@@ -430,6 +441,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/encomendas'
     | '/faturamento'
+    | '/lojas-premium'
     | '/minha-loja'
     | '/onboarding'
     | '/pedidos'
@@ -470,6 +482,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/encomendas'
     | '/_authenticated/faturamento'
+    | '/_authenticated/lojas-premium'
     | '/_authenticated/minha-loja'
     | '/_authenticated/onboarding'
     | '/_authenticated/pedidos'
@@ -648,6 +661,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFaturamentoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/lojas-premium': {
+      id: '/_authenticated/lojas-premium'
+      path: '/lojas-premium'
+      fullPath: '/lojas-premium'
+      preLoaderRoute: typeof AuthenticatedLojasPremiumRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/minha-loja': {
       id: '/_authenticated/minha-loja'
       path: '/minha-loja'
@@ -789,6 +809,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEncomendasRoute: typeof AuthenticatedEncomendasRoute
   AuthenticatedFaturamentoRoute: typeof AuthenticatedFaturamentoRoute
+  AuthenticatedLojasPremiumRoute: typeof AuthenticatedLojasPremiumRoute
   AuthenticatedMinhaLojaRoute: typeof AuthenticatedMinhaLojaRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPedidosRoute: typeof AuthenticatedPedidosRoute
@@ -817,6 +838,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEncomendasRoute: AuthenticatedEncomendasRoute,
   AuthenticatedFaturamentoRoute: AuthenticatedFaturamentoRoute,
+  AuthenticatedLojasPremiumRoute: AuthenticatedLojasPremiumRoute,
   AuthenticatedMinhaLojaRoute: AuthenticatedMinhaLojaRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPedidosRoute: AuthenticatedPedidosRoute,

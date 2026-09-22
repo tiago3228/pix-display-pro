@@ -57,6 +57,13 @@ const NAV = [
   },
   { to: "/minha-loja", label: "Minha Loja", short: "Loja", icon: Store, featured: false },
   {
+    to: "/lojas-premium",
+    label: "⭐ Lojas Premium",
+    short: "Premium",
+    icon: Sparkles,
+    featured: true,
+  },
+  {
     to: "/roupas-esportivas",
     label: "⚽ Roupas Esportivas",
     short: "Esportes",
