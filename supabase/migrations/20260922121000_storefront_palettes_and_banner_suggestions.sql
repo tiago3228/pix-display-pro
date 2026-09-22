@@ -51,7 +51,7 @@ AS $function$
     s.instagram, s.logo_url, COALESCE(sb.image_url, s.banner_url), s.primary_color,
     s.secondary_color, s.accent_color, s.background_color, s.text_color, s.button_color,
     s.welcome_message, s.pix_key, s.pix_key_type, s.accept_pix,
-    (s.allow_installments AND (s.plan = 'pro' OR (s.pro_trial_ends_at IS NOT NULL AND s.pro_trial_ends_at > now())),
+    (s.allow_installments AND (s.plan = 'pro' OR (s.pro_trial_ends_at IS NOT NULL AND s.pro_trial_ends_at > now()))),
     s.max_installments, s.min_installment_amount
   FROM public.stores s
   LEFT JOIN LATERAL (
