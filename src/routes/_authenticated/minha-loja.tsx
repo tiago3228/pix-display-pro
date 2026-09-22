@@ -324,7 +324,10 @@ function MyStore() {
       is_active: false,
       position: banners.data?.length ?? 0,
     });
-    if (error) return toast.error("Não foi possível adicionar o banner.");
+    if (error) {
+      toast.error("Não foi possível adicionar o banner.");
+      return;
+    }
     await queryClient.invalidateQueries({ queryKey: ["storefront-banners", store.id] });
     toast.success("Banner copiado para sua loja. Agora você pode editá-lo.");
   }
