@@ -1,9 +1,11 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import {
   BarChart3,
   Bell,
+  BellRing,
   Calculator,
   CreditCard,
   HelpCircle,
@@ -25,6 +27,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin, useMyStore } from "@/hooks/useAuth";
 import { useProPricing } from "@/hooks/usePricing";
 import { brl } from "@/lib/format";
+import { savePushSubscription } from "@/lib/push.functions";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { BackButton } from "@/components/BackButton";
@@ -83,6 +87,13 @@ const NAV = [
 const MOBILE_NAV = NAV.slice(0, 4);
 const MOBILE_MORE = NAV.slice(4);
 
+function urlBase64ToUint8Array(value: string) {
+  const padding = "=".repeat((4 - (value.length % 4)) % 4);
+  const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((character) => character.charCodeAt(0)));
+}
+
 export function AppShell({
   title,
   description,
@@ -101,6 +112,11 @@ export function AppShell({
   const { data: store, isLoading: storeLoading } = useMyStore();
   const { price: proPrice } = useProPricing();
   const [moreOpen, setMoreOpen] = useState(false);
+  const saveSubscription = useServerFn(savePushSubscription);
+  const [pushReady, setPushReady] = useState(false);
+  const [pushPermission, setPushPermission] = useState<NotificationPermission | "unsupported">(
+    "default",
+  );
   const [ordersAcknowledgedAt, setOrdersAcknowledgedAt] = useState(0);
   const ordersAlertKey = store?.id ? `vitrini:orders-alert:${store.id}` : null;
   const { data: alertOrders = [] } = useQuery({
@@ -149,6 +165,58 @@ export function AppShell({
     0,
   );
   const hasUnacknowledgedOrders = hasOpenOrders && newestOpenOrderAt > ordersAcknowledgedAt;
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setPushPermission("unsupported");
+      return;
+    }
+    setPushPermission(window.Notification.permission);
+    if (!store?.id || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
+    void navigator.serviceWorker.register("/push-sw.js").then(async (registration) => {
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) setPushReady(true);
+    });
+  }, [store?.id]);
+
+  async function enablePushNotifications() {
+    if (!store?.id || typeof window === "undefined" || !("Notification" in window)) return;
+    const publicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+    if (!publicKey) {
+      toast.error("As notificações ainda não foram configuradas pelo administrador.");
+      return;
+    }
+    try {
+      const permission = await window.Notification.requestPermission();
+      setPushPermission(permission);
+      if (permission !== "granted") {
+        toast.error("Permita as notificações do navegador para receber novos pedidos.");
+        return;
+      }
+      const registration = await navigator.serviceWorker.register("/push-sw.js");
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+      const json = subscription.toJSON();
+      if (!json.keys?.p256dh || !json.keys.auth) throw new Error("Assinatura incompleta");
+      await saveSubscription({
+        data: {
+          storeId: store.id,
+          subscription: {
+            endpoint: subscription.endpoint,
+            expirationTime: json.expirationTime ?? null,
+            keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
+          },
+          userAgent: navigator.userAgent,
+        },
+      });
+      setPushReady(true);
+      toast.success("Notificações de novos pedidos ativadas!");
+    } catch {
+      toast.error("Não foi possível ativar as notificações neste dispositivo.");
+    }
+  }
 
   function acknowledgeOrders() {
     const timestamp = Date.now();
@@ -247,6 +315,18 @@ export function AppShell({
 
             <div className="flex shrink-0 items-center gap-2">
               {action}
+              {pushPermission !== "unsupported" && !pushReady ? (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0"
+                  aria-label="Ativar notificações de pedidos"
+                  title="Ativar notificações de pedidos"
+                  onClick={() => void enablePushNotifications()}
+                >
+                  <BellRing className="size-4" />
+                </Button>
+              ) : null}
               {store ? (
                 <Button
                   variant={hasOpenOrders ? "destructive" : "ghost"}

@@ -728,6 +728,12 @@ export const submitOrder = createServerFn({ method: "POST" })
     await supabaseAdmin
       .from("store_events")
       .insert({ store_id: store.id, type: "order_submitted" });
+    try {
+      const { notifyStoreOfNewOrder } = await import("@/lib/push.server");
+      await notifyStoreOfNewOrder({ storeId: store.id, orderNumber: order.number, total });
+    } catch {
+      // A falha no Push não pode impedir o pedido, o WhatsApp ou a gravação.
+    }
 
     return { orderId: order.id, number: order.number, total };
   });
