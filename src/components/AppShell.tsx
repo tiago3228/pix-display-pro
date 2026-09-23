@@ -87,6 +87,26 @@ const NAV = [
 const MOBILE_NAV = NAV.slice(0, 4);
 const MOBILE_MORE = NAV.slice(4);
 
+// Usa o mesmo service worker do app (/sw.js, que importa /push-sw.js) para não haver
+// dois workers disputando o escopo "/". Aguarda até existir um worker ativo.
+async function getPushRegistration(): Promise<ServiceWorkerRegistration> {
+  const stale = await navigator.serviceWorker.getRegistrations();
+  await Promise.all(
+    stale
+      .filter((r) => [r.active, r.waiting, r.installing].some((w) => w?.scriptURL.endsWith("/push-sw.js")))
+      .map((r) => r.unregister()),
+  );
+  await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  const registration = await Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("O service worker não ficou ativo a tempo.")), 15000),
+    ),
+  ]);
+  if (!registration.active) throw new Error("Service worker sem worker ativo.");
+  return registration;
+}
+
 function urlBase64ToUint8Array(value: string) {
   const padding = "=".repeat((4 - (value.length % 4)) % 4);
   const base64 = (value + padding).replace(/-/g, "+").replace(/_/g, "/");
