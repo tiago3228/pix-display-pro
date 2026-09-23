@@ -241,6 +241,7 @@ function Products() {
   const [cafeteriaOnly, setCafeteriaOnly] = useState(false);
   const [marmitariaOnly, setMarmitariaOnly] = useState(false);
   const [sportsOnly, setSportsOnly] = useState(false);
+  const sportsCatalogEnabled = ["roupas", "roupas_esportivas", "roupas_treino"].includes(form.module);
 
   function currentCategoryModule() {
     if (cafeteriaOnly) return "cafeteria";
@@ -374,12 +375,12 @@ function Products() {
 
   const { data: sportsNodes } = useQuery<SportsNode[]>({
     queryKey: ["sports-nodes", store?.id],
-    enabled: Boolean(store?.id && store.plan === "pro"),
+    enabled: Boolean(store?.id && store.plan === "pro" && sportsCatalogEnabled),
     queryFn: () => listSportsNodes(store!.id),
   });
   const { data: sportsCollections } = useQuery<{ id: string; name: string }[]>({
     queryKey: ["sports-collections", store?.id],
-    enabled: Boolean(store?.id && store.plan === "pro"),
+    enabled: Boolean(store?.id && store.plan === "pro" && sportsCatalogEnabled),
     queryFn: async () => {
       const { data, error } = await sportsDb
         .from("sports_collections")
@@ -1478,7 +1479,7 @@ function Products() {
                 </p>
               </div>
             ) : null}
-            {store?.plan === "pro" && sportsNodes?.length ? (
+            {sportsCatalogEnabled && store?.plan === "pro" && sportsNodes?.length ? (
               <div className="space-y-1.5 rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-900 dark:bg-emerald-950/20">
                 <Label>Classificação esportiva</Label>
                 <Select value={sportsNodeId} onValueChange={setSportsNodeId}>
@@ -1500,7 +1501,7 @@ function Products() {
                 </p>
               </div>
             ) : null}
-            {store?.plan === "pro" && sportsCollections?.length ? (
+            {sportsCatalogEnabled && store?.plan === "pro" && sportsCollections?.length ? (
               <div className="space-y-1.5">
                 <Label>Coleção esportiva</Label>
                 <Select value={sportsCollectionId} onValueChange={setSportsCollectionId}>
@@ -1518,7 +1519,7 @@ function Products() {
                 </Select>
               </div>
             ) : null}
-            {store?.plan === "pro" ? (
+            {sportsCatalogEnabled && store?.plan === "pro" ? (
               <div className="space-y-3 rounded-lg border border-border p-3">
                 <p className="text-sm font-semibold">Catálogo esportivo</p>
                 <div className="grid grid-cols-2 gap-3">
