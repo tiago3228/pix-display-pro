@@ -1107,12 +1107,6 @@ export function StorePage() {
       {cart.count > 0 ? (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-3 backdrop-blur">
           <div className="mx-auto flex max-w-3xl items-center gap-3">
-            <div className="flex-1 text-sm">
-              <p className="text-muted-foreground">
-                {cart.count} {cart.count === 1 ? "item" : "itens"}
-              </p>
-              <p className="text-lg font-bold">{brl(cart.total)}</p>
-            </div>
             <Button
               size="lg"
               className="h-12 flex-1"
@@ -1124,6 +1118,12 @@ export function StorePage() {
             >
               Ver carrinho
             </Button>
+            <div className="flex-1 text-right text-sm">
+              <p className="text-muted-foreground">
+                {cart.count} {cart.count === 1 ? "item" : "itens"}
+              </p>
+              <p className="text-xl font-bold">{brl(cart.total)}</p>
+            </div>
           </div>
         </div>
       ) : null}
