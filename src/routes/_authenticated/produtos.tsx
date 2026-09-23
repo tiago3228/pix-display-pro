@@ -300,6 +300,8 @@ function Products() {
       shoesOnly,
       cafeteriaOnly, marmitariaOnly,
       sportsOnly,
+      open,
+      form.module,
     ],
     enabled: Boolean(store?.id),
     queryFn: async () => {
@@ -313,7 +315,7 @@ function Products() {
       if (marmitariaOnly) query = query.eq("module", "marmitaria");
       const { data, error } = await query.order("position");
       if (error) throw error;
-      const module = currentCategoryModule();
+      const module = open ? form.module : currentCategoryModule();
       return (data ?? []).filter((category) => !category.module || category.module === module);
     },
   });

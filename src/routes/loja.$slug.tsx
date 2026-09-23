@@ -227,11 +227,10 @@ export function StorePage() {
         })
       : metadataFiltered;
     return [...searched].sort((a, b) => {
-      const stockA = a.track_stock ? stockOfProduct(a) : Number.POSITIVE_INFINITY;
-      const stockB = b.track_stock ? stockOfProduct(b) : Number.POSITIVE_INFINITY;
-      const availableA = a.is_available && (a.orderEnabled || stockA > 0);
-      const availableB = b.is_available && (b.orderEnabled || stockB > 0);
-      if (availableA !== availableB) return availableA ? -1 : 1;
+      // Produtos sem controle de estoque ficam no topo; os demais descem
+      // naturalmente até os esgotados, sem esconder nenhum produto.
+      const stockA = !a.is_available ? -1 : a.track_stock ? stockOfProduct(a) : Number.POSITIVE_INFINITY;
+      const stockB = !b.is_available ? -1 : b.track_stock ? stockOfProduct(b) : Number.POSITIVE_INFINITY;
       if (stockA !== stockB) return stockB - stockA;
       return a.name.localeCompare(b.name, "pt-BR");
     });
@@ -634,7 +633,7 @@ export function StorePage() {
               </span>
             </div>
             <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none]">
-              {data.categories.slice(0, 12).map((category) => (
+              {data.categories.map((category) => (
                 <button
                   key={category.id}
                   type="button"
