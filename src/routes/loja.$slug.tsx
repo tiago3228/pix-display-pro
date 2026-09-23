@@ -438,12 +438,20 @@ export function StorePage() {
           }}
         >
           {store.promo_banner ? (
-            <div className="mx-auto flex h-full max-w-3xl items-center px-6 text-white drop-shadow-lg">
+            <div
+              className="mx-auto flex h-full max-w-3xl items-center px-6 drop-shadow-lg"
+              style={{ color: store.theme_palette.header ?? store.primary_color }}
+            >
               <div>
                 <p className="text-2xl font-black uppercase sm:text-4xl">
                   {store.promo_banner.title}
                 </p>
-                <p className="mt-1 text-sm sm:text-base">{store.promo_banner.subtitle}</p>
+                <p
+                  className="mt-1 text-sm sm:text-base"
+                  style={{ color: store.theme_palette.text_secondary ?? store.secondary_color }}
+                >
+                  {store.promo_banner.subtitle}
+                </p>
                 <a
                   href={store.promo_banner.cta_href || "#produtos"}
                   className="mt-3 inline-flex rounded-full px-4 py-2 text-xs font-bold"
