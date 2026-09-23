@@ -39,6 +39,27 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { cn } from "@/lib/utils";
 import { EncomendaDialog } from "@/components/EncomendaDialog";
 
+function instagramHref(value: string | null | undefined) {
+  const raw = value?.trim();
+  if (!raw) return null;
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      const url = new URL(raw);
+      if (!/(^|\.)instagram\.com$/i.test(url.hostname)) return null;
+      url.protocol = "https:";
+      return url.toString();
+    } catch {
+      return null;
+    }
+  }
+  const username = raw
+    .replace(/^@+/, "")
+    .replace(/^(?:www\.)?instagram\.com\/?/i, "")
+    .split(/[?#/]/, 1)[0]
+    .trim();
+  return username ? `https://www.instagram.com/${encodeURIComponent(username)}/` : null;
+}
+
 export const Route = createFileRoute("/loja/$slug")({
   loader: ({ params }) => getStorefront({ data: { slug: params.slug } }),
   head: ({ loaderData }) => {
@@ -496,11 +517,11 @@ export function StorePage() {
                 >
                   <MessageCircle className="size-3.5" /> WhatsApp
                 </a>
-                {store.instagram ? (
+                {instagramHref(store.instagram) ? (
                   <a
-                    href={`https://instagram.com/${store.instagram.replace("@", "")}`}
+                    href={instagramHref(store.instagram) ?? undefined}
                     target="_blank"
-                    rel="noopener"
+                    rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium"
                     style={{ borderColor: store.accent_color, color: store.secondary_color }}
                   >
