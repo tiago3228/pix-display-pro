@@ -245,7 +245,9 @@ export function AppShell({
       });
       console.info("[push] inscrição criada", { endpoint: subscription.endpoint.slice(0, 60) });
       const json = subscription.toJSON();
-      if (!json.keys?.p256dh || !json.keys.auth) throw new Error("Assinatura incompleta");
+      const p256dh = json.keys?.["p256dh"];
+      const auth = json.keys?.["auth"];
+      if (!p256dh || !auth) throw new Error("Assinatura incompleta");
       step = "salvar assinatura";
       await saveSubscription({
         data: {
@@ -253,7 +255,7 @@ export function AppShell({
           subscription: {
             endpoint: subscription.endpoint,
             expirationTime: json.expirationTime ?? null,
-            keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
+            keys: { p256dh, auth },
           },
           userAgent: navigator.userAgent,
         },
