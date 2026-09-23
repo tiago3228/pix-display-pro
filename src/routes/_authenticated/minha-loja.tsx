@@ -1124,11 +1124,6 @@ function MyStore() {
                 </div>
               ) : null}
             </div>
-            <div className="flex justify-end border-t pt-3">
-              <Button type="button" onClick={() => void save()} disabled={saving}>
-                {saving ? "Salvando paleta..." : "💾 Salvar modificações"}
-              </Button>
-            </div>
           </div>
           <div className="mt-4 rounded-lg border p-3">
             <p className="text-sm font-semibold">🎨 Temas da loja</p>
@@ -1160,6 +1155,11 @@ function MyStore() {
                   </span>
                 </button>
               ))}
+            </div>
+            <div className="mt-4 flex justify-end border-t pt-3">
+              <Button type="button" onClick={() => void save()} disabled={saving}>
+                {saving ? "Salvando tema..." : "💾 Salvar modificações"}
+              </Button>
             </div>
           </div>
         </CollapsibleSection>
