@@ -186,7 +186,8 @@ export function AppShell({
       if (!window.isSecureContext || !("serviceWorker" in navigator) || !("PushManager" in window)) {
         throw new Error("Este navegador ou endereço não oferece suporte a notificações Push.");
       }
-      const { publicKey } = await getPublicKey();
+      const { publicKey: rawPublicKey } = await getPublicKey();
+      const publicKey = rawPublicKey?.trim().replace(/^['"]|['"]$/g, "");
       if (!publicKey) {
         throw new Error("A chave VAPID pública não está configurada no servidor.");
       }
@@ -195,14 +196,15 @@ export function AppShell({
       if (permission !== "granted") {
         throw new Error("Permita as notificações do navegador para receber novos pedidos.");
       }
-      const registration = await navigator.serviceWorker.register("/push-sw.js");
+      await navigator.serviceWorker.register("/push-sw.js");
+      const registration = await navigator.serviceWorker.ready;
       const applicationServerKey = urlBase64ToUint8Array(publicKey);
       if (applicationServerKey.length !== 65) {
         throw new Error("A chave VAPID pública configurada é inválida.");
       }
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey,
+        applicationServerKey: applicationServerKey.buffer,
       });
       const json = subscription.toJSON();
       if (!json.keys?.p256dh || !json.keys.auth) throw new Error("Assinatura incompleta");
