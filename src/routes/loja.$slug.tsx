@@ -404,7 +404,7 @@ export function StorePage() {
     <div
       className="vitrini-storefront min-h-screen pb-28"
       style={{
-        ["--brand" as string]: data.sports.settings?.primary_color ?? "var(--vitrini-orange)",
+        ["--brand" as string]: store.primary_color,
         ["--store-secondary" as string]: store.secondary_color,
         ["--store-accent" as string]: store.accent_color,
         ["--store-button" as string]: store.button_color,
@@ -419,10 +419,8 @@ export function StorePage() {
         ["--store-borders" as string]: store.theme_palette["borders"] ?? "#e2e8f0",
         ["--store-footer" as string]: store.theme_palette["footer"] ?? store.primary_color,
         ["--store-filters" as string]: store.theme_palette["filters"] ?? "#f1f5f9",
-        ["--sports-primary" as string]:
-          data.sports.settings?.primary_color ?? "var(--vitrini-orange)",
-        ["--sports-secondary" as string]:
-          data.sports.settings?.secondary_color ?? "var(--vitrini-orange)",
+        ["--sports-primary" as string]: store.primary_color,
+        ["--sports-secondary" as string]: store.secondary_color,
         backgroundColor: store.background_color,
         color: store.text_color,
       }}
@@ -478,7 +476,10 @@ export function StorePage() {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.22em] text-orange-300">
+              <p
+                className="mb-1 text-[10px] font-bold uppercase tracking-[0.22em]"
+                style={{ color: store.accent_color }}
+              >
                 VITRINI • LOJA ONLINE
               </p>
               <h1 className="truncate text-xl font-bold sm:text-2xl">{store.name}</h1>
@@ -498,7 +499,8 @@ export function StorePage() {
                     href={`https://instagram.com/${store.instagram.replace("@", "")}`}
                     target="_blank"
                     rel="noopener"
-                    className="inline-flex items-center gap-1.5 rounded-full border border-orange-300/30 px-3 py-1 text-xs font-medium text-orange-100"
+                    className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium"
+                    style={{ borderColor: store.accent_color, color: store.secondary_color }}
                   >
                     <Instagram className="size-3.5" /> Instagram
                   </a>
@@ -507,7 +509,12 @@ export function StorePage() {
             </div>
           </div>
           {store.welcome_message ? (
-            <p className="mt-3 text-center text-sm text-orange-100/75">{store.welcome_message}</p>
+            <p
+              className="mt-3 text-center text-sm"
+              style={{ color: store.theme_palette.text_secondary ?? store.secondary_color }}
+            >
+              {store.welcome_message}
+            </p>
           ) : null}
         </div>
       </header>
@@ -579,7 +586,8 @@ export function StorePage() {
                 <button
                   key={category.id}
                   type="button"
-                  className="surface shrink-0 rounded-xl px-3 py-2 text-xs font-semibold transition hover:border-orange-300/50"
+                  className="surface shrink-0 rounded-xl px-3 py-2 text-xs font-semibold transition"
+                  style={{ borderColor: store.theme_palette.borders ?? "#e2e8f0" }}
                   onClick={() => {
                     setActiveCategory(category.id);
                     setModuleFilter(category.module ?? "all");
@@ -594,7 +602,13 @@ export function StorePage() {
         ) : null}
       </main>
 
-      <div className="sticky top-0 z-20 mt-4 border-y border-orange-200/10 bg-[#21140f]/85 py-2 backdrop-blur">
+      <div
+        className="sticky top-0 z-20 mt-4 border-y py-2 backdrop-blur"
+        style={{
+          backgroundColor: `${store.theme_palette.header ?? store.primary_color}eF`,
+          borderColor: store.theme_palette.borders ?? "#e2e8f0",
+        }}
+      >
         <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
           {(["roupas", "roupas_esportivas", "roupas_treino", "calcados"] as const).map((module) => {
             const labels = {
@@ -613,7 +627,7 @@ export function StorePage() {
                   setActiveCategory("all");
                   setActiveSportsNode("all");
                 }}
-                color={data.sports.settings?.primary_color ?? "var(--vitrini-orange)"}
+                color={data.sports.settings?.primary_color ?? store.primary_color}
               />
             ) : null;
           })}
@@ -622,7 +636,7 @@ export function StorePage() {
               label="Todos os módulos"
               active={false}
               onClick={() => setModuleFilter("all")}
-              color="var(--vitrini-orange)"
+              color={store.primary_color}
             />
           ) : null}
           {data.sports.nodes.length &&
@@ -632,7 +646,7 @@ export function StorePage() {
                 label={data.sports.settings?.name ?? "Esportes"}
                 active={activeSportsNode === "all"}
                 onClick={() => setActiveSportsNode("all")}
-                color={data.sports.settings?.secondary_color ?? "var(--vitrini-orange)"}
+                color={data.sports.settings?.secondary_color ?? store.primary_color}
               />
               {data.sports.nodes
                 .filter((node) => !node.parent_id)
@@ -645,7 +659,7 @@ export function StorePage() {
                     color={
                       node.primary_color ??
                       data.sports.settings?.secondary_color ??
-                      "var(--vitrini-orange)"
+                      store.primary_color
                     }
                   />
                 ))}
@@ -660,7 +674,7 @@ export function StorePage() {
                     color={
                       node.primary_color ??
                       data.sports.settings?.secondary_color ??
-                      "var(--vitrini-orange)"
+                      store.primary_color
                     }
                   />
                 ))}
@@ -670,14 +684,14 @@ export function StorePage() {
             label="Todos"
             active={activeCategory === "all"}
             onClick={() => setActiveCategory("all")}
-            color={data.sports.settings?.primary_color ?? "var(--vitrini-orange)"}
+            color={data.sports.settings?.primary_color ?? store.primary_color}
           />
           {data.products.some((p) => p.is_featured) ? (
             <CategoryChip
               label="Destaques"
               active={activeCategory === "featured"}
               onClick={() => setActiveCategory("featured")}
-              color={data.sports.settings?.primary_color ?? "var(--vitrini-orange)"}
+              color={data.sports.settings?.primary_color ?? store.primary_color}
             />
           ) : null}
           {data.products.some((p) => p.sportsIsNewRelease) ? (
@@ -685,7 +699,7 @@ export function StorePage() {
               label="🆕 Lançamentos"
               active={activeCategory === "new-releases"}
               onClick={() => setActiveCategory("new-releases")}
-              color="var(--vitrini-orange)"
+              color={store.primary_color}
             />
           ) : null}
           {data.products.some((p) => p.sportsOfferActive) ? (
@@ -693,7 +707,7 @@ export function StorePage() {
               label="🔥 Ofertas"
               active={activeCategory === "offers"}
               onClick={() => setActiveCategory("offers")}
-              color="var(--vitrini-orange)"
+              color={store.primary_color}
             />
           ) : null}
           {data.products.some((p) => p.sportsIsRetro) ? (
@@ -701,7 +715,7 @@ export function StorePage() {
               label="🕰️ Retrô"
               active={activeCategory === "retro"}
               onClick={() => setActiveCategory("retro")}
-              color="var(--vitrini-orange)"
+              color={store.primary_color}
             />
           ) : null}
           {availableSportsTypes.map((type) => (
@@ -710,7 +724,7 @@ export function StorePage() {
               label={type}
               active={sportsTypeFilter === type}
               onClick={() => setSportsTypeFilter(type)}
-              color={data.sports.settings?.primary_color ?? "var(--vitrini-orange)"}
+              color={data.sports.settings?.primary_color ?? store.primary_color}
             />
           ))}
           {availableSportsTypes.length ? (
@@ -718,7 +732,7 @@ export function StorePage() {
               label="Todos os tipos"
               active={sportsTypeFilter === "all"}
               onClick={() => setSportsTypeFilter("all")}
-              color={data.sports.settings?.primary_color ?? "var(--vitrini-orange)"}
+              color={data.sports.settings?.primary_color ?? store.primary_color}
             />
           ) : null}
           {availableSportsAudiences.map((audience) => (
@@ -727,7 +741,7 @@ export function StorePage() {
               label={audience}
               active={sportsAudienceFilter === audience}
               onClick={() => setSportsAudienceFilter(audience)}
-              color={data.sports.settings?.secondary_color ?? "var(--vitrini-orange)"}
+              color={data.sports.settings?.secondary_color ?? store.primary_color}
             />
           ))}
           {availableSportsAudiences.length ? (
@@ -735,7 +749,7 @@ export function StorePage() {
               label="Todos os públicos"
               active={sportsAudienceFilter === "all"}
               onClick={() => setSportsAudienceFilter("all")}
-              color={data.sports.settings?.secondary_color ?? "var(--vitrini-orange)"}
+              color={data.sports.settings?.secondary_color ?? store.primary_color}
             />
           ) : null}
           {availableCollections.map((collection) => (
@@ -744,7 +758,7 @@ export function StorePage() {
               label={collection.name}
               active={collectionFilter === collection.name}
               onClick={() => setCollectionFilter(collection.name)}
-              color={data.sports.settings?.secondary_color ?? "var(--vitrini-orange)"}
+              color={data.sports.settings?.secondary_color ?? store.primary_color}
             />
           ))}
           {availableCollections.length ? (
@@ -752,7 +766,7 @@ export function StorePage() {
               label="Todas as coleções"
               active={collectionFilter === "all"}
               onClick={() => setCollectionFilter("all")}
-              color={data.sports.settings?.secondary_color ?? "var(--vitrini-orange)"}
+              color={data.sports.settings?.secondary_color ?? store.primary_color}
             />
           ) : null}
           {data.categories
@@ -766,7 +780,7 @@ export function StorePage() {
                 label={c.name}
                 active={activeCategory === c.id}
                 onClick={() => setActiveCategory(c.id)}
-                color="var(--vitrini-orange)"
+                color={store.primary_color}
               />
             ))}
         </div>
@@ -779,7 +793,7 @@ export function StorePage() {
             categoryName={
               data.categories.find((category) => category.id === selected.category_id)?.name ?? ""
             }
-            color={data.sports.settings?.primary_color ?? "var(--vitrini-orange)"}
+            color={data.sports.settings?.primary_color ?? store.primary_color}
             onBack={() => setSelected(null)}
             onOrder={() => setOrderProduct(selected)}
             onOpenGallery={openGallery}
@@ -803,7 +817,7 @@ export function StorePage() {
               return (
                 <article
                   key={product.id}
-                  className="surface group flex gap-3 p-3 transition hover:-translate-y-0.5 hover:border-orange-300/30 sm:p-4"
+                  className="surface group flex gap-3 p-3 transition hover:-translate-y-0.5 hover:border-[var(--store-accent)]/50 sm:p-4"
                 >
                   <button
                     type="button"
@@ -879,7 +893,7 @@ export function StorePage() {
                           <Button
                             size="sm"
                             className="w-full"
-                            style={{ backgroundColor: "var(--vitrini-orange)" }}
+                            style={{ backgroundColor: store.primary_color }}
                             disabled={
                               status === "sold_out" ||
                               status === "sold_out_with_order" ||
@@ -934,7 +948,7 @@ export function StorePage() {
                           <Button
                             size="sm"
                             className="min-w-0 flex-1"
-                            style={{ backgroundColor: "var(--vitrini-orange)" }}
+                            style={{ backgroundColor: store.primary_color }}
                             disabled={
                               status === "sold_out" ||
                               status === "sold_out_with_order" ||
@@ -1025,7 +1039,7 @@ export function StorePage() {
             <Button
               size="lg"
               className="h-12 flex-1"
-              style={{ backgroundColor: "var(--vitrini-orange)" }}
+              style={{ backgroundColor: store.primary_color }}
               onClick={() => {
                 setCartOpen(true);
                 void track({ data: { storeId: store.id, type: "checkout_started" } });
@@ -1110,7 +1124,7 @@ export function StorePage() {
                         className={cn(
                           "size-20 shrink-0 overflow-hidden rounded-lg border-2 transition sm:size-24",
                           galleryIndex === index
-                            ? "border-orange-500"
+                            ? "border-[var(--store-accent)]"
                             : "border-transparent opacity-70 hover:opacity-100",
                         )}
                       >
@@ -1357,7 +1371,7 @@ export function StorePage() {
                 <>
                   <Button
                     className="h-12"
-                    style={{ backgroundColor: "var(--vitrini-orange)" }}
+                    style={{ backgroundColor: store.primary_color }}
                     onClick={() => setStep("checkout")}
                   >
                     Finalizar pedido
@@ -1565,7 +1579,7 @@ function ProductDetail({
                   key={url}
                   type="button"
                   onClick={() => onOpenGallery(product, index)}
-                  className="size-20 shrink-0 overflow-hidden rounded-lg border-2 border-transparent transition hover:border-orange-500 sm:size-24"
+                  className="size-20 shrink-0 overflow-hidden rounded-lg border-2 border-transparent transition hover:border-[var(--store-accent)] sm:size-24"
                 >
                   <img
                     src={url}
@@ -1736,7 +1750,7 @@ function VariantDialog({
                     type="button"
                     onClick={() => onOpenGallery(product, index)}
                     aria-label={`Abrir foto ${index + 1} de ${product.name}`}
-                    className="size-24 shrink-0 overflow-hidden rounded-lg border-2 border-transparent transition hover:border-orange-500"
+                    className="size-24 shrink-0 overflow-hidden rounded-lg border-2 border-transparent transition hover:border-[var(--store-accent)]"
                   >
                     <img
                       src={url}
