@@ -205,6 +205,22 @@ const BANNER_SUGGESTIONS = [
     cta: "Ver novidades",
     gradient: "linear-gradient(120deg,#3b0764,#a855f7)",
   },
+  {
+    key: "cafe-fresh",
+    niche: "☕ Cafeteria",
+    title: "Café fresquinho todos os dias",
+    subtitle: "Seu momento especial começa aqui",
+    cta: "Ver cardápio",
+    gradient: "linear-gradient(120deg,#78350f,#d97706)",
+  },
+  {
+    key: "cafe-combos",
+    niche: "☕ Cafeteria",
+    title: "Combos especiais",
+    subtitle: "Café, salgados e doces preparados com carinho",
+    cta: "Conhecer cardápio",
+    gradient: "linear-gradient(120deg,#92400e,#f59e0b)",
+  },
 ];
 
 function MyStore() {
@@ -509,7 +525,9 @@ function MyStore() {
           ? "roupas_treino"
           : suggestionNiche === "calcados"
             ? "calcados"
-            : "roupas";
+            : suggestionNiche === "cafeteria"
+              ? "cafeteria"
+              : "roupas";
     const categoriesByNiche: Record<string, string[]> = {
       roupas: [
         "Blusas",
@@ -551,6 +569,18 @@ function MyStore() {
         "Sandálias",
         "Infantil",
       ],
+      cafeteria: [
+        "☕ Cafés",
+        "🥛 Cappuccinos",
+        "🥟 Empadas",
+        "🥐 Pastéis Assados",
+        "🥧 Tortinhas",
+        "🍰 Bolos e Doces",
+        "🥤 Bebidas",
+        "🍪 Acompanhamentos",
+        "⭐ Combos",
+        "🔥 Ofertas",
+      ],
     };
     const palette = {
       primary_color: colors[0],
@@ -583,7 +613,9 @@ function MyStore() {
               ? "Roupas de Treino / Academia"
               : suggestionNiche === "calcados"
                 ? "Calçados"
-                : "Roupas",
+                : suggestionNiche === "cafeteria"
+                  ? "Cafeteria"
+                  : "Roupas",
         ...palette,
       } as never)
       .eq("id", store.id);
@@ -591,14 +623,116 @@ function MyStore() {
       setGenerating(false);
       return toast.error("Não foi possível criar a sugestão da loja.");
     }
-    await supabase.from("categories").insert(
-      (categoriesByNiche[suggestionNiche] ?? categoriesByNiche.roupas).map((name, position) => ({
-        store_id: store.id,
-        name,
-        module,
-        position,
-      })),
-    );
+    const categoryNames = categoriesByNiche[suggestionNiche] ?? categoriesByNiche.roupas;
+    const { data: createdCategories } = await supabase
+      .from("categories")
+      .insert(
+        categoryNames.map((name, position) => ({
+          store_id: store.id,
+          name,
+          module,
+          position,
+        })),
+      )
+      .select("id, name");
+    if (suggestionNiche === "cafeteria" && createdCategories?.length) {
+      const productsByCategory: Record<string, string[]> = {
+        "☕ Cafés": [
+          "☕ Café Espresso",
+          "☕ Café Espresso Duplo",
+          "☕ Café Coado",
+          "☕ Café Americano",
+          "☕ Café com Leite",
+          "☕ Café Latte",
+          "☕ Café Mocha",
+          "☕ Café Gelado",
+        ],
+        "🥛 Cappuccinos": [
+          "🥛 Cappuccino Tradicional",
+          "🥛 Cappuccino de Chocolate",
+          "🥛 Cappuccino de Canela",
+          "🥛 Cappuccino de Baunilha",
+          "🥛 Cappuccino de Caramelo",
+          "🥛 Cappuccino de Avelã",
+        ],
+        "🥟 Empadas": [
+          "🥟 Frango",
+          "🥟 Frango com Catupiry",
+          "🥟 Palmito",
+          "🥟 Carne",
+          "🥟 Camarão",
+          "🥟 Queijo",
+          "🥟 Calabresa com Queijo",
+        ],
+        "🥐 Pastéis Assados": [
+          "🥐 Frango",
+          "🥐 Frango com Catupiry",
+          "🥐 Carne",
+          "🥐 Carne com Queijo",
+          "🥐 Palmito",
+          "🥐 Queijo",
+          "🥐 Pizza",
+        ],
+        "🥧 Tortinhas": [
+          "🥧 Tortinha de Frango",
+          "🥧 Tortinha de Palmito",
+          "🍓 Tortinha de Morango",
+          "🍋 Tortinha de Limão",
+          "🍫 Tortinha de Chocolate",
+        ],
+        "🍰 Bolos e Doces": [
+          "🍰 Bolo de Chocolate",
+          "🍰 Bolo de Cenoura",
+          "🍰 Bolo de Fubá",
+          "🍰 Bolo de Laranja",
+          "🍫 Brownie",
+          "🍪 Cookie",
+          "🍮 Pudim",
+          "🍓 Cheesecake",
+        ],
+        "🥤 Bebidas": [
+          "🥤 Suco Natural",
+          "🥤 Suco de Laranja",
+          "🥤 Limonada",
+          "🧋 Milk-shake",
+          "🥛 Chocolate Quente",
+          "🧊 Chá Gelado",
+          "💧 Água",
+        ],
+        "🍪 Acompanhamentos": [
+          "🍪 Cookie",
+          "🍞 Pão de Queijo",
+          "🥐 Croissant",
+          "🥪 Sanduíche",
+          "🍞 Torrada",
+          "🥯 Bagel",
+        ],
+        "⭐ Combos": [
+          "☕ Combo Café da Manhã",
+          "☕ Combo Café + Doce",
+          "🥟 Combo Salgado",
+          "☕ Combo Cappuccino",
+        ],
+      };
+      const suggestedProducts = createdCategories.flatMap((category) =>
+        (productsByCategory[category.name] ?? []).map((name, position) => ({
+          store_id: store.id,
+          category_id: category.id,
+          module,
+          name,
+          description: "Sugestão editável — personalize descrição, foto, preço e disponibilidade.",
+          price: 0,
+          stock: 0,
+          track_stock: false,
+          is_available: false,
+          is_hidden: true,
+          is_featured: false,
+          position,
+        })),
+      );
+      if (suggestedProducts.length)
+        await supabase.from("products").insert(suggestedProducts as never);
+    }
     const suggestions = BANNER_SUGGESTIONS.filter((banner) =>
       suggestionNiche === "esportes"
         ? banner.key === "sports-season"
@@ -606,7 +740,9 @@ function MyStore() {
           ? banner.key === "training-performance"
           : suggestionNiche === "calcados"
             ? banner.key === "shoes-launch"
-            : banner.niche === "👕 Roupas",
+            : suggestionNiche === "cafeteria"
+              ? banner.niche === "☕ Cafeteria"
+              : banner.niche === "👕 Roupas",
     ).slice(0, 3);
     if (suggestions.length)
       await supabase.from("storefront_banners").insert(
@@ -764,6 +900,7 @@ function MyStore() {
                       ["esportes", "⚽ Roupas Esportivas"],
                       ["treino", "🏋️ Treino / Academia"],
                       ["calcados", "👟 Calçados"],
+                      ["cafeteria", "☕ Cafeteria"],
                     ].map(([value, label]) => (
                       <button
                         key={value}
@@ -778,7 +915,9 @@ function MyStore() {
                   <Input
                     placeholder="Ou digite outro nicho"
                     value={
-                      !["roupas", "esportes", "treino", "calcados"].includes(suggestionNiche)
+                      !["roupas", "esportes", "treino", "calcados", "cafeteria"].includes(
+                        suggestionNiche,
+                      )
                         ? suggestionNiche
                         : ""
                     }

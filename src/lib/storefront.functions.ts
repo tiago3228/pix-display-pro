@@ -13,7 +13,7 @@ export type StorefrontVariant = {
 
 export type StorefrontProduct = {
   id: string;
-  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados";
+  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria";
   name: string;
   description: string;
   price: number;
@@ -122,7 +122,7 @@ export type Storefront = {
 
 type StorefrontProductDbRow = {
   id: string;
-  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados";
+  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria";
   name: string;
   description: string;
   price: number | string;

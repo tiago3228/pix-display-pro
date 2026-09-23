@@ -612,27 +612,30 @@ export function StorePage() {
         }}
       >
         <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
-          {(["roupas", "roupas_esportivas", "roupas_treino", "calcados"] as const).map((module) => {
-            const labels = {
-              roupas: "👕 Roupas",
-              roupas_esportivas: "⚽ Roupas Esportivas",
-              roupas_treino: "🏋️ Roupas de Treino / Academia",
-              calcados: "👟 Calçados",
-            };
-            return data.products.some((product) => product.module === module) ? (
-              <CategoryChip
-                key={module}
-                label={labels[module]}
-                active={moduleFilter === module}
-                onClick={() => {
-                  setModuleFilter(module);
-                  setActiveCategory("all");
-                  setActiveSportsNode("all");
-                }}
-                color={data.sports.settings?.primary_color ?? store.primary_color}
-              />
-            ) : null;
-          })}
+          {(["roupas", "roupas_esportivas", "roupas_treino", "calcados", "cafeteria"] as const).map(
+            (module) => {
+              const labels = {
+                roupas: "👕 Roupas",
+                roupas_esportivas: "⚽ Roupas Esportivas",
+                roupas_treino: "🏋️ Roupas de Treino / Academia",
+                calcados: "👟 Calçados",
+                cafeteria: "☕ Cafeteria",
+              };
+              return data.products.some((product) => product.module === module) ? (
+                <CategoryChip
+                  key={module}
+                  label={labels[module]}
+                  active={moduleFilter === module}
+                  onClick={() => {
+                    setModuleFilter(module);
+                    setActiveCategory("all");
+                    setActiveSportsNode("all");
+                  }}
+                  color={data.sports.settings?.primary_color ?? store.primary_color}
+                />
+              ) : null;
+            },
+          )}
           {moduleFilter !== "all" ? (
             <CategoryChip
               label="Todos os módulos"

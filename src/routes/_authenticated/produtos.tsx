@@ -52,7 +52,7 @@ export const Route = createFileRoute("/_authenticated/produtos")({
 type VariantDraft = { id?: string; label: string; price: string; stock: string };
 type OrderTierDraft = { minQuantity: string; unitPrice: string };
 type SmartSuggestion = {
-  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados";
+  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria";
   brand: string | null;
   model: string | null;
   category: string;
@@ -146,7 +146,7 @@ function interpretProductText(input: string): SmartSuggestion {
 
 type ProductRow = {
   id: string;
-  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados";
+  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria";
   name: string;
   description: string;
   price: number;
@@ -184,7 +184,7 @@ type ProductRow = {
 };
 
 const emptyForm = {
-  module: "roupas" as "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados",
+  module: "roupas" as "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria",
   name: "",
   description: "",
   price: "",
@@ -234,6 +234,7 @@ function Products() {
   const [sportsCollectionId, setSportsCollectionId] = useState("none");
   const [trainingOnly, setTrainingOnly] = useState(false);
   const [shoesOnly, setShoesOnly] = useState(false);
+  const [cafeteriaOnly, setCafeteriaOnly] = useState(false);
   const [sportsOnly, setSportsOnly] = useState(false);
   const [guidedOpen, setGuidedOpen] = useState(false);
   const [guidedType, setGuidedType] = useState("");
@@ -265,16 +266,18 @@ function Products() {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     setSportsOnly(params.get("module") === "roupas_esportivas");
+    setCafeteriaOnly(params.get("module") === "cafeteria");
     if (params.get("guided") === "1") setGuidedOpen(true);
   }, []);
 
   const { data: categories } = useQuery({
-    queryKey: ["categories", store?.id, trainingOnly, shoesOnly],
+    queryKey: ["categories", store?.id, trainingOnly, shoesOnly, cafeteriaOnly],
     enabled: Boolean(store?.id),
     queryFn: async () => {
       let query = supabase.from("categories").select("id, name").eq("store_id", store!.id);
       if (trainingOnly) query = query.eq("module", "roupas_treino");
       if (shoesOnly) query = query.eq("module", "calcados");
+      if (cafeteriaOnly) query = query.eq("module", "cafeteria");
       const { data, error } = await query.order("position");
       if (error) throw error;
       return data;
@@ -314,7 +317,7 @@ function Products() {
   });
 
   const { data: products } = useQuery({
-    queryKey: ["products", store?.id, trainingOnly, shoesOnly],
+    queryKey: ["products", store?.id, trainingOnly, shoesOnly, cafeteriaOnly],
     enabled: Boolean(store?.id),
     queryFn: async () => {
       let query = supabase
@@ -325,6 +328,7 @@ function Products() {
         .eq("store_id", store!.id);
       if (trainingOnly) query = query.eq("module", "roupas_treino");
       if (shoesOnly) query = query.eq("module", "calcados");
+      if (cafeteriaOnly) query = query.eq("module", "cafeteria");
       const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
       return data as unknown as ProductRow[];
@@ -366,7 +370,13 @@ function Products() {
     setEditing(null);
     setForm({
       ...emptyForm,
-      module: trainingOnly ? "roupas_treino" : shoesOnly ? "calcados" : "roupas",
+      module: trainingOnly
+        ? "roupas_treino"
+        : shoesOnly
+          ? "calcados"
+          : cafeteriaOnly
+            ? "cafeteria"
+            : "roupas",
     });
     setVariants([]);
     setOrderTiers([]);
@@ -504,7 +514,13 @@ function Products() {
     const cleanVariants = variants.filter((v) => v.label.trim());
     const payload = {
       store_id: store.id,
-      module: trainingOnly ? "roupas_treino" : shoesOnly ? "calcados" : form.module,
+      module: trainingOnly
+        ? "roupas_treino"
+        : shoesOnly
+          ? "calcados"
+          : cafeteriaOnly
+            ? "cafeteria"
+            : form.module,
       name: form.name.trim(),
       description: form.description ?? "",
       price: Number(String(form.price).replace(",", ".")) || 0,
@@ -838,64 +854,80 @@ function Products() {
                   ["⚽", "Esportivos"],
                   ["🎯", "Personalizados"],
                 ]
-              : trainingOnly
+              : cafeteriaOnly
                 ? [
-                    ["👕", "Camiseta de treino"],
-                    ["💨", "Camiseta Dry Fit"],
-                    ["🏃", "Regata"],
-                    ["👚", "Top"],
-                    ["🩳", "Shorts"],
-                    ["🦵", "Legging"],
-                    ["🏋️", "Conjunto Fitness"],
-                    ["🎯", "Personalizado"],
+                    ["☕", "Café"],
+                    ["🥛", "Cappuccino"],
+                    ["🥟", "Empada"],
+                    ["🥐", "Pastel Assado"],
+                    ["🥧", "Tortinha"],
+                    ["🍰", "Bolo"],
+                    ["🍪", "Doce"],
+                    ["🥤", "Bebida"],
+                    ["⭐", "Combo"],
                   ]
-                : [
-                    ["👕", "Camisa"],
-                    ["👚", "Blusa"],
-                    ["👗", "Vestido"],
-                    ["👖", "Calça"],
-                    ["🩳", "Shorts"],
-                    ["🧥", "Jaqueta"],
-                    ["🧶", "Moletom"],
-                    ["✨", "Personalizado"],
-                  ]
-            ).map(([icon, label]) => [icon ?? "", label ?? ""] as const).map(([icon, label]) => (
-              <button
-                key={label}
-                type="button"
-                className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-xl border p-2 text-center text-sm transition hover:border-primary hover:bg-primary/5"
-                onClick={() => {
-                  setGuidedType(label);
-                  const module = shoesOnly
-                    ? "calcados"
-                    : sportsOnly
-                      ? "roupas_esportivas"
-                      : trainingOnly
-                        ? "roupas_treino"
-                        : "roupas";
-                  const matchingCategory = categories?.find((category) =>
-                    category.name
-                      .toLocaleLowerCase("pt-BR")
-                      .includes(label.toLocaleLowerCase("pt-BR")),
-                  );
-                  setForm({
-                    ...emptyForm,
-                    module,
-                    category_id: matchingCategory?.id ?? "none",
-                    sports_product_type: label,
-                  });
-                  setEditing(null);
-                  setVariants([]);
-                  setOrderTiers([]);
-                  setPhotos([]);
-                  setGuidedOpen(false);
-                  setOpen(true);
-                }}
-              >
-                {icon}
-                <span>{label}</span>
-              </button>
-            ))}
+                : trainingOnly
+                  ? [
+                      ["👕", "Camiseta de treino"],
+                      ["💨", "Camiseta Dry Fit"],
+                      ["🏃", "Regata"],
+                      ["👚", "Top"],
+                      ["🩳", "Shorts"],
+                      ["🦵", "Legging"],
+                      ["🏋️", "Conjunto Fitness"],
+                      ["🎯", "Personalizado"],
+                    ]
+                  : [
+                      ["👕", "Camisa"],
+                      ["👚", "Blusa"],
+                      ["👗", "Vestido"],
+                      ["👖", "Calça"],
+                      ["🩳", "Shorts"],
+                      ["🧥", "Jaqueta"],
+                      ["🧶", "Moletom"],
+                      ["✨", "Personalizado"],
+                    ]
+            )
+              .map(([icon, label]) => [icon ?? "", label ?? ""] as const)
+              .map(([icon, label]) => (
+                <button
+                  key={label}
+                  type="button"
+                  className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-xl border p-2 text-center text-sm transition hover:border-primary hover:bg-primary/5"
+                  onClick={() => {
+                    setGuidedType(label);
+                    const module = cafeteriaOnly
+                      ? "cafeteria"
+                      : shoesOnly
+                        ? "calcados"
+                        : sportsOnly
+                          ? "roupas_esportivas"
+                          : trainingOnly
+                            ? "roupas_treino"
+                            : "roupas";
+                    const matchingCategory = categories?.find((category) =>
+                      category.name
+                        .toLocaleLowerCase("pt-BR")
+                        .includes(label.toLocaleLowerCase("pt-BR")),
+                    );
+                    setForm({
+                      ...emptyForm,
+                      module,
+                      category_id: matchingCategory?.id ?? "none",
+                      sports_product_type: label,
+                    });
+                    setEditing(null);
+                    setVariants([]);
+                    setOrderTiers([]);
+                    setPhotos([]);
+                    setGuidedOpen(false);
+                    setOpen(true);
+                  }}
+                >
+                  {icon}
+                  <span>{label}</span>
+                </button>
+              ))}
           </div>
           <div className="flex justify-end">
             <Button
@@ -1142,15 +1174,20 @@ function Products() {
             >
               <div className="space-y-1.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
                 <Label>Módulo da loja</Label>
-                {trainingOnly || shoesOnly ? (
+                {trainingOnly || shoesOnly || cafeteriaOnly ? (
                   <div className="rounded-md border bg-background px-3 py-2 text-sm font-medium">
-                    {trainingOnly ? "🏋️ Roupas de Treino / Academia" : "👟 Calçados"}
+                    {cafeteriaOnly
+                      ? "☕ Cafeteria"
+                      : trainingOnly
+                        ? "🏋️ Roupas de Treino / Academia"
+                        : "👟 Calçados"}
                   </div>
                 ) : (
                   <Select
                     value={form.module}
                     onValueChange={(
-                      value: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados",
+                      value:
+                        "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria",
                     ) => setForm({ ...form, module: value })}
                   >
                     <SelectTrigger>
@@ -1161,6 +1198,7 @@ function Products() {
                       <SelectItem value="roupas_esportivas">⚽ Roupas Esportivas</SelectItem>
                       <SelectItem value="roupas_treino">🏋️ Roupas de Treino / Academia</SelectItem>
                       <SelectItem value="calcados">👟 Calçados</SelectItem>
+                      <SelectItem value="cafeteria">☕ Cafeteria</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
