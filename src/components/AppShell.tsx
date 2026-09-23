@@ -174,40 +174,59 @@ export function AppShell({
     }
     setPushPermission(window.Notification.permission);
     if (!store?.id || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
-    void navigator.serviceWorker.register("/push-sw.js").then(async (registration) => {
-      const subscription = await registration.pushManager.getSubscription();
-      if (subscription) setPushReady(true);
-    });
+    void getPushRegistration()
+      .then(async (registration) => {
+        const subscription = await registration.pushManager.getSubscription();
+        if (subscription) setPushReady(true);
+      })
+      .catch((error) => console.warn("[push] registro inicial falhou", error));
   }, [store?.id]);
 
   async function enablePushNotifications() {
     if (!store?.id || typeof window === "undefined" || !("Notification" in window)) return;
+    let step = "início";
     try {
       if (!window.isSecureContext || !("serviceWorker" in navigator) || !("PushManager" in window)) {
         throw new Error("Este navegador ou endereço não oferece suporte a notificações Push.");
       }
-      const { publicKey: rawPublicKey } = await getPublicKey();
+      step = "buscar chave pública";
+      const { publicKey: rawPublicKey, keyPairValid } = await getPublicKey();
       const publicKey = rawPublicKey?.trim().replace(/^['"]|['"]$/g, "");
+      console.info("[push] chave recebida", { length: publicKey?.length, keyPairValid });
       if (!publicKey) {
         throw new Error("A chave VAPID pública não está configurada no servidor.");
       }
+      if (keyPairValid === false) {
+        throw new Error("As chaves VAPID pública e privada do servidor não formam um par válido.");
+      }
+      step = "permissão";
       const permission = await window.Notification.requestPermission();
       setPushPermission(permission);
       if (permission !== "granted") {
         throw new Error("Permita as notificações do navegador para receber novos pedidos.");
       }
-      await navigator.serviceWorker.register("/push-sw.js");
-      const registration = await navigator.serviceWorker.ready;
+      step = "service worker";
+      const registration = await getPushRegistration();
+      console.info("[push] service worker ativo", {
+        scope: registration.scope,
+        script: registration.active?.scriptURL,
+      });
+      step = "converter chave";
       const applicationServerKey = urlBase64ToUint8Array(publicKey);
-      if (applicationServerKey.length !== 65) {
+      if (applicationServerKey.length !== 65 || applicationServerKey[0] !== 4) {
         throw new Error("A chave VAPID pública configurada é inválida.");
       }
+      step = "pushManager.subscribe";
+      const existing = await registration.pushManager.getSubscription();
+      if (existing) await existing.unsubscribe().catch(() => undefined);
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: applicationServerKey.buffer,
+        applicationServerKey,
       });
+      console.info("[push] inscrição criada", { endpoint: subscription.endpoint.slice(0, 60) });
       const json = subscription.toJSON();
       if (!json.keys?.p256dh || !json.keys.auth) throw new Error("Assinatura incompleta");
+      step = "salvar assinatura";
       await saveSubscription({
         data: {
           storeId: store.id,
@@ -219,11 +238,23 @@ export function AppShell({
           userAgent: navigator.userAgent,
         },
       });
+      console.info("[push] assinatura salva");
       setPushReady(true);
       toast.success("Notificações de novos pedidos ativadas!");
     } catch (error) {
-      console.error("[push] falha ao ativar notificações", error);
-      toast.error(error instanceof Error ? error.message : "Não foi possível ativar as notificações neste dispositivo.");
+      console.error(`[push] falha na etapa "${step}"`, error);
+      const message = error instanceof Error ? error.message : String(error);
+      const isBrave = Boolean((navigator as Navigator & { brave?: unknown }).brave);
+      if (step === "pushManager.subscribe" && (isBrave || /push service/i.test(message))) {
+        toast.error(
+          isBrave
+            ? "O Brave bloqueou o serviço de Push. Ative em brave://settings/privacy a opção “Usar os serviços do Google para mensagens push”, desative o Shields só para este site, ou teste no Chrome."
+            : "O serviço de Push do navegador recusou o cadastro. Teste no Chrome ou desative bloqueadores apenas para este site.",
+          { duration: 12000 },
+        );
+        return;
+      }
+      toast.error(message || "Não foi possível ativar as notificações neste dispositivo.");
     }
   }
 
