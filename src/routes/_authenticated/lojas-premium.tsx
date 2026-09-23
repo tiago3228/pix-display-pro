@@ -25,6 +25,7 @@ type StoreModule = { module: string; is_active: boolean };
 
 function PremiumStores() {
   const { data: store } = useMyStore();
+  const isPro = store?.plan === "pro";
   const client = useQueryClient();
   const catalog = useQuery({
     queryKey: ["premium-catalog"],
@@ -58,7 +59,7 @@ function PremiumStores() {
     return item.slug;
   }
   async function toggle(item: CatalogItem, value: boolean) {
-    if (!store) return;
+    if (!store || !isPro) return;
     const result = await supabase
       .from("store_modules")
       .update({ is_active: value })
@@ -106,7 +107,9 @@ function PremiumStores() {
               >
                 <div className="flex items-start justify-between">
                   <span className="text-4xl">{item.icon}</span>
-                  {active && available ? (
+                  {!isPro && available ? (
+                    <Badge variant="outline">🔒 PRO</Badge>
+                  ) : active && available ? (
                     <Badge className="gap-1 bg-emerald-600">
                       <Check className="size-3" /> Ativa
                     </Badge>
@@ -120,7 +123,7 @@ function PremiumStores() {
                   <p className="mt-3 text-xs font-medium text-primary">{item.promotional_text}</p>
                 ) : null}
                 <div className="mt-5 flex flex-wrap gap-2">
-                  {available ? (
+                  {available && isPro ? (
                     <Button size="sm" asChild>
                       <a
                         href={active ? item.route : "#"}
@@ -135,12 +138,16 @@ function PremiumStores() {
                         <ArrowRight className="ml-1.5 size-4" />
                       </a>
                     </Button>
+                  ) : available ? (
+                    <Button size="sm" variant="outline" disabled>
+                      🔒 Exclusivo PRO
+                    </Button>
                   ) : (
                     <Button size="sm" variant="outline" disabled>
                       Em breve
                     </Button>
                   )}
-                  {active && available ? (
+                  {isPro && active && available ? (
                     <Button size="sm" variant="outline" asChild>
                       <a href={`${item.route}?settings=1`}>
                         <Settings2 className="mr-1.5 size-4" /> Configurar
@@ -148,7 +155,7 @@ function PremiumStores() {
                     </Button>
                   ) : null}
                 </div>
-                {active && available ? (
+                {isPro && active && available ? (
                   <button
                     className="mt-3 text-xs text-muted-foreground underline-offset-2 hover:underline"
                     onClick={() => void toggle(item, false)}

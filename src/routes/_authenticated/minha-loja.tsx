@@ -34,6 +34,29 @@ export const Route = createFileRoute("/_authenticated/minha-loja")({
 });
 
 const COLORS = ["#111827", "#0f766e", "#e11d48", "#7c3aed", "#ea580c", "#2563eb", "#16a34a"];
+const AVAILABLE_NICHES = [
+  ["roupas", "👕 Roupas"],
+  ["esportes", "⚽ Roupas Esportivas"],
+  ["treino", "🏋️ Roupas de Treino / Academia"],
+  ["calcados", "👟 Calçados"],
+  ["cafeteria", "☕ Cafeteria"],
+  ["acessorios", "👜 Acessórios"],
+  ["beleza", "💄 Beleza"],
+  ["casa", "🏠 Casa e Decoração"],
+  ["presentes", "🎁 Presentes"],
+] as const;
+const CAFETERIA_CATEGORIES = [
+  "☕ Cafés",
+  "🥛 Cappuccinos",
+  "🥟 Empadas",
+  "🥐 Pastéis Assados",
+  "🥧 Tortinhas",
+  "🍰 Bolos e Doces",
+  "🥤 Bebidas",
+  "🍪 Acompanhamentos",
+  "⭐ Combos",
+  "🔥 Ofertas",
+];
 const VITRINI_PALETTE = {
   primary_color: "#0f172a",
   secondary_color: "#475569",
@@ -243,6 +266,9 @@ function MyStore() {
   const [generationStep, setGenerationStep] = useState(0);
   const [selectedBanner, setSelectedBanner] = useState<EditableBanner | null>(null);
   const [bannerDraft, setBannerDraft] = useState<EditableBanner | null>(null);
+  const [nicheOpen, setNicheOpen] = useState(false);
+  const [selectedNiche, setSelectedNiche] = useState("cafeteria");
+  const [customNiche, setCustomNiche] = useState("");
   const isPro = store?.plan === "pro";
   const [form, setForm] = useState({
     name: "",
@@ -500,6 +526,38 @@ function MyStore() {
       },
     }));
     toast.success(`${theme.name} aplicado. Clique em “Salvar modificações” para publicar.`);
+  }
+
+  async function changeStoreNiche() {
+    if (!store) return;
+    const selected = customNiche.trim() || selectedNiche;
+    const label = AVAILABLE_NICHES.find(([value]) => value === selected)?.[1] ?? selected;
+    const { error } = await supabase
+      .from("stores")
+      .update({ category: label } as never)
+      .eq("id", store.id);
+    if (error) return toast.error("Não foi possível alterar o nicho.");
+    if (
+      selected === "cafeteria" &&
+      window.confirm(
+        "Deseja adicionar a estrutura sugerida de Cafeteria? Os dados existentes serão preservados.",
+      )
+    ) {
+      const existing = await supabase.from("categories").select("name").eq("store_id", store.id);
+      const known = new Set((existing.data ?? []).map((item) => item.name));
+      await supabase.from("categories").insert(
+        CAFETERIA_CATEGORIES.filter((name) => !known.has(name)).map((name, position) => ({
+          store_id: store.id,
+          name,
+          module: "cafeteria",
+          position,
+        })) as never,
+      );
+    }
+    setNicheOpen(false);
+    setCustomNiche("");
+    await queryClient.invalidateQueries({ queryKey: ["my-store"] });
+    toast.success(`Nicho alterado para ${label}. Nenhum dado existente foi apagado.`);
   }
 
   async function generateStoreSuggestion() {
@@ -941,6 +999,59 @@ function MyStore() {
               ) : null}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+      <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+        <div>
+          <p className="font-semibold">Nicho atual: {store?.category || "Não definido"}</p>
+          <p className="text-xs text-muted-foreground">
+            O nicho orienta sugestões, mas não limita seus produtos.
+          </p>
+        </div>
+        <Button type="button" variant="outline" onClick={() => setNicheOpen(true)}>
+          🔄 Alterar nicho
+        </Button>
+      </div>
+      <Dialog open={nicheOpen} onOpenChange={setNicheOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>🔄 Alterar nicho</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Escolha o segmento principal. Produtos, categorias, imagens, banners e pedidos
+            existentes serão preservados.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {AVAILABLE_NICHES.map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => {
+                  setSelectedNiche(value);
+                  setCustomNiche("");
+                }}
+                className={`rounded-xl border p-3 text-left text-sm ${selectedNiche === value && !customNiche ? "border-primary bg-primary/10" : ""}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div>
+            <Label>✍️ Outro nicho</Label>
+            <Input
+              placeholder="Ex.: Padaria"
+              value={customNiche}
+              onChange={(event) => setCustomNiche(event.target.value)}
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={() => setNicheOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={() => void changeStoreNiche()}>
+              Salvar nicho
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
       <div className="surface space-y-4 p-5">
