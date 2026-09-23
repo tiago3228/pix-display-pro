@@ -12,6 +12,9 @@ CREATE TABLE IF NOT EXISTS public.push_subscriptions (
 
 ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Store owners manage their push subscriptions"
+  ON public.push_subscriptions;
+
 CREATE POLICY "Store owners manage their push subscriptions"
   ON public.push_subscriptions FOR ALL
   USING (EXISTS (
