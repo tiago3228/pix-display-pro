@@ -408,6 +408,8 @@ export function StorePage() {
         ["--store-secondary" as string]: store.secondary_color,
         ["--store-accent" as string]: store.accent_color,
         ["--store-button" as string]: store.button_color,
+        ["--store-background" as string]: store.background_color,
+        ["--store-text" as string]: store.text_color,
         ["--store-text-secondary" as string]: store.theme_palette["text_secondary"] ?? "#64748b",
         ["--store-header" as string]: store.theme_palette["header"] ?? store.primary_color,
         ["--store-menu" as string]: store.theme_palette["menu"] ?? "#ffffff",
