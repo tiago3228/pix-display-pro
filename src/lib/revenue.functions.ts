@@ -144,7 +144,7 @@ export const getSellerRevenue = createServerFn({ method: "POST" })
         .from("orders")
         .select("id, number, customer_name, total, status, created_at, payment_method")
         .eq("store_id", store.id)
-        .neq("status", "cancelado")
+        .not("status", "in", "(cancelado,teste_cancelado)")
         .gte("created_at", data.from)
         .lte("created_at", data.to),
       context.supabase
@@ -177,6 +177,56 @@ export const getSellerRevenue = createServerFn({ method: "POST" })
     ].sort((a, b) => b.date.localeCompare(a.date));
 
     return { entries, plan: store.plan };
+  });
+
+/** Mantém o pedido no histórico, mas remove seu valor do faturamento. */
+export const markOrderAsTestCanceled = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((data: unknown) => z.object({ orderId: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const store = await ownStore(context as never);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("id, store_id, customer_id, total, status")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (!order || order.store_id !== store.id) throw new Error("Pedido não encontrado.");
+    if (order.status === "teste_cancelado") return { ok: true };
+
+    const { error } = await supabaseAdmin
+      .from("orders")
+      .update({ status: "teste_cancelado", updated_at: new Date().toISOString() })
+      .eq("id", order.id)
+      .eq("store_id", store.id);
+    if (error) throw new Error(error.message);
+
+    if (order.customer_id) {
+      const { data: customer } = await supabaseAdmin
+        .from("customers")
+        .select("orders_count, total_spent")
+        .eq("id", order.customer_id)
+        .maybeSingle();
+      if (customer) {
+        await supabaseAdmin
+          .from("customers")
+          .update({
+            orders_count: Math.max(0, (customer.orders_count ?? 0) - 1),
+            total_spent: Math.max(0, Number(customer.total_spent ?? 0) - Number(order.total ?? 0)),
+          })
+          .eq("id", order.customer_id);
+      }
+    }
+
+    await supabaseAdmin.from("audit_logs").insert({
+      store_id: store.id,
+      user_id: context.userId,
+      action: "order_marked_test_canceled",
+      resource_type: "order",
+      resource_id: order.id,
+      metadata: { previous_status: order.status, total_removed: Number(order.total ?? 0) } as never,
+    });
+    return { ok: true };
   });
 
 export const addManualSale = createServerFn({ method: "POST" })

@@ -56,7 +56,7 @@ function Dashboard() {
       const allOrders = orders.data ?? [];
       const monthOrders = allOrders.filter((o) => new Date(o.created_at) >= monthStart);
       const revenue = monthOrders
-        .filter((o) => o.status !== "cancelado")
+        .filter((o) => o.status !== "cancelado" && o.status !== "teste_cancelado")
         .reduce((sum, o) => sum + Number(o.total), 0);
 
       return {

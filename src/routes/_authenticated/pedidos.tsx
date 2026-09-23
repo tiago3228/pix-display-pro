@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FileText, MessageCircle, Search, Trash2 } from "lucide-react";
+import { FileText, MessageCircle, Search, TestTube2, Trash2 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { getOrderReceiptUrl } from "@/lib/storefront.functions";
+import { markOrderAsTestCanceled } from "@/lib/revenue.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyStore } from "@/hooks/useAuth";
@@ -30,6 +31,7 @@ function Orders() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("todos");
   const receiptUrl = useServerFn(getOrderReceiptUrl);
+  const markTestCanceled = useServerFn(markOrderAsTestCanceled);
 
   const { data: orders } = useQuery({
     queryKey: ["orders", store?.id],
@@ -91,6 +93,24 @@ function Orders() {
     queryClient.invalidateQueries({ queryKey: ["dashboard", store?.id] });
   }
 
+  async function markAsTestCanceled(id: string, number: number) {
+    if (
+      !window.confirm(
+        `Marcar o pedido #${number} como teste/cancelado? Ele permanecerá no histórico, mas será removido do faturamento.`,
+      )
+    )
+      return;
+    try {
+      await markTestCanceled({ data: { orderId: id } });
+      toast.success("Pedido marcado como teste/cancelado e removido do faturamento.");
+      queryClient.invalidateQueries({ queryKey: ["orders", store?.id] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard", store?.id] });
+      queryClient.invalidateQueries({ queryKey: ["seller-revenue"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível marcar o pedido.");
+    }
+  }
+
   const filtered = (orders ?? []).filter((order) => {
     const matchesStatus = status === "todos" || order.status === status;
     const term = search.trim().toLowerCase();
@@ -140,6 +160,9 @@ function Orders() {
               </div>
               <div className="flex items-center gap-2">
                 {order.payment_declared ? <Badge variant="secondary">Pix informado</Badge> : null}
+                {order.status === "teste_cancelado" ? (
+                  <Badge variant="outline">Teste/Cancelado</Badge>
+                ) : null}
                 <span className="text-lg font-bold">{brl(Number(order.total))}</span>
               </div>
             </div>
@@ -190,6 +213,15 @@ function Orders() {
               {order.receipt_path ? (
                 <Button variant="outline" size="sm" onClick={() => openReceipt(order.id)}>
                   <FileText className="mr-1.5 size-4" /> Ver comprovante
+                </Button>
+              ) : null}
+              {order.status !== "teste_cancelado" ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => markAsTestCanceled(order.id, order.number)}
+                >
+                  <TestTube2 className="mr-1.5 size-4" /> Marcar como teste
                 </Button>
               ) : null}
               <Button

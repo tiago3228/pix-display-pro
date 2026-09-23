@@ -55,6 +55,7 @@ export const ORDER_STATUS = [
   { value: "confirmado", label: "Confirmado" },
   { value: "entregue", label: "Entregue" },
   { value: "cancelado", label: "Cancelado" },
+  { value: "teste_cancelado", label: "Teste/Cancelado" },
 ] as const;
 
 export const statusLabel = (value: string) =>
