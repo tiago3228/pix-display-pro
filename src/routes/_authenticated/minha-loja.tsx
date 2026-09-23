@@ -35,21 +35,21 @@ export const Route = createFileRoute("/_authenticated/minha-loja")({
 
 const COLORS = ["#111827", "#0f766e", "#e11d48", "#7c3aed", "#ea580c", "#2563eb", "#16a34a"];
 const VITRINI_PALETTE = {
-  primary_color: "#111827",
-  secondary_color: "#0f766e",
-  accent_color: "#f59e0b",
+  primary_color: "#0f172a",
+  secondary_color: "#475569",
+  accent_color: "#0f9f9a",
   background_color: "#f8fafc",
-  text_color: "#111827",
-  button_color: "#111827",
+  text_color: "#0f172a",
+  button_color: "#0f172a",
 };
 const ADVANCED_PALETTE = {
   text_secondary: "#64748b",
-  header: "#111827",
+  header: "#0f172a",
   menu: "#ffffff",
-  links: "#0f766e",
-  prices: "#111827",
-  offers: "#dc2626",
-  badges: "#f59e0b",
+  links: "#0f9f9a",
+  prices: "#0f172a",
+  offers: "#e11d48",
+  badges: "#0f9f9a",
   cards: "#ffffff",
   borders: "#e2e8f0",
   footer: "#111827",
