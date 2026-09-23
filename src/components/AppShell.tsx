@@ -1,8 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   BarChart3,
+  Bell,
   Calculator,
   CreditCard,
   HelpCircle,
@@ -100,6 +101,63 @@ export function AppShell({
   const { data: store, isLoading: storeLoading } = useMyStore();
   const { price: proPrice } = useProPricing();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [ordersAcknowledgedAt, setOrdersAcknowledgedAt] = useState(0);
+  const ordersAlertKey = store?.id ? `vitrini:orders-alert:${store.id}` : null;
+  const { data: alertOrders = [] } = useQuery({
+    queryKey: ["orders-alert", store?.id],
+    enabled: Boolean(store?.id),
+    refetchInterval: 15000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("id, status, created_at")
+        .eq("store_id", store!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).filter((order) => !["entregue", "cancelado"].includes(order.status));
+    },
+  });
+
+  useEffect(() => {
+    if (!ordersAlertKey || typeof window === "undefined") {
+      setOrdersAcknowledgedAt(0);
+      return;
+    }
+    setOrdersAcknowledgedAt(Number(window.localStorage.getItem(ordersAlertKey) ?? 0));
+  }, [ordersAlertKey]);
+
+  useEffect(() => {
+    if (!store?.id) return;
+    const channel = supabase
+      .channel(`orders-alert-${store.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders", filter: `store_id=eq.${store.id}` },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: ["orders-alert", store.id] });
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [store?.id, queryClient]);
+
+  const hasOpenOrders = alertOrders.length > 0;
+  const newestOpenOrderAt = alertOrders.reduce(
+    (latest, order) => Math.max(latest, new Date(order.created_at).getTime()),
+    0,
+  );
+  const hasUnacknowledgedOrders = hasOpenOrders && newestOpenOrderAt > ordersAcknowledgedAt;
+
+  function acknowledgeOrders() {
+    const timestamp = Date.now();
+    setOrdersAcknowledgedAt(timestamp);
+    if (ordersAlertKey && typeof window !== "undefined") {
+      window.localStorage.setItem(ordersAlertKey, String(timestamp));
+    }
+    navigate({ to: "/pedidos" });
+  }
 
   useEffect(() => {
     if (adminLoading || storeLoading) return;
@@ -189,6 +247,26 @@ export function AppShell({
 
             <div className="flex shrink-0 items-center gap-2">
               {action}
+              {store ? (
+                <Button
+                  variant={hasOpenOrders ? "destructive" : "ghost"}
+                  size="icon"
+                  className={cn(
+                    "relative shrink-0",
+                    hasUnacknowledgedOrders && "animate-pulse",
+                  )}
+                  aria-label={hasOpenOrders ? "Ver pedidos pendentes" : "Ver pedidos"}
+                  title={hasOpenOrders ? "Há pedidos pendentes" : "Pedidos"}
+                  onClick={acknowledgeOrders}
+                >
+                  <Bell className="size-4" />
+                  {hasOpenOrders ? (
+                    <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-red-700 text-[9px] font-bold text-white">
+                      {alertOrders.length > 9 ? "9+" : alertOrders.length}
+                    </span>
+                  ) : null}
+                </Button>
+              ) : null}
               <div className="hidden sm:block">
                 <ThemeToggle />
               </div>
