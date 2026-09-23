@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { createPublicClient } from "./supabase-public.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { normalizePhone } from "@/lib/format";
 
 export type StorefrontVariant = {
   id: string;
@@ -13,7 +14,9 @@ export type StorefrontVariant = {
 
 export type StorefrontProduct = {
   id: string;
-  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria";
+  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria" | "marmitaria";
+  mealPeriod: "lunch" | "dinner" | "both";
+  deliveryEnabled: boolean;
   name: string;
   description: string;
   price: number;
@@ -70,6 +73,7 @@ export type StorefrontSportsCollection = {
 function nicheModule(category: string | null) {
   const value = category?.toLocaleLowerCase("pt-BR") ?? "";
   if (value.includes("cafeteria")) return "cafeteria";
+  if (value.includes("marmitaria") || value.includes("marmita")) return "marmitaria";
   if (value.includes("calçado") || value.includes("calcado")) return "calcados";
   if (value.includes("treino") || value.includes("academia")) return "roupas_treino";
   if (value.includes("esport")) return "roupas_esportivas";
@@ -131,7 +135,7 @@ export type Storefront = {
 
 type StorefrontProductDbRow = {
   id: string;
-  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria";
+  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria" | "marmitaria";
   name: string;
   description: string;
   price: number | string;
@@ -143,6 +147,7 @@ type StorefrontProductDbRow = {
   has_variants: boolean;
   is_hidden: boolean;
   category_id: string | null;
+  meal_period?: "lunch" | "dinner" | "both" | null;
   order_enabled: boolean;
   order_unit_price: number | string | null;
   order_min_quantity: number;
@@ -187,7 +192,7 @@ export const getStorefront = createServerFn({ method: "GET" })
       supabase
         .from("products")
         .select(
-          "id, module, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color",
+          "id, module, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, meal_period, delivery_enabled, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color",
         )
         .eq("store_id", store.id)
         .eq("is_hidden", false)
@@ -400,6 +405,8 @@ export const getStorefront = createServerFn({ method: "GET" })
         is_featured: p.is_featured,
         has_variants: p.has_variants,
         category_id: p.category_id,
+        mealPeriod: p.meal_period ?? "both",
+        deliveryEnabled: Boolean(p.delivery_enabled),
         options: (options ?? [])
           .filter((o) => o.product_id === p.id)
           .map((o) => ({
@@ -463,6 +470,7 @@ const orderSchema = z.object({
   customerName: z.string().max(120).optional().default(""),
   customerWhatsapp: z.string().max(30).optional().default(""),
   note: z.string().max(500).optional().default(""),
+  deliveryAddress: z.object({ cep: z.string().max(9), address: z.string().max(160), number: z.string().max(20), complement: z.string().max(100).optional().default(""), neighborhood: z.string().max(100), city: z.string().max(100), state: z.string().max(2) }).nullable().optional(),
   paymentDeclared: z.boolean().default(false),
   paymentMethod: z.enum(["pix_avista", "parcelado"]).default("pix_avista"),
   installments: z.number().int().min(1).max(12).default(1),
@@ -494,11 +502,14 @@ export const submitOrder = createServerFn({ method: "POST" })
     const { data: store } = await supabaseAdmin
       .from("stores")
       .select(
-        "id, is_active, plan, pro_trial_ends_at, allow_installments, max_installments, min_installment_amount",
+        "id, is_active, plan, pro_trial_ends_at, allow_installments, max_installments, min_installment_amount, default_ddd",
       )
       .eq("id", data.storeId)
       .maybeSingle();
     if (!store || !store.is_active) throw new Error("Loja indisponível");
+    const normalizedCustomerWhatsapp = data.customerWhatsapp
+      ? normalizePhone(data.customerWhatsapp, store.default_ddd ?? "31").replace(/^55/, "")
+      : "";
 
     const { data: productsRaw } = await supabaseAdmin
       .from("products")
@@ -596,13 +607,13 @@ export const submitOrder = createServerFn({ method: "POST" })
     const total = Number(items.reduce((sum, i) => sum + i.subtotal, 0).toFixed(2));
 
     let customerId: string | null = null;
-    if (data.customerWhatsapp) {
+    if (normalizedCustomerWhatsapp) {
       const { data: customer } = await supabaseAdmin
         .from("customers")
         .upsert(
           {
             store_id: store.id,
-            whatsapp: data.customerWhatsapp,
+            whatsapp: normalizedCustomerWhatsapp,
             name: data.customerName || "",
             last_order_at: new Date().toISOString(),
           },
@@ -645,8 +656,15 @@ export const submitOrder = createServerFn({ method: "POST" })
         store_id: store.id,
         customer_id: customerId,
         customer_name: data.customerName,
-        customer_whatsapp: data.customerWhatsapp,
+        customer_whatsapp: normalizedCustomerWhatsapp,
         note: data.note,
+        delivery_cep: data.deliveryAddress?.cep ?? null,
+        delivery_address: data.deliveryAddress?.address ?? null,
+        delivery_number: data.deliveryAddress?.number ?? null,
+        delivery_complement: data.deliveryAddress?.complement ?? null,
+        delivery_neighborhood: data.deliveryAddress?.neighborhood ?? null,
+        delivery_city: data.deliveryAddress?.city ?? null,
+        delivery_state: data.deliveryAddress?.state ?? null,
         total,
         payment_declared: data.paymentDeclared,
         receipt_path: data.receiptPath ?? null,

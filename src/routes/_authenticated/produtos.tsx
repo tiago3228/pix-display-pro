@@ -52,7 +52,7 @@ export const Route = createFileRoute("/_authenticated/produtos")({
 type VariantDraft = { id?: string; label: string; price: string; stock: string };
 type OrderTierDraft = { minQuantity: string; unitPrice: string };
 type SmartSuggestion = {
-  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria";
+  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria" | "marmitaria";
   brand: string | null;
   model: string | null;
   category: string;
@@ -146,7 +146,7 @@ function interpretProductText(input: string): SmartSuggestion {
 
 type ProductRow = {
   id: string;
-  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria";
+  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria" | "marmitaria";
   name: string;
   description: string;
   price: number;
@@ -181,6 +181,8 @@ type ProductRow = {
   shoe_gender?: string | null;
   shoe_size?: string | null;
   shoe_color?: string | null;
+  meal_period?: "lunch" | "dinner" | "both" | null;
+  delivery_enabled?: boolean;
 };
 
 const emptyForm = {
@@ -215,6 +217,8 @@ const emptyForm = {
   shoe_gender: "none",
   shoe_size: "",
   shoe_color: "",
+  meal_period: "both" as "lunch" | "dinner" | "both",
+  delivery_enabled: true,
 };
 
 function Products() {
@@ -235,15 +239,18 @@ function Products() {
   const [trainingOnly, setTrainingOnly] = useState(false);
   const [shoesOnly, setShoesOnly] = useState(false);
   const [cafeteriaOnly, setCafeteriaOnly] = useState(false);
+  const [marmitariaOnly, setMarmitariaOnly] = useState(false);
   const [sportsOnly, setSportsOnly] = useState(false);
 
   function currentCategoryModule() {
     if (cafeteriaOnly) return "cafeteria";
+    if (marmitariaOnly) return "marmitaria";
     if (shoesOnly) return "calcados";
     if (trainingOnly) return "roupas_treino";
     if (sportsOnly) return "roupas_esportivas";
     const category = store?.category?.toLocaleLowerCase("pt-BR") ?? "";
     if (category.includes("cafeteria")) return "cafeteria";
+    if (category.includes("marmitaria") || category.includes("marmita")) return "marmitaria";
     if (category.includes("calçado") || category.includes("calcado")) return "calcados";
     if (category.includes("treino") || category.includes("academia")) return "roupas_treino";
     if (category.includes("esport")) return "roupas_esportivas";
@@ -280,6 +287,7 @@ function Products() {
     const params = new URLSearchParams(window.location.search);
     setSportsOnly(params.get("module") === "roupas_esportivas");
     setCafeteriaOnly(params.get("module") === "cafeteria");
+    setMarmitariaOnly(params.get("module") === "marmitaria");
     if (params.get("guided") === "1") setGuidedOpen(true);
   }, []);
 
@@ -290,7 +298,7 @@ function Products() {
       store?.category,
       trainingOnly,
       shoesOnly,
-      cafeteriaOnly,
+      cafeteriaOnly, marmitariaOnly,
       sportsOnly,
     ],
     enabled: Boolean(store?.id),
@@ -302,6 +310,7 @@ function Products() {
       if (trainingOnly) query = query.eq("module", "roupas_treino");
       if (shoesOnly) query = query.eq("module", "calcados");
       if (cafeteriaOnly) query = query.eq("module", "cafeteria");
+      if (marmitariaOnly) query = query.eq("module", "marmitaria");
       const { data, error } = await query.order("position");
       if (error) throw error;
       const module = currentCategoryModule();
@@ -348,12 +357,13 @@ function Products() {
       let query = supabase
         .from("products")
         .select(
-          "id, module, name, description, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, product_variants(id, label, price, stock), product_order_tiers(min_quantity, unit_price)",
+          "id, module, name, description, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, meal_period, delivery_enabled, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, product_variants(id, label, price, stock), product_order_tiers(min_quantity, unit_price)",
         )
         .eq("store_id", store!.id);
       if (trainingOnly) query = query.eq("module", "roupas_treino");
       if (shoesOnly) query = query.eq("module", "calcados");
       if (cafeteriaOnly) query = query.eq("module", "cafeteria");
+      if (marmitariaOnly) query = query.eq("module", "marmitaria");
       const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
       return data as unknown as ProductRow[];
@@ -399,6 +409,8 @@ function Products() {
         ? "roupas_treino"
         : shoesOnly
           ? "calcados"
+          : marmitariaOnly
+            ? "marmitaria"
           : cafeteriaOnly
             ? "cafeteria"
             : "roupas",
@@ -448,6 +460,8 @@ function Products() {
       shoe_gender: product.shoe_gender ?? "unissex",
       shoe_size: product.shoe_size ?? "",
       shoe_color: product.shoe_color ?? "",
+      meal_period: product.meal_period ?? "both",
+      delivery_enabled: product.delivery_enabled ?? product.module === "marmitaria",
     });
     setSportsNodeId("none");
     setSportsCollectionId("none");
@@ -543,10 +557,14 @@ function Products() {
         ? "roupas_treino"
         : shoesOnly
           ? "calcados"
+          : marmitariaOnly
+            ? "marmitaria"
           : cafeteriaOnly
             ? "cafeteria"
             : form.module,
       name: form.name.trim(),
+      meal_period: form.module === "marmitaria" || marmitariaOnly ? form.meal_period : "both",
+      delivery_enabled: form.module === "marmitaria" || marmitariaOnly ? Boolean(form.delivery_enabled) : false,
       description: form.description ?? "",
       price: Number(String(form.price).replace(",", ".")) || 0,
       stock: Number(form.stock) || 0,
@@ -1227,9 +1245,11 @@ function Products() {
             >
               <div className="space-y-1.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
                 <Label>Módulo da loja</Label>
-                {trainingOnly || shoesOnly || cafeteriaOnly ? (
+                {trainingOnly || shoesOnly || cafeteriaOnly || marmitariaOnly ? (
                   <div className="rounded-md border bg-background px-3 py-2 text-sm font-medium">
-                    {cafeteriaOnly
+                    {marmitariaOnly
+                      ? "🍱 Marmitaria"
+                      : cafeteriaOnly
                       ? "☕ Cafeteria"
                       : trainingOnly
                         ? "🏋️ Roupas de Treino / Academia"
@@ -1240,7 +1260,12 @@ function Products() {
                     value={form.module}
                     onValueChange={(
                       value:
-                        "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria",
+                        | "roupas"
+                        | "roupas_esportivas"
+                        | "roupas_treino"
+                        | "calcados"
+                        | "cafeteria"
+                        | "marmitaria",
                     ) => setForm({ ...form, module: value })}
                   >
                     <SelectTrigger>
@@ -1252,6 +1277,7 @@ function Products() {
                       <SelectItem value="roupas_treino">🏋️ Roupas de Treino / Academia</SelectItem>
                       <SelectItem value="calcados">👟 Calçados</SelectItem>
                       <SelectItem value="cafeteria">☕ Cafeteria</SelectItem>
+                      <SelectItem value="marmitaria">🍱 Marmitaria</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -1259,6 +1285,27 @@ function Products() {
                   O produto aparecerá somente no módulo escolhido.
                 </p>
               </div>
+              {form.module === "marmitaria" || marmitariaOnly ? (
+                <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                  <Label>🕐 Período da refeição</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {([
+                      ["lunch", "☀️ Almoço"],
+                      ["dinner", "🌙 Janta"],
+                      ["both", "☀️🌙 Almoço e Janta"],
+                    ] as const).map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setForm({ ...form, meal_period: value })}
+                        className={`rounded-lg border p-2 text-xs ${form.meal_period === value ? "border-primary bg-primary/10 font-semibold" : ""}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
               <div className="space-y-1.5">
                 <Label>Nome</Label>
                 <Input
@@ -1657,6 +1704,13 @@ function Products() {
             </div>
 
             <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+              {form.module === "marmitaria" || marmitariaOnly ? (
+                <ToggleRow
+                  label="🚚 Habilitar entrega neste produto (solicita CEP e endereço)"
+                  checked={form.delivery_enabled}
+                  onChange={(v) => setForm({ ...form, delivery_enabled: v })}
+                />
+              ) : null}
               <ToggleRow
                 label="📦 Disponibilizar para encomenda"
                 checked={form.order_enabled}

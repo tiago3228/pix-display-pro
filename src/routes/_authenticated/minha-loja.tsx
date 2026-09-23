@@ -40,6 +40,7 @@ const AVAILABLE_NICHES = [
   ["treino", "🏋️ Roupas de Treino / Academia"],
   ["calcados", "👟 Calçados"],
   ["cafeteria", "☕ Cafeteria"],
+  ["marmitaria", "🍱 Marmitaria"],
   ["acessorios", "👜 Acessórios"],
   ["beleza", "💄 Beleza"],
   ["casa", "🏠 Casa e Decoração"],
@@ -56,6 +57,14 @@ const CAFETERIA_CATEGORIES = [
   "🍪 Acompanhamentos",
   "⭐ Combos",
   "🔥 Ofertas",
+];
+const MARMITARIA_CATEGORIES = [
+  "🍱 Marmitas",
+  "🥗 Acompanhamentos",
+  "🥤 Bebidas",
+  "🍰 Sobremesas",
+  "⭐ Combos",
+  "🔥 Promoções",
 ];
 const VITRINI_PALETTE = {
   primary_color: "#0f172a",
@@ -277,6 +286,7 @@ function MyStore() {
     description: "",
     category: "Doces",
     whatsapp: "",
+    default_ddd: "31",
     instagram: "",
     welcome_message: "",
     share_message: DEFAULT_SHARE_MESSAGE,
@@ -319,6 +329,7 @@ function MyStore() {
       description: store.description,
       category: store.category,
       whatsapp: store.whatsapp,
+      default_ddd: (store as { default_ddd?: string }).default_ddd ?? "31",
       instagram: store.instagram ?? "",
       welcome_message: store.welcome_message,
       share_message: store.share_message?.trim() || DEFAULT_SHARE_MESSAGE,
@@ -395,6 +406,7 @@ function MyStore() {
 
     const payload = {
       ...form,
+      default_ddd: /^[1-9][0-9]$/.test(form.default_ddd) ? form.default_ddd : "31",
       slug: slugify(form.slug) || slugify(form.name),
       instagram: form.instagram || null,
     };
@@ -538,18 +550,19 @@ function MyStore() {
       .eq("id", store.id);
     if (error) return toast.error("Não foi possível alterar o nicho.");
     if (
-      selected === "cafeteria" &&
+      (selected === "cafeteria" || selected === "marmitaria") &&
       window.confirm(
         "Deseja adicionar a estrutura sugerida de Cafeteria? Os dados existentes serão preservados.",
       )
     ) {
       const existing = await supabase.from("categories").select("name").eq("store_id", store.id);
       const known = new Set((existing.data ?? []).map((item) => item.name));
+      const suggested = selected === "marmitaria" ? MARMITARIA_CATEGORIES : CAFETERIA_CATEGORIES;
       await supabase.from("categories").insert(
-        CAFETERIA_CATEGORIES.filter((name) => !known.has(name)).map((name, position) => ({
+        suggested.filter((name) => !known.has(name)).map((name, position) => ({
           store_id: store.id,
           name,
-          module: "cafeteria",
+          module: selected === "marmitaria" ? "marmitaria" : "cafeteria",
           position,
         })) as never,
       );
@@ -585,6 +598,8 @@ function MyStore() {
             ? "calcados"
             : suggestionNiche === "cafeteria"
               ? "cafeteria"
+              : suggestionNiche === "marmitaria"
+                ? "marmitaria"
               : "roupas";
     const categoriesByNiche: Record<string, string[]> = {
       roupas: [
@@ -639,6 +654,7 @@ function MyStore() {
         "⭐ Combos",
         "🔥 Ofertas",
       ],
+      marmitaria: MARMITARIA_CATEGORIES,
     };
     const palette = {
       primary_color: colors[0],
@@ -673,6 +689,8 @@ function MyStore() {
                 ? "Calçados"
                 : suggestionNiche === "cafeteria"
                   ? "Cafeteria"
+                  : suggestionNiche === "marmitaria"
+                    ? "Marmitaria"
                   : "Roupas",
         ...palette,
       } as never)
@@ -959,6 +977,7 @@ function MyStore() {
                       ["treino", "🏋️ Treino / Academia"],
                       ["calcados", "👟 Calçados"],
                       ["cafeteria", "☕ Cafeteria"],
+                      ["marmitaria", "🍱 Marmitaria"],
                     ].map(([value, label]) => (
                       <button
                         key={value}
@@ -973,7 +992,7 @@ function MyStore() {
                   <Input
                     placeholder="Ou digite outro nicho"
                     value={
-                      !["roupas", "esportes", "treino", "calcados", "cafeteria"].includes(
+                      !["roupas", "esportes", "treino", "calcados", "cafeteria", "marmitaria"].includes(
                         suggestionNiche,
                       )
                         ? suggestionNiche
@@ -1150,6 +1169,20 @@ function MyStore() {
               placeholder="@sualoja"
               onChange={(e) => setForm({ ...form, instagram: e.target.value })}
             />
+          </div>
+          <div className="space-y-1.5">
+            <Label>📱 DDD padrão da loja</Label>
+            <Input
+              inputMode="numeric"
+              maxLength={2}
+              value={form.default_ddd}
+              onChange={(e) =>
+                setForm({ ...form, default_ddd: e.target.value.replace(/\D/g, "").slice(0, 2) })
+              }
+            />
+            <p className="text-xs text-muted-foreground">
+              Usado quando o cliente informa um telefone sem DDD.
+            </p>
           </div>
         </div>
 

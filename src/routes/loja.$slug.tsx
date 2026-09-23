@@ -135,6 +135,7 @@ export function StorePage() {
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [moduleFilter, setModuleFilter] = useState<string>("all");
+  const [mealFilter, setMealFilter] = useState<"all" | "lunch" | "dinner">("all");
   const [activeSportsNode, setActiveSportsNode] = useState<string>("all");
   const [sportsTypeFilter, setSportsTypeFilter] = useState("all");
   const [sportsAudienceFilter, setSportsAudienceFilter] = useState("all");
@@ -150,6 +151,8 @@ export function StorePage() {
   const [paid, setPaid] = useState(false);
   const [installments, setInstallments] = useState(1);
   const [customer, setCustomer] = useState({ name: "", whatsapp: "", note: "" });
+  const [delivery, setDelivery] = useState({ cep: "", address: "", number: "", complement: "", neighborhood: "", city: "", state: "" });
+  const [lookingUpCep, setLookingUpCep] = useState(false);
   const [sending, setSending] = useState(false);
   const uploadReceipt = useServerFn(uploadOrderReceipt);
   const [receipt, setReceipt] = useState<{ name: string; path: string; url: string | null } | null>(
@@ -181,18 +184,22 @@ export function StorePage() {
       moduleFilter === "all"
         ? data.products
         : data.products.filter((product) => product.module === moduleFilter);
+    const mealProducts =
+      mealFilter === "all" || (!moduleProducts.some((product) => product.module === "marmitaria") && moduleFilter !== "marmitaria")
+        ? moduleProducts
+        : moduleProducts.filter((product) => product.mealPeriod === mealFilter || product.mealPeriod === "both");
     const filtered =
       activeCategory === "all"
-        ? moduleProducts
+        ? mealProducts
         : activeCategory === "featured"
-          ? moduleProducts.filter((p) => p.is_featured)
+          ? mealProducts.filter((p) => p.is_featured)
           : activeCategory === "new-releases"
-            ? moduleProducts.filter((p) => p.sportsIsNewRelease)
+            ? mealProducts.filter((p) => p.sportsIsNewRelease)
             : activeCategory === "offers"
-              ? moduleProducts.filter((p) => p.sportsOfferActive)
+              ? mealProducts.filter((p) => p.sportsOfferActive)
               : activeCategory === "retro"
-                ? moduleProducts.filter((p) => p.sportsIsRetro)
-                : moduleProducts.filter((p) => p.category_id === activeCategory);
+                ? mealProducts.filter((p) => p.sportsIsRetro)
+                : mealProducts.filter((p) => p.category_id === activeCategory);
     const sportsFiltered =
       activeSportsNode === "all"
         ? filtered
@@ -237,6 +244,7 @@ export function StorePage() {
     sportsAudienceFilter,
     collectionFilter,
     search,
+    mealFilter,
   ]);
 
   const availableSportsNodes = useMemo(() => {
@@ -299,6 +307,24 @@ export function StorePage() {
   }
 
   const { store } = data;
+  const isMarmitaria = String(store.category ?? "").toLowerCase().includes("marmit");
+  const deliveryRequired = isMarmitaria && cart.items.some((item) => item.deliveryEnabled);
+
+  async function lookupCep() {
+    const cep = delivery.cep.replace(/\D/g, "");
+    if (cep.length !== 8) return;
+    setLookingUpCep(true);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const result = await response.json();
+      if (result.erro) throw new Error("CEP não encontrado");
+      setDelivery((current) => ({ ...current, cep: cep.replace(/(\d{5})(\d{3})/, "$1-$2"), address: result.logradouro ?? "", neighborhood: result.bairro ?? "", city: result.localidade ?? "", state: result.uf ?? "" }));
+    } catch {
+      toast.error("Não foi possível localizar esse CEP.");
+    } finally {
+      setLookingUpCep(false);
+    }
+  }
 
   function stockOf(product: StorefrontProduct) {
     if (!product.track_stock) return Infinity;
@@ -325,6 +351,7 @@ export function StorePage() {
         description: product.description,
         unitPrice: product.price,
         imageUrl: product.image,
+        deliveryEnabled: product.deliveryEnabled,
         maxQuantity: product.track_stock ? product.stock : null,
       },
       quantity,
@@ -382,6 +409,7 @@ export function StorePage() {
       note: customer.note,
       installments: count,
       receiptUrl: receipt?.url ?? null,
+      deliveryAddress: deliveryRequired ? delivery : null,
     });
     try {
       await sendOrder({
@@ -394,6 +422,7 @@ export function StorePage() {
           paymentMethod: count > 1 ? "parcelado" : "pix_avista",
           installments: count,
           receiptPath: receipt?.path ?? null,
+          deliveryAddress: deliveryRequired ? delivery : null,
           items: cart.items.map((i) => ({
             productId: i.productId,
             variantId: i.variantId ?? null,
@@ -633,7 +662,7 @@ export function StorePage() {
         }}
       >
         <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
-          {(["roupas", "roupas_esportivas", "roupas_treino", "calcados", "cafeteria"] as const).map(
+          {(["roupas", "roupas_esportivas", "roupas_treino", "calcados", "cafeteria", "marmitaria"] as const).map(
             (module) => {
               const labels = {
                 roupas: "👕 Roupas",
@@ -641,6 +670,7 @@ export function StorePage() {
                 roupas_treino: "🏋️ Roupas de Treino / Academia",
                 calcados: "👟 Calçados",
                 cafeteria: "☕ Cafeteria",
+                marmitaria: "🍱 Marmitaria",
               };
               return data.products.some((product) => product.module === module) ? (
                 <CategoryChip
@@ -657,6 +687,28 @@ export function StorePage() {
               ) : null;
             },
           )}
+          {moduleFilter === "marmitaria" ? (
+            <>
+              <CategoryChip
+                label="🍱 Todas"
+                active={mealFilter === "all"}
+                onClick={() => setMealFilter("all")}
+                color={store.primary_color}
+              />
+              <CategoryChip
+                label="☀️ Almoço"
+                active={mealFilter === "lunch"}
+                onClick={() => setMealFilter("lunch")}
+                color={store.primary_color}
+              />
+              <CategoryChip
+                label="🌙 Janta"
+                active={mealFilter === "dinner"}
+                onClick={() => setMealFilter("dinner")}
+                color={store.primary_color}
+              />
+            </>
+          ) : null}
           {moduleFilter !== "all" ? (
             <CategoryChip
               label="Todos os módulos"
@@ -1359,6 +1411,22 @@ export function StorePage() {
                   </div>
                 </div>
 
+                {deliveryRequired ? (
+                  <div className="space-y-3 rounded-xl border bg-muted/30 p-4">
+                    <div>
+                      <p className="text-sm font-semibold">Endereço de entrega</p>
+                      <p className="text-xs text-muted-foreground">Obrigatório para pedidos de Marmitaria.</p>
+                    </div>
+                    <div className="grid grid-cols-[1fr_auto] gap-2">
+                      <Input value={delivery.cep} inputMode="numeric" placeholder="CEP" maxLength={9} onChange={(e) => setDelivery((d) => ({ ...d, cep: e.target.value }))} onBlur={() => void lookupCep()} />
+                      <Button type="button" variant="outline" onClick={() => void lookupCep()} disabled={lookingUpCep}>{lookingUpCep ? "Buscando..." : "Buscar CEP"}</Button>
+                    </div>
+                    <Input placeholder="Rua / avenida" value={delivery.address} onChange={(e) => setDelivery((d) => ({ ...d, address: e.target.value }))} />
+                    <div className="grid grid-cols-2 gap-2"><Input placeholder="Número" value={delivery.number} onChange={(e) => setDelivery((d) => ({ ...d, number: e.target.value }))} /><Input placeholder="Complemento" value={delivery.complement} onChange={(e) => setDelivery((d) => ({ ...d, complement: e.target.value }))} /></div>
+                    <Input placeholder="Bairro" value={delivery.neighborhood} onChange={(e) => setDelivery((d) => ({ ...d, neighborhood: e.target.value }))} />
+                    <div className="grid grid-cols-[1fr_80px] gap-2"><Input placeholder="Cidade" value={delivery.city} onChange={(e) => setDelivery((d) => ({ ...d, city: e.target.value }))} /><Input placeholder="UF" maxLength={2} value={delivery.state} onChange={(e) => setDelivery((d) => ({ ...d, state: e.target.value.toUpperCase() }))} /></div>
+                  </div>
+                ) : null}
                 <div className="space-y-3">
                   <div className="space-y-1.5">
                     <Label htmlFor="cname">Seu nome (opcional)</Label>
@@ -1562,6 +1630,7 @@ function ProductDetail({
         description: product.description,
         unitPrice,
         imageUrl: product.image,
+        deliveryEnabled: product.deliveryEnabled,
         maxQuantity: product.track_stock || !simpleProduct ? maxQuantity : null,
       },
       quantity,

@@ -17,15 +17,16 @@ export function slugify(input: string) {
 }
 
 /** Keeps only digits and makes sure the number has the Brazilian country code. */
-export function normalizePhone(input: string) {
+export function normalizePhone(input: string, defaultDdd = "31") {
   const digits = (input || "").replace(/\D/g, "");
   if (!digits) return "";
   if (digits.startsWith("55")) return digits;
+  if (digits.length === 9 && /^[1-9][0-9]$/.test(defaultDdd)) return `55${defaultDdd}${digits}`;
   return `55${digits}`;
 }
 
-export function whatsappLink(phone: string, message: string) {
-  return `https://wa.me/${normalizePhone(phone)}?text=${encodeURIComponent(message)}`;
+export function whatsappLink(phone: string, message: string, defaultDdd = "31") {
+  return `https://wa.me/${normalizePhone(phone, defaultDdd)}?text=${encodeURIComponent(message)}`;
 }
 
 export const PIX_KEY_TYPES = [

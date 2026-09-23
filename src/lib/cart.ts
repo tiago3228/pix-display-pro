@@ -11,6 +11,7 @@ export type CartItem = {
   quantity: number;
   maxQuantity?: number | null;
   imageUrl?: string | null;
+  deliveryEnabled?: boolean;
 };
 
 const storageKey = (slug: string) => `vitrini:cart:${slug}`;
@@ -98,6 +99,7 @@ export function buildOrderMessage(opts: {
   note?: string;
   installments?: number;
   receiptUrl?: string | null;
+  deliveryAddress?: { cep: string; address: string; number: string; complement?: string; neighborhood: string; city: string; state: string } | null;
 }) {
   const lines: string[] = [];
   lines.push(`Olá, ${opts.sellerName || "tudo bem"}! 😊`);
@@ -127,6 +129,10 @@ export function buildOrderMessage(opts: {
   }
   if (opts.note) {
     lines.push(`Observação: ${opts.note}`);
+  }
+  if (opts.deliveryAddress) {
+    const a = opts.deliveryAddress;
+    lines.push(`📍 Entrega: ${a.address}, ${a.number}${a.complement ? `, ${a.complement}` : ""} - ${a.neighborhood}, ${a.city}/${a.state} - CEP ${a.cep}`);
   }
   if (opts.receiptUrl) {
     lines.push("");
