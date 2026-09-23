@@ -97,6 +97,7 @@ export function buildOrderMessage(opts: {
   customerName?: string;
   note?: string;
   installments?: number;
+  receiptUrl?: string | null;
 }) {
   const lines: string[] = [];
   lines.push(`Olá, ${opts.sellerName || "tudo bem"}! 😊`);
@@ -126,6 +127,10 @@ export function buildOrderMessage(opts: {
   }
   if (opts.note) {
     lines.push(`Observação: ${opts.note}`);
+  }
+  if (opts.receiptUrl) {
+    lines.push("");
+    lines.push(`📎 Comprovante de pagamento: ${opts.receiptUrl}`);
   }
   lines.push("");
   const count = opts.installments ?? 1;

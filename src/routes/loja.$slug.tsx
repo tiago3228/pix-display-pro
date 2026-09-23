@@ -131,7 +131,9 @@ export function StorePage() {
   const [customer, setCustomer] = useState({ name: "", whatsapp: "", note: "" });
   const [sending, setSending] = useState(false);
   const uploadReceipt = useServerFn(uploadOrderReceipt);
-  const [receipt, setReceipt] = useState<{ name: string; path: string } | null>(null);
+  const [receipt, setReceipt] = useState<{ name: string; path: string; url: string | null } | null>(
+    null,
+  );
   const [uploadingReceipt, setUploadingReceipt] = useState(false);
 
   function openGallery(product: StorefrontProduct, index = 0) {
@@ -338,7 +340,7 @@ export function StorePage() {
           base64: btoa(binary),
         },
       });
-      setReceipt({ name: file.name, path: result.path });
+      setReceipt({ name: file.name, path: result.path, url: result.url });
       toast.success("Comprovante anexado!");
     } catch {
       toast.error("Não foi possível anexar o comprovante. Tente novamente.");
@@ -358,6 +360,7 @@ export function StorePage() {
       customerName: customer.name,
       note: customer.note,
       installments: count,
+      receiptUrl: receipt?.url ?? null,
     });
     try {
       await sendOrder({

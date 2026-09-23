@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   DEFAULT_SHARE_MESSAGE,
   StoreWhatsAppShare,
@@ -121,6 +122,14 @@ function MyStore() {
   const [palettePreview, setPalettePreview] = useState(false);
   const [customColorName, setCustomColorName] = useState("");
   const [customColorHex, setCustomColorHex] = useState("#90ee90");
+  const [suggestionOpen, setSuggestionOpen] = useState(false);
+  const [suggestionStep, setSuggestionStep] = useState(1);
+  const [suggestionName, setSuggestionName] = useState("");
+  const [suggestionColors, setSuggestionColors] = useState(["#111827"]);
+  const [suggestionColorInput, setSuggestionColorInput] = useState("#0f766e");
+  const [suggestionNiche, setSuggestionNiche] = useState("roupas");
+  const [generating, setGenerating] = useState(false);
+  const [generationStep, setGenerationStep] = useState(0);
   const isPro = store?.plan === "pro";
   const [form, setForm] = useState({
     name: "",
@@ -332,8 +341,324 @@ function MyStore() {
     toast.success("Banner copiado para sua loja. Agora você pode editá-lo.");
   }
 
+  async function generateStoreSuggestion() {
+    if (!store || !suggestionName.trim() || !suggestionColors.length || !suggestionNiche) return;
+    setGenerating(true);
+    const steps = [
+      "Analisando seu nicho...",
+      "Criando identidade visual...",
+      "Criando sua paleta...",
+      "Preparando banners...",
+      "Organizando categorias...",
+      "Montando sua página...",
+    ];
+    for (let index = 0; index < steps.length; index += 1) {
+      setGenerationStep(index + 1);
+      await new Promise((resolve) => window.setTimeout(resolve, 280));
+    }
+    const colors = [...suggestionColors, "#ffffff", "#111827"];
+    const module =
+      suggestionNiche === "esportes"
+        ? "roupas_esportivas"
+        : suggestionNiche === "treino"
+          ? "roupas_treino"
+          : suggestionNiche === "calcados"
+            ? "calcados"
+            : "roupas";
+    const categoriesByNiche: Record<string, string[]> = {
+      roupas: [
+        "Blusas",
+        "Camisas",
+        "Calças",
+        "Vestidos",
+        "Shorts",
+        "Conjuntos",
+        "Moda Praia",
+        "Acessórios",
+      ],
+      esportes: [
+        "Futebol",
+        "Basquete",
+        "Vôlei",
+        "Corrida",
+        "Treino",
+        "Clubes",
+        "Seleções",
+        "Retrô",
+      ],
+      treino: [
+        "Camisetas",
+        "Dry Fit",
+        "Regatas",
+        "Tops",
+        "Leggings",
+        "Shorts",
+        "Conjuntos",
+        "Acessórios",
+      ],
+      calcados: [
+        "Tênis",
+        "Casual",
+        "Running",
+        "Academia",
+        "Futebol",
+        "Botas",
+        "Sandálias",
+        "Infantil",
+      ],
+    };
+    const palette = {
+      primary_color: colors[0],
+      secondary_color: colors[1],
+      accent_color: colors[2],
+      background_color: colors[3],
+      text_color: colors[4],
+      button_color: colors[0],
+      theme_palette: {
+        ...ADVANCED_PALETTE,
+        header: colors[0],
+        links: colors[1],
+        prices: colors[0],
+        offers: colors[2],
+        badges: colors[2],
+        custom_colors: suggestionColors.map((hex, index) => ({
+          name: `Cor da marca ${index + 1}`,
+          hex,
+        })),
+      },
+    };
+    const storeUpdate = await supabase
+      .from("stores")
+      .update({
+        name: suggestionName.trim(),
+        category:
+          suggestionNiche === "esportes"
+            ? "Roupas Esportivas"
+            : suggestionNiche === "treino"
+              ? "Roupas de Treino / Academia"
+              : suggestionNiche === "calcados"
+                ? "Calçados"
+                : "Roupas",
+        ...palette,
+      } as never)
+      .eq("id", store.id);
+    if (storeUpdate.error) {
+      setGenerating(false);
+      return toast.error("Não foi possível criar a sugestão da loja.");
+    }
+    await supabase.from("categories").insert(
+      (categoriesByNiche[suggestionNiche] ?? categoriesByNiche.roupas).map((name, position) => ({
+        store_id: store.id,
+        name,
+        module,
+        position,
+      })),
+    );
+    const suggestions = BANNER_SUGGESTIONS.filter((banner) =>
+      suggestionNiche === "esportes"
+        ? banner.key === "sports-season"
+        : suggestionNiche === "treino"
+          ? banner.key === "training-performance"
+          : suggestionNiche === "calcados"
+            ? banner.key === "shoes-launch"
+            : banner.niche === "👕 Roupas",
+    ).slice(0, 3);
+    if (suggestions.length)
+      await supabase.from("storefront_banners").insert(
+        suggestions.map((banner, position) => ({
+          store_id: store.id,
+          title: banner.title,
+          subtitle: banner.subtitle,
+          cta_label: banner.cta,
+          template_key: banner.key,
+          position,
+          is_active: false,
+        })),
+      );
+    setGenerating(false);
+    setSuggestionOpen(false);
+    setSuggestionStep(1);
+    queryClient.invalidateQueries({ queryKey: ["my-store"] });
+    toast.success("Sua primeira sugestão de loja foi criada. Tudo continua editável.");
+  }
+
   return (
     <AppShell title="Minha loja" description="Personalize sua vitrine">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-amber-300/60 bg-gradient-to-r from-amber-50 to-orange-50 p-5 dark:from-amber-950/30 dark:to-orange-950/20">
+        <div>
+          <p className="text-base font-bold">✨ Sugestão de Loja</p>
+          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+            Informe o nome, escolha suas cores e diga o que vende. O Vitrini prepara uma primeira
+            versão profissional para você.
+          </p>
+        </div>
+        <Button
+          type="button"
+          onClick={() => {
+            setSuggestionName(form.name);
+            setSuggestionOpen(true);
+          }}
+          className="bg-amber-500 text-white hover:bg-amber-600"
+        >
+          ✨ Criar minha loja
+        </Button>
+      </div>
+      <Dialog open={suggestionOpen} onOpenChange={(open) => !generating && setSuggestionOpen(open)}>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>✨ Sugestão de Loja</DialogTitle>
+          </DialogHeader>
+          {generating ? (
+            <div className="space-y-3 py-5">
+              {[
+                "Analisando seu nicho...",
+                "Criando identidade visual...",
+                "Criando sua paleta...",
+                "Preparando banners...",
+                "Organizando categorias...",
+                "Montando sua página...",
+              ].map((label, index) => (
+                <div key={label} className="flex items-center gap-2 text-sm">
+                  {index < generationStep ? (
+                    <span className="text-emerald-600">✓</span>
+                  ) : (
+                    <span className="size-4 rounded-full border" />
+                  )}
+                  {label}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {suggestionStep === 1 ? (
+                <div className="space-y-3">
+                  <p className="font-semibold">Qual é o nome da sua marca?</p>
+                  <Input
+                    autoFocus
+                    placeholder="Ex.: Tiago Camisas BR"
+                    value={suggestionName}
+                    onChange={(event) => setSuggestionName(event.target.value)}
+                  />
+                  <Button
+                    className="w-full"
+                    disabled={!suggestionName.trim()}
+                    onClick={() => setSuggestionStep(2)}
+                  >
+                    Próximo
+                  </Button>
+                </div>
+              ) : null}
+              {suggestionStep === 2 ? (
+                <div className="space-y-3">
+                  <p className="font-semibold">🎨 Quais são as cores da sua marca?</p>
+                  <p className="text-xs text-muted-foreground">
+                    Escolha de 1 a 5 cores. O Vitrini organiza as funções sem substituir suas
+                    escolhas.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {suggestionColors.map((color) => (
+                      <span
+                        key={color}
+                        className="inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs"
+                      >
+                        <span className="size-3 rounded-full" style={{ backgroundColor: color }} />
+                        {color}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={suggestionColorInput}
+                      onChange={(event) => setSuggestionColorInput(event.target.value)}
+                      className="size-10 rounded border p-0.5"
+                    />
+                    <Input
+                      value={suggestionColorInput}
+                      maxLength={7}
+                      onChange={(event) => setSuggestionColorInput(event.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={
+                        suggestionColors.length >= 5 ||
+                        !/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(suggestionColorInput)
+                      }
+                      onClick={() => {
+                        if (!suggestionColors.includes(suggestionColorInput.toUpperCase()))
+                          setSuggestionColors((current) => [
+                            ...current,
+                            suggestionColorInput.toUpperCase(),
+                          ]);
+                      }}
+                    >
+                      Adicionar
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" onClick={() => setSuggestionStep(1)}>
+                      Voltar
+                    </Button>
+                    <Button
+                      className="flex-1"
+                      disabled={!suggestionColors.length}
+                      onClick={() => setSuggestionStep(3)}
+                    >
+                      Próximo
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+              {suggestionStep === 3 ? (
+                <div className="space-y-3">
+                  <p className="font-semibold">🏪 Qual é o nicho da sua loja?</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      ["roupas", "👕 Roupas"],
+                      ["esportes", "⚽ Roupas Esportivas"],
+                      ["treino", "🏋️ Treino / Academia"],
+                      ["calcados", "👟 Calçados"],
+                    ].map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setSuggestionNiche(value)}
+                        className={`rounded-xl border p-3 text-left text-sm ${suggestionNiche === value ? "border-primary bg-primary/10" : ""}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <Input
+                    placeholder="Ou digite outro nicho"
+                    value={
+                      !["roupas", "esportes", "treino", "calcados"].includes(suggestionNiche)
+                        ? suggestionNiche
+                        : ""
+                    }
+                    onChange={(event) => setSuggestionNiche(event.target.value || "roupas")}
+                  />
+                  <div className="rounded-lg bg-muted/40 p-3 text-sm">
+                    <p className="font-semibold">Tudo pronto para criar sua loja!</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {suggestionName} · {suggestionColors.join(" ")} · {suggestionNiche}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="ghost" onClick={() => setSuggestionStep(2)}>
+                      Voltar
+                    </Button>
+                    <Button className="flex-1" onClick={() => void generateStoreSuggestion()}>
+                      🚀 Criar minha loja
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       <div className="surface space-y-4 p-5">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">

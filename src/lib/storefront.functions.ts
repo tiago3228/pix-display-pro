@@ -746,7 +746,11 @@ export const uploadOrderReceipt = createServerFn({ method: "POST" })
       .upload(path, bytes, { contentType: data.contentType, upsert: false });
     if (error) throw new Error("Não foi possível enviar o comprovante.");
 
-    return { path };
+    const { data: signed } = await supabaseAdmin.storage
+      .from("store-assets")
+      .createSignedUrl(path, 60 * 60 * 24);
+
+    return { path, url: signed?.signedUrl ?? null };
   });
 
 /** O vendedor autenticado obtém um link temporário do comprovante do seu pedido. */
