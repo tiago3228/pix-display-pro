@@ -27,7 +27,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin, useMyStore } from "@/hooks/useAuth";
 import { useProPricing } from "@/hooks/usePricing";
 import { brl } from "@/lib/format";
-import { savePushSubscription } from "@/lib/push.functions";
+import { getPushPublicKey, savePushSubscription } from "@/lib/push.functions";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -112,6 +112,7 @@ export function AppShell({
   const { data: store, isLoading: storeLoading } = useMyStore();
   const { price: proPrice } = useProPricing();
   const [moreOpen, setMoreOpen] = useState(false);
+  const getPublicKey = useServerFn(getPushPublicKey);
   const saveSubscription = useServerFn(savePushSubscription);
   const [pushReady, setPushReady] = useState(false);
   const [pushPermission, setPushPermission] = useState<NotificationPermission | "unsupported">(
@@ -181,7 +182,7 @@ export function AppShell({
 
   async function enablePushNotifications() {
     if (!store?.id || typeof window === "undefined" || !("Notification" in window)) return;
-    const publicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+    const { publicKey } = await getPublicKey();
     if (!publicKey) {
       toast.error("As notificações ainda não foram configuradas pelo administrador.");
       return;

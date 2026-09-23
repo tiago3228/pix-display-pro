@@ -12,6 +12,10 @@ const subscriptionSchema = z.object({
   userAgent: z.string().max(500).optional(),
 });
 
+export const getPushPublicKey = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => ({ publicKey: process.env["VAPID_PUBLIC_KEY"] ?? null }));
+
 export const savePushSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: unknown) => subscriptionSchema.parse(data))
