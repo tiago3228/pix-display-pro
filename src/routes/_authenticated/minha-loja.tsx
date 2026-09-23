@@ -330,7 +330,7 @@ function MyStore() {
       subtitle: suggestion.subtitle,
       cta_label: suggestion.cta,
       template_key: suggestion.key,
-      is_active: false,
+      is_active: true,
       position: banners.data?.length ?? 0,
     });
     if (error) {

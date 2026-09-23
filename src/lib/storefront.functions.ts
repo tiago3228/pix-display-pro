@@ -86,6 +86,13 @@ export type Storefront = {
     text_color: string;
     button_color: string;
     theme_palette: Record<string, string>;
+    promo_banner: {
+      title: string;
+      subtitle: string;
+      cta_label: string;
+      cta_href: string;
+      image_url: string | null;
+    } | null;
     welcome_message: string;
     pix_key: string;
     pix_key_type: string;
@@ -162,12 +169,6 @@ export const getStorefront = createServerFn({ method: "GET" })
 
     if (!store) return null;
 
-    const { data: themeRow } = await supabase
-      .from("stores")
-      .select("theme_palette")
-      .eq("id", store.id)
-      .maybeSingle();
-
     const [{ data: categories }, { data: productsRaw }] = await Promise.all([
       supabase
         .from("categories")
@@ -185,6 +186,16 @@ export const getStorefront = createServerFn({ method: "GET" })
     ]);
 
     const products = (productsRaw ?? []) as unknown as StorefrontProductDbRow[];
+    const { data: promoBanner } = await supabase
+      .from("storefront_banners")
+      .select("title, subtitle, cta_label, cta_href, image_url")
+      .eq("store_id", store.id)
+      .eq("is_active", true)
+      .or("starts_at.is.null,starts_at.lte." + new Date().toISOString())
+      .or("ends_at.is.null,ends_at.gte." + new Date().toISOString())
+      .order("position")
+      .limit(1)
+      .maybeSingle();
     const productIds = products.map((p) => p.id);
     // These tables are introduced by the migrations in this change; generated
     // Supabase types are refreshed by Lovable when the SQL is published.
@@ -308,7 +319,16 @@ export const getStorefront = createServerFn({ method: "GET" })
         background_color: store.background_color ?? "#f8fafc",
         text_color: store.text_color ?? "#111827",
         button_color: store.button_color ?? store.primary_color,
-        theme_palette: (themeRow?.theme_palette as Record<string, string> | null) ?? {},
+        theme_palette: (store.theme_palette as Record<string, string> | null | undefined) ?? {},
+        promo_banner: promoBanner
+          ? {
+              title: promoBanner.title,
+              subtitle: promoBanner.subtitle,
+              cta_label: promoBanner.cta_label,
+              cta_href: promoBanner.cta_href,
+              image_url: promoBanner.image_url,
+            }
+          : null,
         welcome_message: store.welcome_message,
         pix_key: store.pix_key,
         pix_key_type: store.pix_key_type,
@@ -489,8 +509,7 @@ export const submitOrder = createServerFn({ method: "POST" })
     // Prices always come from the database, never from the browser payload.
     const items = data.items.map((item) => {
       const product = (products ?? []).find(
-        (p) =>
-          p.id === item.productId && p.store_id === store.id && !p.is_hidden && p.is_available,
+        (p) => p.id === item.productId && p.store_id === store.id && !p.is_hidden && p.is_available,
       );
       if (!product) throw new Error("Produto indisponível para pedido");
       const variant = item.variantId

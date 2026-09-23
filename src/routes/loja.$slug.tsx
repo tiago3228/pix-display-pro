@@ -408,17 +408,17 @@ export function StorePage() {
         ["--store-secondary" as string]: store.secondary_color,
         ["--store-accent" as string]: store.accent_color,
         ["--store-button" as string]: store.button_color,
-        ["--store-text-secondary" as string]: store.theme_palette['text_secondary'] ?? "#64748b",
-        ["--store-header" as string]: store.theme_palette['header'] ?? store.primary_color,
-        ["--store-menu" as string]: store.theme_palette['menu'] ?? "#ffffff",
-        ["--store-links" as string]: store.theme_palette['links'] ?? store.secondary_color,
-        ["--store-prices" as string]: store.theme_palette['prices'] ?? store.primary_color,
-        ["--store-offers" as string]: store.theme_palette['offers'] ?? "#dc2626",
-        ["--store-badges" as string]: store.theme_palette['badges'] ?? store.accent_color,
-        ["--store-cards" as string]: store.theme_palette['cards'] ?? "#ffffff",
-        ["--store-borders" as string]: store.theme_palette['borders'] ?? "#e2e8f0",
-        ["--store-footer" as string]: store.theme_palette['footer'] ?? store.primary_color,
-        ["--store-filters" as string]: store.theme_palette['filters'] ?? "#f1f5f9",
+        ["--store-text-secondary" as string]: store.theme_palette["text_secondary"] ?? "#64748b",
+        ["--store-header" as string]: store.theme_palette["header"] ?? store.primary_color,
+        ["--store-menu" as string]: store.theme_palette["menu"] ?? "#ffffff",
+        ["--store-links" as string]: store.theme_palette["links"] ?? store.secondary_color,
+        ["--store-prices" as string]: store.theme_palette["prices"] ?? store.primary_color,
+        ["--store-offers" as string]: store.theme_palette["offers"] ?? "#dc2626",
+        ["--store-badges" as string]: store.theme_palette["badges"] ?? store.accent_color,
+        ["--store-cards" as string]: store.theme_palette["cards"] ?? "#ffffff",
+        ["--store-borders" as string]: store.theme_palette["borders"] ?? "#e2e8f0",
+        ["--store-footer" as string]: store.theme_palette["footer"] ?? store.primary_color,
+        ["--store-filters" as string]: store.theme_palette["filters"] ?? "#f1f5f9",
         ["--sports-primary" as string]:
           data.sports.settings?.primary_color ?? "var(--vitrini-orange)",
         ["--sports-secondary" as string]:
@@ -436,7 +436,25 @@ export function StorePage() {
                 ? `center/cover url(${data.sports.settings?.banner_url || store.banner})`
                 : "linear-gradient(120deg, #ffffff 0%, #f8fafc 52%, #e2e8f0 150%)",
           }}
-        />
+        >
+          {store.promo_banner ? (
+            <div className="mx-auto flex h-full max-w-3xl items-center px-6 text-white drop-shadow-lg">
+              <div>
+                <p className="text-2xl font-black uppercase sm:text-4xl">
+                  {store.promo_banner.title}
+                </p>
+                <p className="mt-1 text-sm sm:text-base">{store.promo_banner.subtitle}</p>
+                <a
+                  href={store.promo_banner.cta_href || "#produtos"}
+                  className="mt-3 inline-flex rounded-full px-4 py-2 text-xs font-bold"
+                  style={{ backgroundColor: store.button_color }}
+                >
+                  {store.promo_banner.cta_label}
+                </a>
+              </div>
+            </div>
+          ) : null}
+        </div>
         <div className="mx-auto max-w-3xl px-4">
           <div className="surface vitrini-glow -mt-12 flex items-start gap-4 p-4 sm:p-5">
             <div
@@ -814,7 +832,10 @@ export function StorePage() {
                           <span className="text-xs text-muted-foreground line-through">
                             {brl(product.sportsOriginalPrice ?? product.price)}
                           </span>
-                          <span className="text-base font-bold text-emerald-600">
+                          <span
+                            className="text-base font-bold"
+                            style={{ color: store.theme_palette.prices ?? store.primary_color }}
+                          >
                             {brl(product.sportsOfferPrice)}
                           </span>
                           {product.sportsOfferPercent ? (
@@ -822,7 +843,12 @@ export function StorePage() {
                           ) : null}
                         </>
                       ) : (
-                        <span className="text-base font-bold">{brl(product.price)}</span>
+                        <span
+                          className="text-base font-bold"
+                          style={{ color: store.theme_palette.prices ?? store.primary_color }}
+                        >
+                          {brl(product.price)}
+                        </span>
                       )}
                       {product.sportsIsNewRelease ? (
                         <Badge variant="secondary">🆕 Lançamento</Badge>
