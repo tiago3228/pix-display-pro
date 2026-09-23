@@ -236,6 +236,19 @@ function Products() {
   const [shoesOnly, setShoesOnly] = useState(false);
   const [cafeteriaOnly, setCafeteriaOnly] = useState(false);
   const [sportsOnly, setSportsOnly] = useState(false);
+
+  function currentCategoryModule() {
+    if (cafeteriaOnly) return "cafeteria";
+    if (shoesOnly) return "calcados";
+    if (trainingOnly) return "roupas_treino";
+    if (sportsOnly) return "roupas_esportivas";
+    const category = store?.category?.toLocaleLowerCase("pt-BR") ?? "";
+    if (category.includes("cafeteria")) return "cafeteria";
+    if (category.includes("calçado") || category.includes("calcado")) return "calcados";
+    if (category.includes("treino") || category.includes("academia")) return "roupas_treino";
+    if (category.includes("esport")) return "roupas_esportivas";
+    return "roupas";
+  }
   const [guidedOpen, setGuidedOpen] = useState(false);
   const [guidedType, setGuidedType] = useState("");
   const [smartOpen, setSmartOpen] = useState(false);
@@ -271,16 +284,28 @@ function Products() {
   }, []);
 
   const { data: categories } = useQuery({
-    queryKey: ["categories", store?.id, trainingOnly, shoesOnly, cafeteriaOnly],
+    queryKey: [
+      "categories",
+      store?.id,
+      store?.category,
+      trainingOnly,
+      shoesOnly,
+      cafeteriaOnly,
+      sportsOnly,
+    ],
     enabled: Boolean(store?.id),
     queryFn: async () => {
-      let query = supabase.from("categories").select("id, name").eq("store_id", store!.id);
+      let query = supabase
+        .from("categories")
+        .select("id, name, module, is_active")
+        .eq("store_id", store!.id);
       if (trainingOnly) query = query.eq("module", "roupas_treino");
       if (shoesOnly) query = query.eq("module", "calcados");
       if (cafeteriaOnly) query = query.eq("module", "cafeteria");
       const { data, error } = await query.order("position");
       if (error) throw error;
-      return data;
+      const module = currentCategoryModule();
+      return (data ?? []).filter((category) => !category.module || category.module === module);
     },
   });
 
@@ -741,13 +766,28 @@ function Products() {
     if (!newCategory.trim() || !store) return;
     const { error } = await supabase
       .from("categories")
-      .insert({ store_id: store.id, name: newCategory.trim() });
+      .insert({ store_id: store.id, name: newCategory.trim(), module: currentCategoryModule() });
     if (error) {
       toast.error("Não foi possível criar a categoria.");
       return;
     }
     setNewCategory("");
     queryClient.invalidateQueries({ queryKey: ["categories", store.id] });
+  }
+
+  async function toggleCategory(category: { id: string; name: string; is_active: boolean | null }) {
+    const next = category.is_active === false;
+    const { error } = await supabase
+      .from("categories")
+      .update({ is_active: next } as never)
+      .eq("id", category.id)
+      .eq("store_id", store!.id);
+    if (error) {
+      toast.error("Não foi possível alterar a categoria. Publique a migração SQL primeiro.");
+      return;
+    }
+    queryClient.invalidateQueries({ queryKey: ["categories", store?.id] });
+    toast.success(`${category.name} ${next ? "ativada" : "desativada"}.`);
   }
 
   return (
@@ -796,11 +836,24 @@ function Products() {
       <div className="surface mb-4 p-4">
         <p className="text-sm font-semibold">Categorias</p>
         <div className="mt-2 flex flex-wrap gap-2">
-          {(categories ?? []).map((category) => (
-            <Badge key={category.id} variant="secondary">
-              {category.name}
-            </Badge>
-          ))}
+          {(categories ?? []).map((category) => {
+            const active = category.is_active !== false;
+            return (
+              <button
+                key={category.id}
+                type="button"
+                title={active ? "Toque para desativar" : "Toque para ativar"}
+                onClick={() => void toggleCategory(category)}
+                className={`rounded-full border px-3 py-1 text-xs font-medium transition active:scale-95 ${
+                  active
+                    ? "border-primary/20 bg-primary/10 text-foreground"
+                    : "border-dashed bg-muted/40 text-muted-foreground opacity-60 line-through"
+                }`}
+              >
+                {category.name} {active ? "✓" : "· desativada"}
+              </button>
+            );
+          })}
           {!categories?.length ? (
             <p className="text-xs text-muted-foreground">Nenhuma categoria criada.</p>
           ) : null}

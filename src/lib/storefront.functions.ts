@@ -67,6 +67,15 @@ export type StorefrontSportsCollection = {
   is_featured: boolean;
 };
 
+function nicheModule(category: string | null) {
+  const value = category?.toLocaleLowerCase("pt-BR") ?? "";
+  if (value.includes("cafeteria")) return "cafeteria";
+  if (value.includes("calçado") || value.includes("calcado")) return "calcados";
+  if (value.includes("treino") || value.includes("academia")) return "roupas_treino";
+  if (value.includes("esport")) return "roupas_esportivas";
+  return "roupas";
+}
+
 export type Storefront = {
   store: {
     id: string;
@@ -172,7 +181,7 @@ export const getStorefront = createServerFn({ method: "GET" })
     const [{ data: categories }, { data: productsRaw }] = await Promise.all([
       supabase
         .from("categories")
-        .select("id, name, module, position")
+        .select("id, name, module, position, is_active")
         .eq("store_id", store.id)
         .order("position"),
       supabase
@@ -186,6 +195,11 @@ export const getStorefront = createServerFn({ method: "GET" })
     ]);
 
     const products = (productsRaw ?? []) as unknown as StorefrontProductDbRow[];
+    const activeModule = nicheModule(store.category);
+    const visibleCategories = (categories ?? []).filter((category) => {
+      const item = category as unknown as { module?: string; is_active?: boolean };
+      return item.is_active !== false && (!item.module || item.module === activeModule);
+    });
     const { data: promoBanner } = await supabase
       .from("storefront_banners")
       .select("title, subtitle, cta_label, cta_href, image_url")
@@ -339,7 +353,7 @@ export const getStorefront = createServerFn({ method: "GET" })
         max_installments: store.max_installments,
         min_installment_amount: Number(store.min_installment_amount),
       },
-      categories: (categories ?? []).map((c) => {
+      categories: visibleCategories.map((c) => {
         const category = c as unknown as { id: string; name: string; module?: string };
         return {
           id: category.id,
