@@ -235,6 +235,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          is_active: boolean
           module: string
           name: string
           position: number
@@ -243,6 +244,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_active?: boolean
           module?: string
           name: string
           position?: number
@@ -251,6 +253,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_active?: boolean
           module?: string
           name?: string
           position?: number
@@ -658,6 +661,13 @@ export type Database = {
           customer_id: string | null
           customer_name: string
           customer_whatsapp: string
+          delivery_address: string | null
+          delivery_cep: string | null
+          delivery_city: string | null
+          delivery_complement: string | null
+          delivery_neighborhood: string | null
+          delivery_number: string | null
+          delivery_state: string | null
           id: string
           installments_count: number
           note: string | null
@@ -675,6 +685,13 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string
           customer_whatsapp?: string
+          delivery_address?: string | null
+          delivery_cep?: string | null
+          delivery_city?: string | null
+          delivery_complement?: string | null
+          delivery_neighborhood?: string | null
+          delivery_number?: string | null
+          delivery_state?: string | null
           id?: string
           installments_count?: number
           note?: string | null
@@ -692,6 +709,13 @@ export type Database = {
           customer_id?: string | null
           customer_name?: string
           customer_whatsapp?: string
+          delivery_address?: string | null
+          delivery_cep?: string | null
+          delivery_city?: string | null
+          delivery_complement?: string | null
+          delivery_neighborhood?: string | null
+          delivery_number?: string | null
+          delivery_state?: string | null
           id?: string
           installments_count?: number
           note?: string | null
@@ -1235,6 +1259,7 @@ export type Database = {
           category_id: string | null
           created_at: string
           created_via: string
+          delivery_enabled: boolean
           description: string
           discovery_imported_at: string | null
           discovery_imported_fields: Json
@@ -1246,6 +1271,7 @@ export type Database = {
           is_available: boolean
           is_featured: boolean
           is_hidden: boolean
+          meal_period: string
           module: string
           name: string
           order_enabled: boolean
@@ -1285,6 +1311,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           created_via?: string
+          delivery_enabled?: boolean
           description?: string
           discovery_imported_at?: string | null
           discovery_imported_fields?: Json
@@ -1296,6 +1323,7 @@ export type Database = {
           is_available?: boolean
           is_featured?: boolean
           is_hidden?: boolean
+          meal_period?: string
           module?: string
           name: string
           order_enabled?: boolean
@@ -1335,6 +1363,7 @@ export type Database = {
           category_id?: string | null
           created_at?: string
           created_via?: string
+          delivery_enabled?: boolean
           description?: string
           discovery_imported_at?: string | null
           discovery_imported_fields?: Json
@@ -1346,6 +1375,7 @@ export type Database = {
           is_available?: boolean
           is_featured?: boolean
           is_hidden?: boolean
+          meal_period?: string
           module?: string
           name?: string
           order_enabled?: boolean
@@ -1434,6 +1464,47 @@ export type Database = {
           whatsapp?: string | null
         }
         Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          store_id: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          store_id: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          store_id?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shoe_brands: {
         Row: {
@@ -1957,6 +2028,7 @@ export type Database = {
           button_color: string
           category: string
           created_at: string
+          default_ddd: string
           description: string
           id: string
           instagram: string | null
@@ -1992,6 +2064,7 @@ export type Database = {
           button_color?: string
           category?: string
           created_at?: string
+          default_ddd?: string
           description?: string
           id?: string
           instagram?: string | null
@@ -2027,6 +2100,7 @@ export type Database = {
           button_color?: string
           category?: string
           created_at?: string
+          default_ddd?: string
           description?: string
           id?: string
           instagram?: string | null
@@ -2349,6 +2423,7 @@ export type Database = {
           seller_name: string
           slug: string
           text_color: string
+          theme_palette: Json
           welcome_message: string
           whatsapp: string
         }[]

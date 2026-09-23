@@ -12,9 +12,54 @@ const subscriptionSchema = z.object({
   userAgent: z.string().max(500).optional(),
 });
 
+function b64urlToBytes(value: string) {
+  const b64 = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+  return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+}
+function bytesToB64url(bytes: Uint8Array) {
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+// Confere se a chave privada pertence à pública: assina com a privada e verifica com a pública.
+async function checkVapidPair(publicKey: string, privateKey: string): Promise<boolean> {
+  const pub = b64urlToBytes(publicKey);
+  if (pub.length !== 65 || pub[0] !== 4) return false;
+  const x = bytesToB64url(pub.slice(1, 33));
+  const y = bytesToB64url(pub.slice(33, 65));
+  const priv = await crypto.subtle.importKey(
+    "jwk",
+    { kty: "EC", crv: "P-256", x, y, d: privateKey, ext: true },
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["sign"],
+  );
+  const pubKey = await crypto.subtle.importKey("raw", pub, { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"]);
+  const msg = new TextEncoder().encode("vitrini-vapid-check");
+  const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, priv, msg);
+  return crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, pubKey, sig, msg);
+}
+
 export const getPushPublicKey = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async () => ({ publicKey: process.env["VAPID_PUBLIC_KEY"] ?? null }));
+  .handler(async () => {
+    const publicKey = process.env["VAPID_PUBLIC_KEY"]?.trim().replace(/^['"]|['"]$/g, "") ?? null;
+    const privateKey = process.env["VAPID_PRIVATE_KEY"]?.trim().replace(/^['"]|['"]$/g, "");
+    let keyPairValid: boolean | null = null;
+    if (publicKey && privateKey) {
+      try {
+        keyPairValid = await checkVapidPair(publicKey, privateKey);
+      } catch (error) {
+        console.error("[push] falha ao validar par VAPID", error);
+        keyPairValid = false;
+      }
+    }
+    console.info("[push] chave pública solicitada", {
+      publicLength: publicKey?.length ?? 0,
+      hasPrivate: Boolean(privateKey),
+      keyPairValid,
+    });
+    return { publicKey, keyPairValid };
+  });
 
 export const savePushSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

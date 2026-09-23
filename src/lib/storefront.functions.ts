@@ -731,8 +731,9 @@ export const submitOrder = createServerFn({ method: "POST" })
     try {
       const { notifyStoreOfNewOrder } = await import("@/lib/push.server");
       await notifyStoreOfNewOrder({ storeId: store.id, orderNumber: order.number, total });
-    } catch {
+    } catch (error) {
       // A falha no Push não pode impedir o pedido, o WhatsApp ou a gravação.
+      console.error("[push] falha ao notificar novo pedido", error);
     }
 
     return { orderId: order.id, number: order.number, total };

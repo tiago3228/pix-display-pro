@@ -1,4 +1,7 @@
-const CACHE_VERSION = "vitrini-shell-v1";
+// Um único service worker controla o escopo "/": os handlers de Push vêm de /push-sw.js.
+importScripts("/push-sw.js");
+
+const CACHE_VERSION = "vitrini-shell-v2";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const APP_SHELL = [
   "/",
