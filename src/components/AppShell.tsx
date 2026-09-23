@@ -182,22 +182,27 @@ export function AppShell({
 
   async function enablePushNotifications() {
     if (!store?.id || typeof window === "undefined" || !("Notification" in window)) return;
-    const { publicKey } = await getPublicKey();
-    if (!publicKey) {
-      toast.error("As notificações ainda não foram configuradas pelo administrador.");
-      return;
-    }
     try {
+      if (!window.isSecureContext || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+        throw new Error("Este navegador ou endereço não oferece suporte a notificações Push.");
+      }
+      const { publicKey } = await getPublicKey();
+      if (!publicKey) {
+        throw new Error("A chave VAPID pública não está configurada no servidor.");
+      }
       const permission = await window.Notification.requestPermission();
       setPushPermission(permission);
       if (permission !== "granted") {
-        toast.error("Permita as notificações do navegador para receber novos pedidos.");
-        return;
+        throw new Error("Permita as notificações do navegador para receber novos pedidos.");
       }
       const registration = await navigator.serviceWorker.register("/push-sw.js");
+      const applicationServerKey = urlBase64ToUint8Array(publicKey);
+      if (applicationServerKey.length !== 65) {
+        throw new Error("A chave VAPID pública configurada é inválida.");
+      }
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
+        applicationServerKey,
       });
       const json = subscription.toJSON();
       if (!json.keys?.p256dh || !json.keys.auth) throw new Error("Assinatura incompleta");
@@ -214,8 +219,9 @@ export function AppShell({
       });
       setPushReady(true);
       toast.success("Notificações de novos pedidos ativadas!");
-    } catch {
-      toast.error("Não foi possível ativar as notificações neste dispositivo.");
+    } catch (error) {
+      console.error("[push] falha ao ativar notificações", error);
+      toast.error(error instanceof Error ? error.message : "Não foi possível ativar as notificações neste dispositivo.");
     }
   }
 

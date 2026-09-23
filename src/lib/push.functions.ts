@@ -39,7 +39,7 @@ export const savePushSubscription = createServerFn({ method: "POST" })
       },
       { onConflict: "store_id,endpoint" },
     );
-    if (error) throw new Error("Não foi possível ativar as notificações.");
+    if (error) throw new Error(`Não foi possível salvar a assinatura Push: ${error.message}`);
     return { ok: true };
   });
 
