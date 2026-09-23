@@ -68,6 +68,101 @@ const PALETTE_LABELS: Record<keyof typeof ADVANCED_PALETTE, string> = {
   footer: "Cor do rodapé",
   filters: "Cor dos filtros",
 };
+const STORE_THEMES = [
+  {
+    key: "fashion",
+    name: "🌸 Fashion",
+    colors: {
+      primary_color: "#be185d",
+      secondary_color: "#9d174d",
+      accent_color: "#f9a8d4",
+      background_color: "#fff7fb",
+      text_color: "#3b0a24",
+      button_color: "#be185d",
+    },
+  },
+  {
+    key: "elegant",
+    name: "🖤 Elegante",
+    colors: {
+      primary_color: "#111827",
+      secondary_color: "#374151",
+      accent_color: "#d4af37",
+      background_color: "#f9fafb",
+      text_color: "#111827",
+      button_color: "#111827",
+    },
+  },
+  {
+    key: "minimal",
+    name: "🤍 Minimalista",
+    colors: {
+      primary_color: "#334155",
+      secondary_color: "#64748b",
+      accent_color: "#cbd5e1",
+      background_color: "#ffffff",
+      text_color: "#0f172a",
+      button_color: "#334155",
+    },
+  },
+  {
+    key: "vibrant",
+    name: "🔥 Vibrante",
+    colors: {
+      primary_color: "#dc2626",
+      secondary_color: "#ea580c",
+      accent_color: "#facc15",
+      background_color: "#fff7ed",
+      text_color: "#431407",
+      button_color: "#dc2626",
+    },
+  },
+  {
+    key: "natural",
+    name: "🌿 Natural",
+    colors: {
+      primary_color: "#166534",
+      secondary_color: "#15803d",
+      accent_color: "#a3e635",
+      background_color: "#f7fee7",
+      text_color: "#14532d",
+      button_color: "#166534",
+    },
+  },
+  {
+    key: "modern",
+    name: "💜 Moderno",
+    colors: {
+      primary_color: "#6d28d9",
+      secondary_color: "#7c3aed",
+      accent_color: "#c084fc",
+      background_color: "#faf5ff",
+      text_color: "#2e1065",
+      button_color: "#6d28d9",
+    },
+  },
+  {
+    key: "sport",
+    name: "⚡ Esportivo",
+    colors: {
+      primary_color: "#1d4ed8",
+      secondary_color: "#0369a1",
+      accent_color: "#22c55e",
+      background_color: "#eff6ff",
+      text_color: "#172554",
+      button_color: "#1d4ed8",
+    },
+  },
+];
+type EditableBanner = {
+  id: string;
+  title: string;
+  subtitle: string;
+  cta_label: string;
+  cta_href: string;
+  is_active: boolean;
+  position: number;
+};
 
 const BANNER_SUGGESTIONS = [
   {
@@ -130,6 +225,8 @@ function MyStore() {
   const [suggestionNiche, setSuggestionNiche] = useState("roupas");
   const [generating, setGenerating] = useState(false);
   const [generationStep, setGenerationStep] = useState(0);
+  const [selectedBanner, setSelectedBanner] = useState<EditableBanner | null>(null);
+  const [bannerDraft, setBannerDraft] = useState<EditableBanner | null>(null);
   const isPro = store?.plan === "pro";
   const [form, setForm] = useState({
     name: "",
@@ -324,6 +421,7 @@ function MyStore() {
 
   async function addBannerSuggestion(suggestion: (typeof BANNER_SUGGESTIONS)[number]) {
     if (!store) return;
+    await supabase.from("storefront_banners").update({ is_active: false }).eq("store_id", store.id);
     const { error } = await supabase.from("storefront_banners").insert({
       store_id: store.id,
       title: suggestion.title,
@@ -339,6 +437,53 @@ function MyStore() {
     }
     await queryClient.invalidateQueries({ queryKey: ["storefront-banners", store.id] });
     toast.success("Banner copiado para sua loja. Agora você pode editá-lo.");
+  }
+
+  async function saveBannerDraft() {
+    if (!bannerDraft) return;
+    if (bannerDraft.is_active && store) {
+      await supabase
+        .from("storefront_banners")
+        .update({ is_active: false })
+        .eq("store_id", store.id)
+        .neq("id", bannerDraft.id);
+    }
+    const { error } = await supabase
+      .from("storefront_banners")
+      .update({
+        title: bannerDraft.title,
+        subtitle: bannerDraft.subtitle,
+        cta_label: bannerDraft.cta_label,
+        cta_href: bannerDraft.cta_href,
+        is_active: bannerDraft.is_active,
+      } as never)
+      .eq("id", bannerDraft.id);
+    if (error) return toast.error("Não foi possível salvar o banner.");
+    await queryClient.invalidateQueries({ queryKey: ["storefront-banners", store?.id] });
+    setSelectedBanner(null);
+    setBannerDraft(null);
+    toast.success("Banner atualizado.");
+  }
+
+  function applyStoreTheme(theme: (typeof STORE_THEMES)[number]) {
+    const primary = theme.colors.primary_color;
+    const secondary = theme.colors.secondary_color;
+    const accent = theme.colors.accent_color;
+    setForm((current) => ({
+      ...current,
+      ...theme.colors,
+      theme_palette: {
+        ...current.theme_palette,
+        header: primary,
+        links: secondary,
+        prices: primary,
+        offers: accent,
+        badges: accent,
+        cards: "#ffffff",
+        borders: "#e2e8f0",
+      },
+    }));
+    toast.success(`${theme.name} aplicado. Clique em “Salvar modificações” para publicar.`);
   }
 
   async function generateStoreSuggestion() {
@@ -985,6 +1130,38 @@ function MyStore() {
               </Button>
             </div>
           </div>
+          <div className="mt-4 rounded-lg border p-3">
+            <p className="text-sm font-semibold">🎨 Temas da loja</p>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Escolha um tema para trocar a identidade visual completa. Depois, você pode ajustar
+              qualquer cor individualmente.
+            </p>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {STORE_THEMES.map((theme) => (
+                <button
+                  key={theme.key}
+                  type="button"
+                  onClick={() => applyStoreTheme(theme)}
+                  className="rounded-xl border p-3 text-left transition hover:-translate-y-0.5 hover:border-primary"
+                >
+                  <span className="block text-sm font-semibold">{theme.name}</span>
+                  <span className="mt-2 flex gap-1">
+                    {[
+                      theme.colors.primary_color,
+                      theme.colors.secondary_color,
+                      theme.colors.accent_color,
+                    ].map((color) => (
+                      <span
+                        key={color}
+                        className="size-5 rounded-full border"
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
         </CollapsibleSection>
 
         <CollapsibleSection title="🖼️ Banners" description="Sugestões por nicho e cópias editáveis">
@@ -1032,14 +1209,101 @@ function MyStore() {
                       Cópia editável · {banner.is_active ? "Ativo" : "Rascunho"}
                     </p>
                   </div>
-                  <Badge variant={banner.is_active ? "default" : "outline"}>
-                    {banner.is_active ? "Ativo" : "Editar"}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={banner.is_active ? "default" : "outline"}>
+                      {banner.is_active ? "Ativo" : "Rascunho"}
+                    </Badge>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const draft = banner as unknown as EditableBanner;
+                        setSelectedBanner(draft);
+                        setBannerDraft({ ...draft });
+                      }}
+                    >
+                      Editar
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           ) : null}
         </CollapsibleSection>
+
+        <Dialog
+          open={Boolean(selectedBanner)}
+          onOpenChange={(open) => !open && setSelectedBanner(null)}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>🖼️ Editar banner</DialogTitle>
+            </DialogHeader>
+            {bannerDraft ? (
+              <div className="space-y-3">
+                <div>
+                  <Label>Título</Label>
+                  <Input
+                    value={bannerDraft.title}
+                    onChange={(event) =>
+                      setBannerDraft({ ...bannerDraft, title: event.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Subtítulo</Label>
+                  <Textarea
+                    value={bannerDraft.subtitle}
+                    onChange={(event) =>
+                      setBannerDraft({ ...bannerDraft, subtitle: event.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Texto do botão</Label>
+                  <Input
+                    value={bannerDraft.cta_label}
+                    onChange={(event) =>
+                      setBannerDraft({ ...bannerDraft, cta_label: event.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Link</Label>
+                  <Input
+                    value={bannerDraft.cta_href}
+                    onChange={(event) =>
+                      setBannerDraft({ ...bannerDraft, cta_href: event.target.value })
+                    }
+                  />
+                </div>
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div>
+                    <p className="text-sm font-medium">Banner ativo</p>
+                    <p className="text-xs text-muted-foreground">
+                      Exibir este banner na vitrine pública
+                    </p>
+                  </div>
+                  <Switch
+                    checked={bannerDraft.is_active}
+                    onCheckedChange={(checked) =>
+                      setBannerDraft({ ...bannerDraft, is_active: checked })
+                    }
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="ghost" onClick={() => setSelectedBanner(null)}>
+                    Cancelar
+                  </Button>
+                  <Button type="button" onClick={() => void saveBannerDraft()}>
+                    💾 Salvar banner
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </DialogContent>
+        </Dialog>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5">
