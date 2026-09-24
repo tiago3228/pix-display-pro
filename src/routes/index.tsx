@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   ArrowRight,
   Check,
@@ -92,6 +92,12 @@ const FAQ: { q: string; a: string }[] = [
 function Landing() {
   const { session } = useSession();
   const { banner, pricing, basicPrice } = Route.useLoaderData();
+  const navigate = useNavigate();
+
+  const handleBannerClick = (event: React.MouseEvent<HTMLElement>) => {
+    if ((event.target as HTMLElement).closest("a, button")) return;
+    navigate({ to: "/s/$slug", params: { slug: "atena-joias" } });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -124,7 +130,8 @@ function Landing() {
 
       <main>
         <section
-          className="mx-auto max-w-6xl px-4 pt-14 pb-16 sm:pt-20"
+          onClick={handleBannerClick}
+          className="mx-auto max-w-6xl cursor-pointer px-4 pt-14 pb-16 sm:pt-20"
           style={
             banner.image
               ? {
