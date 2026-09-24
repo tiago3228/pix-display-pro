@@ -317,7 +317,15 @@ function Products() {
       const { data, error } = await query.order("position");
       if (error) throw error;
       const module = open ? form.module : currentCategoryModule();
-      return (data ?? []).filter((category) => !category.module || category.module === module);
+      const visible = (data ?? []).filter(
+        (category) => !category.module || category.module === module,
+      );
+      const unique = new Map<string, (typeof visible)[number]>();
+      for (const category of visible) {
+        const key = `${category.module ?? "roupas"}:${category.name.trim().toLocaleLowerCase("pt-BR")}`;
+        if (!unique.has(key)) unique.set(key, category);
+      }
+      return [...unique.values()];
     },
   });
 
