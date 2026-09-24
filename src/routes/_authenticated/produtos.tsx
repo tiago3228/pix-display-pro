@@ -322,8 +322,8 @@ function Products() {
   });
 
   const { data: shoeBrands } = useQuery({
-    queryKey: ["shoe-brands", store?.id],
-    enabled: Boolean(store?.id && shoesOnly),
+    queryKey: ["shoe-brands", store?.id, form.module],
+    enabled: Boolean(store?.id && (shoesOnly || form.module === "calcados")),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("shoe_brands")
@@ -338,7 +338,11 @@ function Products() {
   });
   const { data: shoeModels } = useQuery({
     queryKey: ["shoe-models", store?.id, form.shoe_brand_id],
-    enabled: Boolean(store?.id && shoesOnly && form.shoe_brand_id !== "none"),
+    enabled: Boolean(
+      store?.id &&
+        (shoesOnly || form.module === "calcados") &&
+        form.shoe_brand_id !== "none",
+    ),
     queryFn: async () => {
       const { data, error } = await supabase
         .from("shoe_models")
