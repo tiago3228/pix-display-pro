@@ -519,7 +519,7 @@ function MyStore() {
         is_active: bannerDraft.is_active,
       } as never)
       .eq("id", bannerDraft.id);
-    if (error) return toast.error("Não foi possível salvar o banner.");
+    if (error) { toast.error("Não foi possível salvar o banner."); return; }
     await queryClient.invalidateQueries({ queryKey: ["storefront-banners", store?.id] });
     setSelectedBanner(null);
     setBannerDraft(null);
@@ -555,7 +555,7 @@ function MyStore() {
       .from("stores")
       .update({ category: label } as never)
       .eq("id", store.id);
-    if (error) return toast.error("Não foi possível alterar o nicho.");
+    if (error) { toast.error("Não foi possível alterar o nicho."); return; }
     if (
       (selected === "cafeteria" || selected === "marmitaria") &&
       window.confirm(
@@ -704,9 +704,9 @@ function MyStore() {
       .eq("id", store.id);
     if (storeUpdate.error) {
       setGenerating(false);
-      return toast.error("Não foi possível criar a sugestão da loja.");
+      { toast.error("Não foi possível criar a sugestão da loja."); return; }
     }
-    const categoryNames = categoriesByNiche[suggestionNiche] ?? categoriesByNiche.roupas;
+    const categoryNames = categoriesByNiche[suggestionNiche] ?? categoriesByNiche["roupas"] ?? [];
     const { data: createdCategories } = await supabase
       .from("categories")
       .insert(
@@ -989,7 +989,7 @@ function MyStore() {
                       <button
                         key={value}
                         type="button"
-                        onClick={() => setSuggestionNiche(value)}
+                        onClick={() => setSuggestionNiche(value ?? "roupas")}
                         className={`rounded-xl border p-3 text-left text-sm ${suggestionNiche === value ? "border-primary bg-primary/10" : ""}`}
                       >
                         {label}

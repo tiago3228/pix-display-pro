@@ -55,7 +55,7 @@ function instagramHref(value: string | null | undefined) {
   const username = raw
     .replace(/^@+/, "")
     .replace(/^(?:www\.)?instagram\.com\/?/i, "")
-    .split(/[?#/]/, 1)[0]
+    .split(/[?#/]/, 1)[0] ?? ""
     .trim();
   return username ? `https://www.instagram.com/${encodeURIComponent(username)}/` : null;
 }
@@ -500,7 +500,7 @@ export function StorePage() {
           {store.promo_banner ? (
             <div
               className="mx-auto flex h-full max-w-3xl items-center px-6 drop-shadow-lg"
-              style={{ color: store.theme_palette.header ?? store.primary_color }}
+              style={{ color: store.theme_palette?.["header"] ?? store.primary_color }}
             >
               <div>
                 <p className="text-2xl font-black uppercase sm:text-4xl">
@@ -508,7 +508,7 @@ export function StorePage() {
                 </p>
                 <p
                   className="mt-1 text-sm sm:text-base"
-                  style={{ color: store.theme_palette.text_secondary ?? store.secondary_color }}
+                  style={{ color: store.theme_palette?.["text_secondary"] ?? store.secondary_color }}
                 >
                   {store.promo_banner.subtitle}
                 </p>
@@ -573,7 +573,7 @@ export function StorePage() {
           {store.welcome_message ? (
             <p
               className="mt-3 text-center text-sm"
-              style={{ color: store.theme_palette.text_secondary ?? store.secondary_color }}
+              style={{ color: store.theme_palette?.["text_secondary"] ?? store.secondary_color }}
             >
               {store.welcome_message}
             </p>
@@ -649,7 +649,7 @@ export function StorePage() {
                   key={category.id}
                   type="button"
                   className="surface shrink-0 rounded-xl px-3 py-2 text-xs font-semibold transition"
-                  style={{ borderColor: store.theme_palette.borders ?? "#e2e8f0" }}
+                  style={{ borderColor: store.theme_palette?.["borders"] ?? "#e2e8f0" }}
                   onClick={() => {
                     setActiveCategory(category.id);
                     setModuleFilter(category.module ?? "all");
@@ -667,8 +667,8 @@ export function StorePage() {
       <div
         className="sticky top-0 z-20 mt-4 border-y py-2 backdrop-blur"
         style={{
-          backgroundColor: `${store.theme_palette.header ?? store.primary_color}eF`,
-          borderColor: store.theme_palette.borders ?? "#e2e8f0",
+          backgroundColor: `${store.theme_palette?.["header"] ?? store.primary_color}eF`,
+          borderColor: store.theme_palette?.["borders"] ?? "#e2e8f0",
         }}
       >
         <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
@@ -944,7 +944,7 @@ export function StorePage() {
                           </span>
                           <span
                             className="text-base font-bold"
-                            style={{ color: store.theme_palette.prices ?? store.primary_color }}
+                            style={{ color: store.theme_palette?.["prices"] ?? store.primary_color }}
                           >
                             {brl(product.sportsOfferPrice)}
                           </span>
@@ -955,7 +955,7 @@ export function StorePage() {
                       ) : (
                         <span
                           className="text-base font-bold"
-                          style={{ color: store.theme_palette.prices ?? store.primary_color }}
+                          style={{ color: store.theme_palette?.["prices"] ?? store.primary_color }}
                         >
                           {brl(product.price)}
                         </span>

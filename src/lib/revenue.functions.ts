@@ -120,7 +120,7 @@ async function ownStore(context: { supabase: never; userId: string }) {
         eq: (
           col: string,
           v: string,
-        ) => { maybeSingle: () => Promise<{ data: { id: string; plan: string } | null }> };
+        ) => { maybeSingle: () => Promise<{ data: { id: string; plan: string; pro_trial_ends_at: string | null } | null }> };
       };
     };
   };
