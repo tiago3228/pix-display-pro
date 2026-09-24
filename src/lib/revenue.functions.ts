@@ -126,9 +126,9 @@ async function ownStore(context: { supabase: never; userId: string }) {
   };
   const { data } = await supabase
     .from("stores")
-    .select("id, plan")
+    .select("id, plan, pro_trial_ends_at")
     .eq("owner_id", context.userId)
-    .maybeSingle();
+      .maybeSingle();
   if (!data) throw new Error("Crie sua loja antes de acessar o faturamento.");
   return data;
 }
@@ -176,7 +176,10 @@ export const getSellerRevenue = createServerFn({ method: "POST" })
       })),
     ].sort((a, b) => b.date.localeCompare(a.date));
 
-    return { entries, plan: store.plan };
+    const trialActive = Boolean(
+      store.pro_trial_ends_at && new Date(store.pro_trial_ends_at).getTime() > Date.now(),
+    );
+    return { entries, plan: store.plan === "pro" || trialActive ? "pro" : "basica" };
   });
 
 /** Mantém o pedido no histórico, mas remove seu valor do faturamento. */
@@ -234,7 +237,10 @@ export const addManualSale = createServerFn({ method: "POST" })
   .validator((data: unknown) => saleSchema.parse(data))
   .handler(async ({ data, context }) => {
     const store = await ownStore(context as never);
-    if (store.plan !== "pro") throw new Error("Recurso disponível no plano PRO.");
+    const trialActive = Boolean(
+      store.pro_trial_ends_at && new Date(store.pro_trial_ends_at).getTime() > Date.now(),
+    );
+    if (store.plan !== "pro" && !trialActive) throw new Error("Recurso disponível no plano PRO.");
     const { error } = await context.supabase.from("manual_sales").insert({
       store_id: store.id,
       amount: data.amount,

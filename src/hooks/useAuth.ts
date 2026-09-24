@@ -37,6 +37,8 @@ export type MyStore = {
   pix_key_type: string;
   pix_key: string;
   plan: string;
+  pro_trial_ends_at: string | null;
+  pro_trial_used: boolean;
   is_active: boolean;
   onboarding_done: boolean;
   accept_pix: boolean;
@@ -57,7 +59,12 @@ export function useMyStore() {
         .eq("owner_id", userData.user.id)
         .maybeSingle();
       if (error) throw error;
-      return (data as MyStore) ?? null;
+      if (!data) return null;
+      const row = data as MyStore;
+      const trialActive = Boolean(
+        row.pro_trial_ends_at && new Date(row.pro_trial_ends_at).getTime() > Date.now(),
+      );
+      return { ...row, plan: row.plan === "pro" || trialActive ? "pro" : "basica" };
     },
   });
 }

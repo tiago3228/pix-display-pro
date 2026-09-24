@@ -82,6 +82,13 @@ function Onboarding() {
       category: form.category,
       logo_url: logoPath,
     };
+    const trialOnCreation = storeId
+      ? {}
+      : {
+          plan: "basica",
+          pro_trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          pro_trial_used: true,
+        };
 
     let saved: { id: string; slug: string } | null = null;
     for (let attempt = 0; attempt < 5 && !saved; attempt++) {
@@ -95,7 +102,7 @@ function Onboarding() {
             .single()
         : supabase
             .from("stores")
-            .insert({ ...payload, slug: trySlug })
+            .insert({ ...payload, ...trialOnCreation, slug: trySlug })
             .select("id, slug")
             .single();
       const { data, error } = await query;

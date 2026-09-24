@@ -429,7 +429,14 @@ function MyStore() {
       }
       const res = await supabase
         .from("stores")
-        .insert({ ...payload, owner_id: userData.user.id, onboarding_done: true } as never);
+        .insert({
+          ...payload,
+          owner_id: userData.user.id,
+          onboarding_done: true,
+          plan: "basica",
+          pro_trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+          pro_trial_used: true,
+        } as never);
       error = res.error;
     }
     setSaving(false);
