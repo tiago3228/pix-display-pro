@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { getStoreNicheModule, isNeutralCategoryName } from "@/lib/store-niche";
 import { createPublicClient } from "./supabase-public.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizePhone } from "@/lib/format";
@@ -69,16 +70,6 @@ export type StorefrontSportsCollection = {
   banner_url: string | null;
   is_featured: boolean;
 };
-
-function nicheModule(category: string | null) {
-  const value = category?.toLocaleLowerCase("pt-BR") ?? "";
-  if (value.includes("cafeteria")) return "cafeteria";
-  if (value.includes("marmitaria") || value.includes("marmita")) return "marmitaria";
-  if (value.includes("calçado") || value.includes("calcado")) return "calcados";
-  if (value.includes("treino") || value.includes("academia")) return "roupas_treino";
-  if (value.includes("esport")) return "roupas_esportivas";
-  return "roupas";
-}
 
 export type Storefront = {
   store: {
@@ -201,10 +192,13 @@ export const getStorefront = createServerFn({ method: "GET" })
     ]);
 
     const products = (productsRaw ?? []) as unknown as StorefrontProductDbRow[];
-    const activeModule = nicheModule(store.category);
+    const activeModule = getStoreNicheModule(store.category);
     const visibleCategories = (categories ?? []).filter((category) => {
       const item = category as unknown as { module?: string; is_active?: boolean };
-      return item.is_active !== false && (!item.module || item.module === activeModule);
+      return (
+        item.is_active !== false &&
+        (item.module === activeModule || isNeutralCategoryName(category.name))
+      );
     });
     const { data: promoBanner } = await supabase
       .from("storefront_banners")

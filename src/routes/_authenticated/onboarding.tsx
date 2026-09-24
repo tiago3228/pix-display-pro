@@ -9,6 +9,7 @@ import { BackButton } from "@/components/BackButton";
 import { useMyStore } from "@/hooks/useAuth";
 import { uploadAsset } from "@/lib/images";
 import { PIX_KEY_TYPES, STORE_CATEGORIES, slugify, whatsappLink } from "@/lib/format";
+import { getStoreNicheModule } from "@/lib/store-niche";
 import { QrImage } from "@/components/QrCode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -151,6 +152,7 @@ function Onboarding() {
     setSaving(true);
     const { error } = await supabase.from("products").insert({
       store_id: storeId!,
+      module: getStoreNicheModule(form.category),
       name: product.name,
       description: product.description,
       price: Number(product.price.replace(",", ".")),

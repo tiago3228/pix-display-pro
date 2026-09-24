@@ -8,6 +8,7 @@ import { AppShell } from "@/components/AppShell";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { uploadAsset } from "@/lib/images";
 import { PIX_KEY_TYPES, STORE_CATEGORIES, slugify } from "@/lib/format";
+import { getStoreNicheModule, isNeutralCategoryName } from "@/lib/store-niche";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -556,6 +557,20 @@ function MyStore() {
       .update({ category: label } as never)
       .eq("id", store.id);
     if (error) { toast.error("Não foi possível alterar o nicho."); return; }
+    const module = getStoreNicheModule(label);
+    const { data: currentCategories } = await supabase
+      .from("categories")
+      .select("name")
+      .eq("store_id", store.id)
+      .eq("module", module);
+    if (!(currentCategories ?? []).some((category) => isNeutralCategoryName(category.name))) {
+      const { error: categoryError } = await supabase
+        .from("categories")
+        .insert({ store_id: store.id, name: "Geral", module, position: -1 } as never);
+      if (categoryError) {
+        toast.error("O nicho foi alterado, mas não foi possível criar a categoria Geral.");
+      }
+    }
     if (
       (selected === "cafeteria" || selected === "marmitaria") &&
       window.confirm(

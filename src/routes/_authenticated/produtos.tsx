@@ -24,6 +24,7 @@ import { getSignedAssetUrl } from "@/lib/images.functions";
 import { FREE_PLAN_PRODUCT_LIMIT, brl } from "@/lib/format";
 import { searchProductDiscovery, type DiscoveryResult } from "@/lib/product-discovery.functions";
 import { listSportsNodes, sportsDb, type SportsNode } from "@/lib/sports";
+import { getStoreNicheModule, isNeutralCategoryName } from "@/lib/store-niche";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -234,6 +235,8 @@ function Products() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newCategory, setNewCategory] = useState("");
+  const [manualShoeBrand, setManualShoeBrand] = useState("");
+  const [manualShoeModel, setManualShoeModel] = useState("");
   const [sportsNodeId, setSportsNodeId] = useState("none");
   const [sportsCollectionId, setSportsCollectionId] = useState("none");
   const [trainingOnly, setTrainingOnly] = useState(false);
@@ -249,13 +252,7 @@ function Products() {
     if (shoesOnly) return "calcados";
     if (trainingOnly) return "roupas_treino";
     if (sportsOnly) return "roupas_esportivas";
-    const category = store?.category?.toLocaleLowerCase("pt-BR") ?? "";
-    if (category.includes("cafeteria")) return "cafeteria";
-    if (category.includes("marmitaria") || category.includes("marmita")) return "marmitaria";
-    if (category.includes("calçado") || category.includes("calcado")) return "calcados";
-    if (category.includes("treino") || category.includes("academia")) return "roupas_treino";
-    if (category.includes("esport")) return "roupas_esportivas";
-    return "roupas";
+    return getStoreNicheModule(store?.category);
   }
   const [guidedOpen, setGuidedOpen] = useState(false);
   const [guidedType, setGuidedType] = useState("");
@@ -306,19 +303,16 @@ function Products() {
     ],
     enabled: Boolean(store?.id),
     queryFn: async () => {
-      let query = supabase
+      const query = supabase
         .from("categories")
         .select("id, name, module, is_active")
-        .eq("store_id", store!.id);
-      if (trainingOnly) query = query.eq("module", "roupas_treino");
-      if (shoesOnly) query = query.eq("module", "calcados");
-      if (cafeteriaOnly) query = query.eq("module", "cafeteria");
-      if (marmitariaOnly) query = query.eq("module", "marmitaria");
+        .eq("store_id", store!.id)
+        .eq("is_active", true);
       const { data, error } = await query.order("position");
       if (error) throw error;
       const module = open ? form.module : currentCategoryModule();
       const visible = (data ?? []).filter(
-        (category) => !category.module || category.module === module,
+        (category) => category.module === module || isNeutralCategoryName(category.name),
       );
       const unique = new Map<string, (typeof visible)[number]>();
       for (const category of visible) {
@@ -346,17 +340,14 @@ function Products() {
   });
   const { data: shoeModels } = useQuery({
     queryKey: ["shoe-models", store?.id, form.shoe_brand_id],
-    enabled: Boolean(
-      store?.id &&
-        (shoesOnly || form.module === "calcados") &&
-        form.shoe_brand_id !== "none",
-    ),
+    enabled: Boolean(store?.id && (shoesOnly || form.module === "calcados")),
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("shoe_models")
-        .select("id, name")
-        .eq("store_id", store!.id)
-        .eq("brand_id", form.shoe_brand_id)
+        .select("id, name, brand_id")
+        .eq("store_id", store!.id);
+      if (form.shoe_brand_id !== "none") query = query.eq("brand_id", form.shoe_brand_id);
+      const { data, error } = await query
         .eq("is_active", true)
         .order("position")
         .order("name");
@@ -418,6 +409,8 @@ function Products() {
       return;
     }
     setEditing(null);
+    setManualShoeBrand("");
+    setManualShoeModel("");
     setForm({
       ...emptyForm,
       module: trainingOnly
@@ -428,7 +421,7 @@ function Products() {
             ? "marmitaria"
           : cafeteriaOnly
             ? "cafeteria"
-            : "roupas",
+            : currentCategoryModule(),
     });
     setVariants([]);
     setOrderTiers([]);
@@ -440,6 +433,24 @@ function Products() {
 
   function openEdit(product: ProductRow) {
     setEditing(product);
+    setManualShoeBrand("");
+    setManualShoeModel("");
+    if (product.shoe_brand_id) {
+      void supabase
+        .from("shoe_brands")
+        .select("name")
+        .eq("id", product.shoe_brand_id)
+        .maybeSingle()
+        .then(({ data }) => setManualShoeBrand(data?.name ?? ""));
+    }
+    if (product.shoe_model_id) {
+      void supabase
+        .from("shoe_models")
+        .select("name")
+        .eq("id", product.shoe_model_id)
+        .maybeSingle()
+        .then(({ data }) => setManualShoeModel(data?.name ?? ""));
+    }
     setForm({
       module: product.module ?? "roupas",
       name: product.name,
@@ -565,6 +576,100 @@ function Products() {
     setSaving(true);
     const imagePath = photos[0] ?? null;
 
+    let shoeBrandId = form.shoe_brand_id === "none" ? null : form.shoe_brand_id;
+    let shoeModelId = form.shoe_model_id === "none" ? null : form.shoe_model_id;
+    if (form.module === "calcados") {
+      const { data: storeShoeBrands, error: shoeBrandLookupError } = await supabase
+        .from("shoe_brands")
+        .select("id, name")
+        .eq("store_id", store.id)
+        .eq("is_active", true);
+      if (shoeBrandLookupError) {
+        setSaving(false);
+        toast.error(`Não foi possível verificar as marcas: ${shoeBrandLookupError.message}`);
+        return;
+      }
+      const requestedBrand = manualShoeBrand.trim();
+      if (requestedBrand) {
+        if (!shoeBrandId) {
+          const existingBrand = (storeShoeBrands ?? []).find(
+            (brand) =>
+              brand.name.trim().toLocaleLowerCase("pt-BR") ===
+              requestedBrand.toLocaleLowerCase("pt-BR"),
+          );
+          if (existingBrand) shoeBrandId = existingBrand.id;
+        }
+        if (!shoeBrandId) {
+          const { data, error: brandError } = await supabase
+            .from("shoe_brands")
+            .insert({ store_id: store.id, name: requestedBrand })
+            .select("id")
+            .single();
+          if (brandError || !data) {
+            setSaving(false);
+            toast.error(`Não foi possível salvar a marca: ${brandError?.message ?? "erro desconhecido"}`);
+            return;
+          }
+          shoeBrandId = data.id;
+        }
+      }
+
+      const requestedModel = manualShoeModel.trim();
+      if (requestedModel) {
+        if (!shoeBrandId) {
+          const genericBrand = (storeShoeBrands ?? []).find(
+            (brand) => brand.name.trim().toLocaleLowerCase("pt-BR") === "sem marca",
+          );
+          if (genericBrand) {
+            shoeBrandId = genericBrand.id;
+          } else {
+            const { data, error: brandError } = await supabase
+              .from("shoe_brands")
+              .insert({ store_id: store.id, name: "Sem marca" })
+              .select("id")
+              .single();
+            if (brandError || !data) {
+              setSaving(false);
+              toast.error(`Não foi possível salvar o modelo: ${brandError?.message ?? "erro desconhecido"}`);
+              return;
+            }
+            shoeBrandId = data.id;
+          }
+        }
+        const { data: modelsForBrand, error: modelsError } = await supabase
+          .from("shoe_models")
+          .select("id, name")
+          .eq("store_id", store.id)
+          .eq("brand_id", shoeBrandId)
+          .eq("is_active", true);
+        if (modelsError) {
+          setSaving(false);
+          toast.error(`Não foi possível verificar o modelo: ${modelsError.message}`);
+          return;
+        }
+        const existingModel = (modelsForBrand ?? []).find(
+          (model) =>
+            model.name.trim().toLocaleLowerCase("pt-BR") ===
+            requestedModel.toLocaleLowerCase("pt-BR"),
+        );
+        if (existingModel) {
+          shoeModelId = existingModel.id;
+        } else {
+          const { data, error: modelError } = await supabase
+            .from("shoe_models")
+            .insert({ store_id: store.id, brand_id: shoeBrandId, name: requestedModel })
+            .select("id")
+            .single();
+          if (modelError || !data) {
+            setSaving(false);
+            toast.error(`Não foi possível salvar o modelo: ${modelError?.message ?? "erro desconhecido"}`);
+            return;
+          }
+          shoeModelId = data.id;
+        }
+      }
+    }
+
     const cleanVariants = variants.filter((v) => v.label.trim());
     const payload = {
       store_id: store.id,
@@ -615,9 +720,9 @@ function Products() {
           ? Number(String(form.sports_offer_price).replace(",", "."))
           : null,
       shoe_brand_id:
-        form.module === "calcados" && form.shoe_brand_id !== "none" ? form.shoe_brand_id : null,
+        form.module === "calcados" ? shoeBrandId : null,
       shoe_model_id:
-        form.module === "calcados" && form.shoe_model_id !== "none" ? form.shoe_model_id : null,
+        form.module === "calcados" ? shoeModelId : null,
       shoe_authenticity: form.module === "calcados" ? form.shoe_authenticity : "original",
       shoe_gender: form.module === "calcados" ? form.shoe_gender : null,
       shoe_size: form.module === "calcados" ? form.shoe_size.trim() || null : null,
@@ -760,6 +865,8 @@ function Products() {
     toast.success(editing ? "Produto atualizado!" : "Produto criado!");
     queryClient.invalidateQueries({ queryKey: ["products", store.id] });
     queryClient.invalidateQueries({ queryKey: ["dashboard", store.id] });
+    queryClient.invalidateQueries({ queryKey: ["shoe-brands", store.id] });
+    queryClient.invalidateQueries({ queryKey: ["shoe-models", store.id] });
   }
 
   async function remove(product: ProductRow) {
@@ -1386,46 +1493,70 @@ function Products() {
                 <p className="text-sm font-semibold">👟 Dados do Calçado</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label>Marca</Label>
-                    <Select
-                      value={form.shoe_brand_id}
-                      onValueChange={(value) =>
-                        setForm({ ...form, shoe_brand_id: value, shoe_model_id: "none" })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Marca" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Marca manual</SelectItem>
-                        {(shoeBrands ?? []).map((brand) => (
-                          <SelectItem key={brand.id} value={brand.id}>
-                            {brand.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="shoe-brand-input">Marca</Label>
+                    <Input
+                      id="shoe-brand-input"
+                      list="shoe-brand-suggestions"
+                      placeholder="Digite ou escolha uma sugestão"
+                      value={manualShoeBrand}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        const matchedBrand = (shoeBrands ?? []).find(
+                          (brand) =>
+                            brand.name.toLocaleLowerCase("pt-BR") ===
+                            value.trim().toLocaleLowerCase("pt-BR"),
+                        );
+                        setManualShoeBrand(value);
+                        setForm({
+                          ...form,
+                          shoe_brand_id: matchedBrand?.id ?? "none",
+                          shoe_model_id: "none",
+                        });
+                        setManualShoeModel("");
+                      }}
+                    />
+                    <datalist id="shoe-brand-suggestions">
+                      {(shoeBrands ?? []).map((brand) => (
+                        <option key={brand.id} value={brand.name} />
+                      ))}
+                    </datalist>
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Modelo</Label>
-                    <Select
-                      value={form.shoe_model_id}
-                      onValueChange={(value) => setForm({ ...form, shoe_model_id: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Modelo" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Modelo manual</SelectItem>
-                        {(shoeModels ?? []).map((model) => (
-                          <SelectItem key={model.id} value={model.id}>
-                            {model.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="shoe-model-input">Modelo</Label>
+                    <Input
+                      id="shoe-model-input"
+                      list="shoe-model-suggestions"
+                      placeholder="Digite ou escolha uma sugestão"
+                      value={manualShoeModel}
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        const matchedModel = (shoeModels ?? []).find(
+                          (model) =>
+                            model.name.toLocaleLowerCase("pt-BR") ===
+                            value.trim().toLocaleLowerCase("pt-BR"),
+                        );
+                        setManualShoeModel(value);
+                        const matchedBrand = matchedModel
+                          ? (shoeBrands ?? []).find((brand) => brand.id === matchedModel.brand_id)
+                          : undefined;
+                        if (matchedBrand) setManualShoeBrand(matchedBrand.name);
+                        setForm({
+                          ...form,
+                          shoe_brand_id: matchedBrand?.id ?? form.shoe_brand_id,
+                          shoe_model_id: matchedModel?.id ?? "none",
+                        });
+                      }}
+                    />
+                    <datalist id="shoe-model-suggestions">
+                      {(shoeModels ?? []).map((model) => (
+                        <option key={model.id} value={model.name} />
+                      ))}
+                    </datalist>
                   </div>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Novas marcas e modelos digitados ficam salvos como sugestões para os próximos cadastros.
+                </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label>Tamanho</Label>

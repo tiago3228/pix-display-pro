@@ -37,6 +37,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { getStoreModuleLabel } from "@/lib/store-niche";
 import { EncomendaDialog } from "@/components/EncomendaDialog";
 
 function instagramHref(value: string | null | undefined) {
@@ -674,18 +675,10 @@ export function StorePage() {
         <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
           {(["roupas", "roupas_esportivas", "roupas_treino", "calcados", "cafeteria", "marmitaria"] as const).map(
             (module) => {
-              const labels = {
-                roupas: "👕 Roupas",
-                roupas_esportivas: "⚽ Roupas Esportivas",
-                roupas_treino: "🏋️ Roupas de Treino / Academia",
-                calcados: "👟 Calçados",
-                cafeteria: "☕ Cafeteria",
-                marmitaria: "🍱 Marmitaria",
-              };
               return data.products.some((product) => product.module === module) ? (
                 <CategoryChip
                   key={module}
-                  label={labels[module]}
+                  label={getStoreModuleLabel(store.category, module)}
                   active={moduleFilter === module}
                   onClick={() => {
                     setModuleFilter(module);
