@@ -4,6 +4,7 @@ import {
   BarChart3,
   CheckCircle2,
   CreditCard,
+  BellRing,
   HelpCircle,
   ImagePlus,
   Megaphone,
@@ -12,6 +13,7 @@ import {
   Settings,
   ShoppingCart,
   Shirt,
+  Sparkles,
   Store,
   Users,
   Wallet,
@@ -49,6 +51,8 @@ type TutorialStep = {
     | "/clientes"
     | "/faturamento"
     | "/assinatura"
+    | "/lojas-premium"
+    | "/feedback"
     | "/configuracoes";
   action: string;
 };
@@ -347,8 +351,9 @@ const SECTIONS: TutorialSection[] = [
         description: "Compare os planos e escolha a opção adequada para sua operação.",
         details: [
           "Confira preço, limites e recursos antes de assinar.",
-          "A assinatura Básica possui o período promocional PRO previsto na oferta vigente.",
-          "Após a confirmação, aguarde a atualização do plano no painel.",
+          "Novas lojas recebem 30 dias grátis com acesso aos recursos PRO, sem cartão.",
+          "Durante o trial, o painel e os módulos Premium ficam liberados.",
+          "Depois do período de teste, escolha a Básica ou a PRO para continuar com os recursos pagos.",
         ],
         to: "/assinatura",
         action: "Ver planos",
@@ -363,6 +368,70 @@ const SECTIONS: TutorialSection[] = [
         ],
         to: "/dashboard",
         action: "Ver indicadores",
+      },
+    ],
+  },
+  {
+    number: "8",
+    title: "Use os módulos Premium por 30 dias grátis",
+    description:
+      "O trial PRO libera os módulos especializados para você testar a operação antes de escolher um plano.",
+    icon: Sparkles,
+    steps: [
+      {
+        title: "Ative seu segmento especializado",
+        description:
+          "Acesse Lojas Premium e escolha os módulos que combinam com sua loja, sem perder a liberdade de criar produtos personalizados.",
+        details: [
+          "Use Roupas Esportivas, Treino/A academia, Calçados, Cafeteria ou Marmitaria.",
+          "Os módulos ativados continuam com produtos, pedidos e clientes centralizados.",
+          "Na Marmitaria, configure almoço e jantar e use endereço/CEP quando houver entrega.",
+          "Produtos sugeridos ou importados continuam editáveis e podem começar como rascunho.",
+        ],
+        to: "/lojas-premium",
+        action: "Explorar Lojas Premium",
+      },
+      {
+        title: "Acompanhe o período gratuito",
+        description: "Confira na assinatura a situação do trial e a data de término dos 30 dias PRO.",
+        details: [
+          "O trial começa na criação da nova loja.",
+          "Durante o período, recursos como IA, estoque, variações, faturamento e módulos Premium ficam disponíveis.",
+          "A tela de assinatura mostra quando será necessário escolher um plano.",
+        ],
+        to: "/assinatura",
+        action: "Ver meu trial",
+      },
+    ],
+  },
+  {
+    number: "9",
+    title: "Receba alertas e ajude a evoluir o Vitrini",
+    description:
+      "Acompanhe pedidos mesmo fora da tela atual e envie diretamente suas observações durante os testes.",
+    icon: BellRing,
+    steps: [
+      {
+        title: "Ativar notificações de pedidos",
+        description: "No Dashboard, toque no sino para permitir notificações do navegador.",
+        details: [
+          "Aceite a permissão do navegador para receber alertas de novos pedidos.",
+          "No computador, as notificações podem chegar mesmo com a aba fechada, conforme as permissões do navegador.",
+          "No celular, permita notificações e adicione o Vitrini à tela inicial quando o navegador oferecer essa opção.",
+        ],
+        to: "/dashboard",
+        action: "Abrir o Dashboard",
+      },
+      {
+        title: "Reportar bugs e sugestões",
+        description: "Envie problemas, ideias e melhorias para a conta de administrador master.",
+        details: [
+          "Escolha Bug, Sugestão ou Melhoria.",
+          "Descreva a tela, o que aconteceu e, se possível, os passos para reproduzir.",
+          "Acompanhe o status do relato em Meus relatos.",
+        ],
+        to: "/feedback",
+        action: "Reportar um problema",
       },
     ],
   },
