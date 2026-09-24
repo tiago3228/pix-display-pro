@@ -92,6 +92,12 @@ const FAQ: { q: string; a: string }[] = [
 function Landing() {
   const { session } = useSession();
   const { banner, pricing, basicPrice } = Route.useLoaderData();
+  const navigate = useNavigate();
+
+  const handleBannerClick = (event: React.MouseEvent<HTMLElement>) => {
+    if ((event.target as HTMLElement).closest("a, button")) return;
+    navigate({ to: "/s/$slug", params: { slug: "atena-joias" } });
+  };
 
   return (
     <div className="min-h-screen bg-background">
