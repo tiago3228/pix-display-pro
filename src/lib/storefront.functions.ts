@@ -193,13 +193,32 @@ export const getStorefront = createServerFn({ method: "GET" })
 
     const products = (productsRaw ?? []) as unknown as StorefrontProductDbRow[];
     const activeModule = getStoreNicheModule(store.category);
-    const visibleCategories = (categories ?? []).filter((category) => {
+    const visibleModules = new Set<string>([activeModule, ...products.map((product) => product.module)]);
+    const activeCategories = (categories ?? []).filter((category) => {
       const item = category as unknown as { module?: string; is_active?: boolean };
       return (
         item.is_active !== false &&
-        (item.module === activeModule || isNeutralCategoryName(category.name))
+        item.module !== undefined &&
+        visibleModules.has(item.module) &&
+        !isNeutralCategoryName(category.name)
       );
     });
+    const neutralCategories = (categories ?? []).filter((category) => {
+      const item = category as unknown as { module?: string; is_active?: boolean };
+      return item.is_active !== false && isNeutralCategoryName(category.name);
+    });
+    const defaultNeutral =
+      neutralCategories.find(
+        (category) =>
+          category.module === activeModule &&
+          category.name.trim().toLocaleLowerCase("pt-BR") === "geral",
+      ) ??
+      neutralCategories.find((category) => category.module === activeModule) ??
+      neutralCategories[0];
+    const visibleCategories = [
+      ...activeCategories,
+      ...(defaultNeutral ? [defaultNeutral] : []),
+    ];
     const { data: promoBanner } = await supabase
       .from("storefront_banners")
       .select("title, subtitle, cta_label, cta_href, image_url")

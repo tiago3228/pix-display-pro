@@ -63,7 +63,10 @@ type SmartSuggestion = {
   name: string;
 };
 
-function interpretProductText(input: string): SmartSuggestion {
+function interpretProductText(
+  input: string,
+  defaultModule: SmartSuggestion["module"] = "roupas",
+): SmartSuggestion {
   const text = input.trim();
   const lower = text.toLocaleLowerCase("pt-BR");
   const module =
@@ -71,11 +74,17 @@ function interpretProductText(input: string): SmartSuggestion {
       lower,
     )
       ? "calcados"
-      : /fitness|academia|legging|top|treino|dry fit/.test(lower)
-        ? "roupas_treino"
-        : /flamengo|vasco|corinthians|seleção|selecao|camisa de futebol|futebol/.test(lower)
-          ? "roupas_esportivas"
-          : "roupas";
+      : /marmita|marmitex|prato feito|almoço|almoco|janta|refeição|refeicao/.test(lower)
+        ? "marmitaria"
+        : /café|cafe|bolo|doce|brigadeiro|brownie|empada|pastel|cappuccino|bebida|salgado/.test(
+              lower,
+            )
+          ? "cafeteria"
+          : /fitness|academia|legging|top|treino|dry fit/.test(lower)
+            ? "roupas_treino"
+            : /flamengo|vasco|corinthians|seleção|selecao|camisa de futebol|futebol/.test(lower)
+              ? "roupas_esportivas"
+              : defaultModule;
   const brands = [
     "Nike",
     "adidas",
@@ -124,6 +133,12 @@ function interpretProductText(input: string): SmartSuggestion {
   const category =
     module === "calcados"
       ? "Tênis"
+      : module === "marmitaria"
+        ? "🍱 Marmitas"
+        : module === "cafeteria"
+          ? /café|cafe|cappuccino/.test(lower)
+            ? "☕ Cafés"
+            : "🍰 Bolos e Doces"
       : module === "roupas_treino"
         ? "Conjuntos / Performance"
         : module === "roupas_esportivas"
@@ -311,9 +326,14 @@ function Products() {
       const { data, error } = await query.order("position");
       if (error) throw error;
       const module = open ? form.module : currentCategoryModule();
-      const visible = (data ?? []).filter(
-        (category) => category.module === module || isNeutralCategoryName(category.name),
-      );
+      const moduleCategories = (data ?? []).filter((category) => category.module === module);
+      const neutralCategory =
+        moduleCategories.find((category) => isNeutralCategoryName(category.name)) ??
+        (data ?? []).find((category) => isNeutralCategoryName(category.name));
+      const visible = [
+        ...moduleCategories.filter((category) => !isNeutralCategoryName(category.name)),
+        ...(neutralCategory ? [neutralCategory] : []),
+      ];
       const unique = new Map<string, (typeof visible)[number]>();
       for (const category of visible) {
         const key = `${category.module ?? "roupas"}:${category.name.trim().toLocaleLowerCase("pt-BR")}`;
@@ -1091,13 +1111,15 @@ function Products() {
                     setGuidedType(label);
                     const module = cafeteriaOnly
                       ? "cafeteria"
+                      : marmitariaOnly
+                        ? "marmitaria"
                       : shoesOnly
                         ? "calcados"
                         : sportsOnly
                           ? "roupas_esportivas"
-                          : trainingOnly
-                            ? "roupas_treino"
-                            : "roupas";
+                            : trainingOnly
+                              ? "roupas_treino"
+                              : currentCategoryModule();
                     const matchingCategory = categories?.find((category) =>
                       category.name
                         .toLocaleLowerCase("pt-BR")
@@ -1209,7 +1231,7 @@ function Products() {
                         <Button
                           size="sm"
                           onClick={() => {
-                            const suggestion = interpretProductText(result.name);
+                            const suggestion = interpretProductText(result.name, currentCategoryModule());
                             setForm({
                               ...emptyForm,
                               module: suggestion.module,
@@ -1291,9 +1313,13 @@ function Products() {
                         ? "👟 Calçados"
                         : smartSuggestion.module === "roupas_treino"
                           ? "🏋️ Treino"
-                          : smartSuggestion.module === "roupas_esportivas"
-                            ? "⚽ Esportivas"
-                            : "👕 Roupas",
+                        : smartSuggestion.module === "roupas_esportivas"
+                          ? "⚽ Esportivas"
+                          : smartSuggestion.module === "cafeteria"
+                            ? "☕ Cafeteria"
+                            : smartSuggestion.module === "marmitaria"
+                              ? "🍱 Marmitaria"
+                              : "👕 Roupas",
                     ],
                     ["Marca", smartSuggestion.brand],
                     ["Modelo", smartSuggestion.model],
@@ -1342,7 +1368,9 @@ function Products() {
               ) : (
                 <Button
                   disabled={!smartText.trim()}
-                  onClick={() => setSmartSuggestion(interpretProductText(smartText))}
+                  onClick={() =>
+                    setSmartSuggestion(interpretProductText(smartText, currentCategoryModule()))
+                  }
                 >
                   Continuar <span className="ml-1">→</span>
                 </Button>

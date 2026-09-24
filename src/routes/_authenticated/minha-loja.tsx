@@ -577,7 +577,11 @@ function MyStore() {
         "Deseja adicionar a estrutura sugerida de Cafeteria? Os dados existentes serão preservados.",
       )
     ) {
-      const existing = await supabase.from("categories").select("name").eq("store_id", store.id);
+      const existing = await supabase
+        .from("categories")
+        .select("name")
+        .eq("store_id", store.id)
+        .eq("module", selected === "marmitaria" ? "marmitaria" : "cafeteria");
       const known = new Set((existing.data ?? []).map((item) => item.name));
       const suggested = selected === "marmitaria" ? MARMITARIA_CATEGORIES : CAFETERIA_CATEGORIES;
       await supabase.from("categories").insert(
@@ -611,18 +615,7 @@ function MyStore() {
       await new Promise((resolve) => window.setTimeout(resolve, 280));
     }
     const colors = [...suggestionColors, "#ffffff", "#111827"];
-    const module =
-      suggestionNiche === "esportes"
-        ? "roupas_esportivas"
-        : suggestionNiche === "treino"
-          ? "roupas_treino"
-          : suggestionNiche === "calcados"
-            ? "calcados"
-            : suggestionNiche === "cafeteria"
-              ? "cafeteria"
-              : suggestionNiche === "marmitaria"
-                ? "marmitaria"
-              : "roupas";
+    const module = getStoreNicheModule(suggestionNiche);
     const categoriesByNiche: Record<string, string[]> = {
       roupas: [
         "Blusas",
@@ -711,9 +704,11 @@ function MyStore() {
                 ? "Calçados"
                 : suggestionNiche === "cafeteria"
                   ? "Cafeteria"
-                  : suggestionNiche === "marmitaria"
-                    ? "Marmitaria"
-                  : "Roupas",
+                : suggestionNiche === "marmitaria"
+                  ? "Marmitaria"
+                  : suggestionNiche === "roupas"
+                    ? "Roupas"
+                    : suggestionNiche,
         ...palette,
       } as never)
       .eq("id", store.id);
@@ -721,18 +716,24 @@ function MyStore() {
       setGenerating(false);
       { toast.error("Não foi possível criar a sugestão da loja."); return; }
     }
-    const categoryNames = categoriesByNiche[suggestionNiche] ?? categoriesByNiche["roupas"] ?? [];
-    const { data: createdCategories } = await supabase
+    const categoryNames = categoriesByNiche[suggestionNiche] ?? ["Geral"];
+    const { data: existingCategories } = await supabase
       .from("categories")
-      .insert(
-        categoryNames.map((name, position) => ({
-          store_id: store.id,
-          name,
-          module,
-          position,
-        })),
-      )
-      .select("id, name");
+      .select("name")
+      .eq("store_id", store.id)
+      .eq("module", module);
+    const knownCategoryNames = new Set(
+      (existingCategories ?? []).map((category) => category.name.trim().toLocaleLowerCase("pt-BR")),
+    );
+    const categoriesToCreate = categoryNames
+      .filter((name) => !knownCategoryNames.has(name.trim().toLocaleLowerCase("pt-BR")))
+      .map((name, position) => ({ store_id: store.id, name, module, position }));
+    const { data: createdCategories } = categoriesToCreate.length
+      ? await supabase
+          .from("categories")
+          .insert(categoriesToCreate)
+          .select("id, name")
+      : { data: [] as { id: string; name: string }[] };
     if (suggestionNiche === "cafeteria" && createdCategories?.length) {
       const productsByCategory: Record<string, string[]> = {
         "☕ Cafés": [

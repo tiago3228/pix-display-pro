@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getStoreNicheModule, isNeutralCategoryName, type StoreModule } from "@/lib/store-niche";
 import { AI_MAX_PAGES_PER_RUN, MAX_PRODUCT_IMAGES, aiPageLimitFor } from "./ai-import.config";
 
 export type AiImportStatus = {
@@ -50,11 +51,11 @@ type AuthContext = { supabase: SupabaseClient; userId: string };
 async function storeOf(context: AuthContext) {
   const { data } = await context.supabase
     .from("stores")
-    .select("id, plan")
+    .select("id, plan, category")
     .eq("owner_id", context.userId)
     .order("created_at", { ascending: true })
     .limit(1);
-  return (data?.[0] ?? null) as { id: string; plan: string } | null;
+  return (data?.[0] ?? null) as { id: string; plan: string; category: string } | null;
 }
 
 async function buildStatus(store: { id: string; plan: string } | null): Promise<AiImportStatus> {
@@ -275,16 +276,26 @@ export const createProductsFromAi = createServerFn({ method: "POST" })
     const store = await storeOf(ctx);
     if (!store) throw new Error("Crie sua loja antes de cadastrar produtos.");
 
+    const defaultModule = getStoreNicheModule(store.category);
     const { data: categoryRows } = await ctx.supabase
       .from("categories")
-      .select("id, name")
+      .select("id, name, module")
       .eq("store_id", store.id);
-    const categories = new Map<string, string>(
-      ((categoryRows ?? []) as { id: string; name: string }[]).map((c) => [
-        c.name.trim().toLowerCase(),
-        c.id,
-      ]),
-    );
+    const categories = new Map<string, string>();
+    const categoryKey = (module: string, name: string) =>
+      `${module}:${name.trim().toLocaleLowerCase("pt-BR")}`;
+    for (const category of (categoryRows ?? []) as {
+      id: string;
+      name: string;
+      module: string | null;
+    }[]) {
+      if (category.module === defaultModule) {
+        categories.set(categoryKey(defaultModule, category.name), category.id);
+      }
+      if (isNeutralCategoryName(category.name)) {
+        categories.set(categoryKey("neutral", category.name), category.id);
+      }
+    }
 
     let created = 0;
     let updated = 0;
@@ -292,14 +303,26 @@ export const createProductsFromAi = createServerFn({ method: "POST" })
 
     for (const item of data.items) {
       try {
+        let targetModule: StoreModule = defaultModule;
+        if (item.mode === "update" && item.existingProductId) {
+          const { data: currentProduct, error: currentProductError } = await ctx.supabase
+            .from("products")
+            .select("module")
+            .eq("id", item.existingProductId)
+            .eq("store_id", store.id)
+            .maybeSingle();
+          if (currentProductError) throw currentProductError;
+          if (currentProduct?.module) targetModule = currentProduct.module as StoreModule;
+        }
         let categoryId: string | null = null;
         if (item.categoryName) {
-          const key = item.categoryName.trim().toLowerCase();
-          categoryId = categories.get(key) ?? null;
+          const key = categoryKey(targetModule, item.categoryName);
+          categoryId =
+            categories.get(key) ?? categories.get(categoryKey("neutral", item.categoryName)) ?? null;
           if (!categoryId) {
             const { data: newCategory } = await ctx.supabase
               .from("categories")
-              .insert({ store_id: store.id, name: item.categoryName.trim() })
+              .insert({ store_id: store.id, name: item.categoryName.trim(), module: targetModule })
               .select("id")
               .single();
             if (newCategory?.id) {
@@ -314,6 +337,7 @@ export const createProductsFromAi = createServerFn({ method: "POST" })
 
         const payload = {
           store_id: store.id,
+          module: targetModule,
           name: item.name,
           description: item.description ?? "",
           price: item.price,
