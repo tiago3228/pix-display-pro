@@ -704,7 +704,7 @@ function MyStore() {
       .eq("id", store.id);
     if (storeUpdate.error) {
       setGenerating(false);
-      return toast.error("Não foi possível criar a sugestão da loja.");
+      { toast.error("Não foi possível criar a sugestão da loja."); return; }
     }
     const categoryNames = categoriesByNiche[suggestionNiche] ?? categoriesByNiche["roupas"] ?? [];
     const { data: createdCategories } = await supabase
