@@ -104,7 +104,10 @@ async function getPushRegistration(): Promise<ServiceWorkerRegistration> {
       .filter((r) => [r.active, r.waiting, r.installing].some((w) => w?.scriptURL.endsWith("/push-sw.js")))
       .map((r) => r.unregister()),
   );
-  await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  const registered = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+  if (registered.waiting) {
+    registered.waiting.postMessage({ type: "SKIP_WAITING" });
+  }
   const registration = await Promise.race([
     navigator.serviceWorker.ready,
     new Promise<never>((_, reject) =>
@@ -143,6 +146,7 @@ export function AppShell({
   const getPublicKey = useServerFn(getPushPublicKey);
   const saveSubscription = useServerFn(savePushSubscription);
   const [pushReady, setPushReady] = useState(false);
+  const [pushBusy, setPushBusy] = useState(false);
   const [pushPermission, setPushPermission] = useState<NotificationPermission | "unsupported">(
     "default",
   );
@@ -211,11 +215,24 @@ export function AppShell({
   }, [store?.id]);
 
   async function enablePushNotifications() {
+    if (pushBusy) return;
     if (!store?.id || typeof window === "undefined" || !("Notification" in window)) return;
+    setPushBusy(true);
     let step = "início";
     try {
       if (!window.isSecureContext || !("serviceWorker" in navigator) || !("PushManager" in window)) {
         throw new Error("Este navegador ou endereço não oferece suporte a notificações Push.");
+      }
+      const isIos =
+        /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      const isStandalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        Boolean((navigator as Navigator & { standalone?: boolean }).standalone);
+      if (isIos && !isStandalone) {
+        throw new Error(
+          "No iPhone/iPad, use Compartilhar → Adicionar à Tela de Início e abra o Vitrini pelo ícone instalado.",
+        );
       }
       step = "buscar chave pública";
       const { publicKey: rawPublicKey, keyPairValid } = await getPublicKey();
@@ -285,6 +302,8 @@ export function AppShell({
         return;
       }
       toast.error(message || "Não foi possível ativar as notificações neste dispositivo.");
+    } finally {
+      setPushBusy(false);
     }
   }
 
@@ -392,9 +411,10 @@ export function AppShell({
                   className="shrink-0"
                   aria-label="Ativar notificações de pedidos"
                   title="Ativar notificações de pedidos"
+                  disabled={pushBusy}
                   onClick={() => void enablePushNotifications()}
                 >
-                  <BellRing className="size-4" />
+                  <BellRing className={cn("size-4", pushBusy && "animate-pulse")} />
                 </Button>
               ) : null}
               {store ? (
