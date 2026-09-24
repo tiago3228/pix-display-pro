@@ -48,6 +48,7 @@ import { Route as AuthenticatedAdminFaturamentoRouteImport } from './routes/_aut
 import { Route as AuthenticatedAdminFeedbackRouteImport } from './routes/_authenticated/admin_.feedback'
 import { Route as AuthenticatedAdminLandingRouteImport } from './routes/_authenticated/admin_.landing'
 import { Route as AuthenticatedAdminLojasRouteImport } from './routes/_authenticated/admin_.lojas'
+import { Route as AuthenticatedAdminNotificacoesRouteImport } from './routes/_authenticated/admin_.notificacoes'
 import { Route as AuthenticatedAdminPrecosRouteImport } from './routes/_authenticated/admin_.precos'
 import { Route as AuthenticatedAdminSolicitacoesProRouteImport } from './routes/_authenticated/admin_.solicitacoes-pro'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public/webhooks/mercadopago'
@@ -257,6 +258,12 @@ const AuthenticatedAdminLojasRoute = AuthenticatedAdminLojasRouteImport.update({
   path: '/admin/lojas',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAdminNotificacoesRoute =
+  AuthenticatedAdminNotificacoesRouteImport.update({
+    id: '/admin_/notificacoes',
+    path: '/admin/notificacoes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminPrecosRoute =
   AuthenticatedAdminPrecosRouteImport.update({
     id: '/admin_/precos',
@@ -315,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/admin/lojas': typeof AuthenticatedAdminLojasRoute
+  '/admin/notificacoes': typeof AuthenticatedAdminNotificacoesRoute
   '/admin/precos': typeof AuthenticatedAdminPrecosRoute
   '/admin/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
@@ -358,6 +366,7 @@ export interface FileRoutesByTo {
   '/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/admin/lojas': typeof AuthenticatedAdminLojasRoute
+  '/admin/notificacoes': typeof AuthenticatedAdminNotificacoesRoute
   '/admin/precos': typeof AuthenticatedAdminPrecosRoute
   '/admin/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
@@ -403,6 +412,7 @@ export interface FileRoutesById {
   '/_authenticated/admin_/feedback': typeof AuthenticatedAdminFeedbackRoute
   '/_authenticated/admin_/landing': typeof AuthenticatedAdminLandingRoute
   '/_authenticated/admin_/lojas': typeof AuthenticatedAdminLojasRoute
+  '/_authenticated/admin_/notificacoes': typeof AuthenticatedAdminNotificacoesRoute
   '/_authenticated/admin_/precos': typeof AuthenticatedAdminPrecosRoute
   '/_authenticated/admin_/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
@@ -448,6 +458,7 @@ export interface FileRouteTypes {
     | '/admin/feedback'
     | '/admin/landing'
     | '/admin/lojas'
+    | '/admin/notificacoes'
     | '/admin/precos'
     | '/admin/solicitacoes-pro'
     | '/api/public/webhooks/mercadopago'
@@ -491,6 +502,7 @@ export interface FileRouteTypes {
     | '/admin/feedback'
     | '/admin/landing'
     | '/admin/lojas'
+    | '/admin/notificacoes'
     | '/admin/precos'
     | '/admin/solicitacoes-pro'
     | '/api/public/webhooks/mercadopago'
@@ -535,6 +547,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin_/feedback'
     | '/_authenticated/admin_/landing'
     | '/_authenticated/admin_/lojas'
+    | '/_authenticated/admin_/notificacoes'
     | '/_authenticated/admin_/precos'
     | '/_authenticated/admin_/solicitacoes-pro'
     | '/api/public/webhooks/mercadopago'
@@ -831,6 +844,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminLojasRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin_/notificacoes': {
+      id: '/_authenticated/admin_/notificacoes'
+      path: '/admin/notificacoes'
+      fullPath: '/admin/notificacoes'
+      preLoaderRoute: typeof AuthenticatedAdminNotificacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin_/precos': {
       id: '/_authenticated/admin_/precos'
       path: '/admin/precos'
@@ -883,6 +903,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminFeedbackRoute: typeof AuthenticatedAdminFeedbackRoute
   AuthenticatedAdminLandingRoute: typeof AuthenticatedAdminLandingRoute
   AuthenticatedAdminLojasRoute: typeof AuthenticatedAdminLojasRoute
+  AuthenticatedAdminNotificacoesRoute: typeof AuthenticatedAdminNotificacoesRoute
   AuthenticatedAdminPrecosRoute: typeof AuthenticatedAdminPrecosRoute
   AuthenticatedAdminSolicitacoesProRoute: typeof AuthenticatedAdminSolicitacoesProRoute
 }
@@ -915,6 +936,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminFeedbackRoute: AuthenticatedAdminFeedbackRoute,
   AuthenticatedAdminLandingRoute: AuthenticatedAdminLandingRoute,
   AuthenticatedAdminLojasRoute: AuthenticatedAdminLojasRoute,
+  AuthenticatedAdminNotificacoesRoute: AuthenticatedAdminNotificacoesRoute,
   AuthenticatedAdminPrecosRoute: AuthenticatedAdminPrecosRoute,
   AuthenticatedAdminSolicitacoesProRoute:
     AuthenticatedAdminSolicitacoesProRoute,

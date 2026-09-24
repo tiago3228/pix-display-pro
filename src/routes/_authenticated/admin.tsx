@@ -93,6 +93,9 @@ function Admin() {
         <Button asChild variant="outline" size="sm">
           <a href="/admin/feedback">Feedbacks dos proprietários</a>
         </Button>
+        <Button asChild variant="outline" size="sm">
+          <a href="/admin/notificacoes">FAQ de notificações</a>
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
