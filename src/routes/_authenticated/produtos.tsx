@@ -186,7 +186,7 @@ type ProductRow = {
 };
 
 const emptyForm = {
-  module: "roupas" as "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria",
+  module: "roupas" as "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria" | "marmitaria",
   name: "",
   description: "",
   price: "",

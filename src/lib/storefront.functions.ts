@@ -148,6 +148,7 @@ type StorefrontProductDbRow = {
   is_hidden: boolean;
   category_id: string | null;
   meal_period?: "lunch" | "dinner" | "both" | null;
+  delivery_enabled?: boolean | null;
   order_enabled: boolean;
   order_unit_price: number | string | null;
   order_min_quantity: number;
