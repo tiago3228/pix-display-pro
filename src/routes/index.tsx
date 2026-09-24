@@ -130,7 +130,8 @@ function Landing() {
 
       <main>
         <section
-          className="mx-auto max-w-6xl px-4 pt-14 pb-16 sm:pt-20"
+          onClick={handleBannerClick}
+          className="mx-auto max-w-6xl cursor-pointer px-4 pt-14 pb-16 sm:pt-20"
           style={
             banner.image
               ? {
