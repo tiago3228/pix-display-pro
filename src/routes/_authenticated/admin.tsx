@@ -90,6 +90,9 @@ function Admin() {
         <Button asChild variant="outline" size="sm">
           <a href="/admin/lojas">Lojas e campanhas</a>
         </Button>
+        <Button asChild variant="outline" size="sm">
+          <a href="/admin/feedback">Feedbacks dos proprietários</a>
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">

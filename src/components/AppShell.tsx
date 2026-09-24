@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   Camera,
+  MessageSquarePlus,
   Package,
   QrCode,
   Settings,
@@ -80,6 +81,13 @@ const NAV = [
     label: "Como funciona",
     short: "Ajuda",
     icon: HelpCircle,
+    featured: false,
+  },
+  {
+    to: "/feedback",
+    label: "Reportar problemas",
+    short: "Feedback",
+    icon: MessageSquarePlus,
     featured: false,
   },
 ] as const;
