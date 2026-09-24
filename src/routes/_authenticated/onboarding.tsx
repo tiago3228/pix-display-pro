@@ -110,7 +110,7 @@ function Onboarding() {
         saved = data;
       } else if (error && !error.message.includes("duplicate")) {
         setSaving(false);
-        toast.error("Não foi possível salvar sua loja.");
+        toast.error(`Não foi possível salvar sua loja: ${error.message}`);
         return;
       }
       candidate = slugify(form.name) || candidate;
