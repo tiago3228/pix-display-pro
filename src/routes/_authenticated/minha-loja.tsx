@@ -625,6 +625,7 @@ function MyStore() {
         "Shorts",
         "Conjuntos",
         "Moda Praia",
+        "Íntimos",
         "Acessórios",
       ],
       esportes: [
