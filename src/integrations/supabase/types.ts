@@ -745,6 +745,53 @@ export type Database = {
           },
         ]
       }
+      owner_feedback: {
+        Row: {
+          admin_note: string
+          category: string
+          created_at: string
+          id: string
+          message: string
+          owner_id: string
+          status: string
+          store_id: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          admin_note?: string
+          category: string
+          created_at?: string
+          id?: string
+          message: string
+          owner_id: string
+          status?: string
+          store_id: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          admin_note?: string
+          category?: string
+          created_at?: string
+          id?: string
+          message?: string
+          owner_id?: string
+          status?: string
+          store_id?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "owner_feedback_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_reminders: {
         Row: {
           channel: string
@@ -2478,6 +2525,10 @@ export type Database = {
       seed_store_modules: {
         Args: { target_store_id: string }
         Returns: undefined
+      }
+      store_has_pro_access: {
+        Args: { target_store_id: string }
+        Returns: boolean
       }
     }
     Enums: {
