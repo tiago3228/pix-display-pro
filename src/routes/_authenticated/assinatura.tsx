@@ -124,7 +124,8 @@ function Subscription() {
   });
 
   const subscription = data?.subscription ?? null;
-  const isPro = data?.hasProAccess ?? false;
+  const trialEndsAt = data?.trialEndsAt ?? store?.pro_trial_ends_at ?? null;
+  const isPro = Boolean(data?.hasProAccess || store?.plan === "pro");
 
   return (
     <AppShell title="Assinatura" description="Escolha seu plano Vitrini">
@@ -146,11 +147,11 @@ function Subscription() {
         </div>
       ) : null}
 
-      {data?.proSource === "trial" && data.trialEndsAt ? (
+      {isPro && trialEndsAt && !subscription ? (
         <div className="mb-4 rounded-lg border border-primary/40 bg-primary/5 p-4 text-sm">
           <p className="font-semibold">Você está nos {PRO_TRIAL_DAYS} dias grátis do PRO</p>
           <p className="mt-1 text-muted-foreground">
-            O teste termina em {formatDay(data.trialEndsAt)}. Depois dessa data, será necessário
+            O teste termina em {formatDay(trialEndsAt)}. Depois dessa data, será necessário
             assinar a Básica por {brl(plans.basicPrice)}/mês ou a PRO por {brl(pricing.price)}/mês
             para continuar usando os recursos pagos.
           </p>
