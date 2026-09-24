@@ -39,47 +39,51 @@ function SignupPage() {
       return;
     }
     setLoading(true);
-    const { data, error } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        data: { name: form.name, whatsapp: form.whatsapp },
-      },
-    });
-    if (error) {
-      setLoading(false);
-      toast.error(
-        error.message.includes("already")
-          ? "Este e-mail já possui uma conta. Faça login."
-          : "Não foi possível criar a conta.",
-      );
-      return;
-    }
-    let userId = data.user?.id ?? null;
-    if (!data.session) {
-      // Sem confirmação de e-mail: entra direto após o cadastro.
-      const { data: signIn, error: signInError } = await supabase.auth.signInWithPassword({
-        email: form.email,
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: form.email.trim(),
         password: form.password,
+        options: {
+          data: { name: form.name.trim(), whatsapp: form.whatsapp.trim() },
+        },
       });
-      if (signInError || !signIn.session) {
-        setLoading(false);
-        toast.error("Conta criada, mas não foi possível entrar. Tente fazer login.");
-        navigate({ to: "/login" });
+      if (error) {
+        toast.error(
+          error.message.toLowerCase().includes("already")
+            ? "Este e-mail já possui uma conta. Faça login."
+            : error.message || "Não foi possível criar a conta.",
+        );
         return;
       }
-      userId = signIn.user.id;
+      let userId = data.user?.id ?? null;
+      if (!data.session) {
+        // Em projetos sem confirmação de e-mail, a sessão pode chegar alguns instantes depois.
+        const { data: signIn, error: signInError } = await supabase.auth.signInWithPassword({
+          email: form.email.trim(),
+          password: form.password,
+        });
+        if (signInError || !signIn.session) {
+          toast.success("Conta criada. Confirme seu e-mail e entre para criar a loja.");
+          navigate({ to: "/login" });
+          return;
+        }
+        userId = signIn.user.id;
+      }
+      if (userId) {
+        const { error: profileError } = await supabase.from("profiles").upsert({
+          id: userId,
+          name: form.name.trim(),
+          email: form.email.trim(),
+          whatsapp: form.whatsapp.trim(),
+        });
+        if (profileError) console.warn("Não foi possível salvar o perfil inicial", profileError);
+      }
+      navigate({ to: "/onboarding" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível criar a conta. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-    if (userId) {
-      await supabase.from("profiles").upsert({
-        id: userId,
-        name: form.name,
-        email: form.email,
-        whatsapp: form.whatsapp,
-      });
-    }
-    navigate({ to: "/onboarding" });
   }
 
   async function handleGoogle() {

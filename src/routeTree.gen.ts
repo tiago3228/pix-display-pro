@@ -29,6 +29,7 @@ import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authen
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedEncomendasRouteImport } from './routes/_authenticated/encomendas'
 import { Route as AuthenticatedFaturamentoRouteImport } from './routes/_authenticated/faturamento'
+import { Route as AuthenticatedFeedbackRouteImport } from './routes/_authenticated/feedback'
 import { Route as AuthenticatedLojasPremiumRouteImport } from './routes/_authenticated/lojas-premium'
 import { Route as AuthenticatedMinhaLojaRouteImport } from './routes/_authenticated/minha-loja'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -44,6 +45,7 @@ import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
 import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as AuthenticatedAdminAssinaturasRouteImport } from './routes/_authenticated/admin_.assinaturas'
 import { Route as AuthenticatedAdminFaturamentoRouteImport } from './routes/_authenticated/admin_.faturamento'
+import { Route as AuthenticatedAdminFeedbackRouteImport } from './routes/_authenticated/admin_.feedback'
 import { Route as AuthenticatedAdminLandingRouteImport } from './routes/_authenticated/admin_.landing'
 import { Route as AuthenticatedAdminLojasRouteImport } from './routes/_authenticated/admin_.lojas'
 import { Route as AuthenticatedAdminPrecosRouteImport } from './routes/_authenticated/admin_.precos'
@@ -153,6 +155,11 @@ const AuthenticatedFaturamentoRoute =
     path: '/faturamento',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedFeedbackRoute = AuthenticatedFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedLojasPremiumRoute =
   AuthenticatedLojasPremiumRouteImport.update({
     id: '/lojas-premium',
@@ -233,6 +240,12 @@ const AuthenticatedAdminFaturamentoRoute =
     path: '/admin/faturamento',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminFeedbackRoute =
+  AuthenticatedAdminFeedbackRouteImport.update({
+    id: '/admin_/feedback',
+    path: '/admin/feedback',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminLandingRoute =
   AuthenticatedAdminLandingRouteImport.update({
     id: '/admin_/landing',
@@ -283,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/encomendas': typeof AuthenticatedEncomendasRoute
   '/faturamento': typeof AuthenticatedFaturamentoRoute
+  '/feedback': typeof AuthenticatedFeedbackRoute
   '/lojas-premium': typeof AuthenticatedLojasPremiumRoute
   '/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -298,6 +312,7 @@ export interface FileRoutesByFullPath {
   '/s/$slug': typeof SSlugRoute
   '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
   '/admin/faturamento': typeof AuthenticatedAdminFaturamentoRoute
+  '/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/admin/lojas': typeof AuthenticatedAdminLojasRoute
   '/admin/precos': typeof AuthenticatedAdminPrecosRoute
@@ -324,6 +339,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/encomendas': typeof AuthenticatedEncomendasRoute
   '/faturamento': typeof AuthenticatedFaturamentoRoute
+  '/feedback': typeof AuthenticatedFeedbackRoute
   '/lojas-premium': typeof AuthenticatedLojasPremiumRoute
   '/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -339,6 +355,7 @@ export interface FileRoutesByTo {
   '/s/$slug': typeof SSlugRoute
   '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
   '/admin/faturamento': typeof AuthenticatedAdminFaturamentoRoute
+  '/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
   '/admin/landing': typeof AuthenticatedAdminLandingRoute
   '/admin/lojas': typeof AuthenticatedAdminLojasRoute
   '/admin/precos': typeof AuthenticatedAdminPrecosRoute
@@ -367,6 +384,7 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/encomendas': typeof AuthenticatedEncomendasRoute
   '/_authenticated/faturamento': typeof AuthenticatedFaturamentoRoute
+  '/_authenticated/feedback': typeof AuthenticatedFeedbackRoute
   '/_authenticated/lojas-premium': typeof AuthenticatedLojasPremiumRoute
   '/_authenticated/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -382,6 +400,7 @@ export interface FileRoutesById {
   '/s/$slug': typeof SSlugRoute
   '/_authenticated/admin_/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
   '/_authenticated/admin_/faturamento': typeof AuthenticatedAdminFaturamentoRoute
+  '/_authenticated/admin_/feedback': typeof AuthenticatedAdminFeedbackRoute
   '/_authenticated/admin_/landing': typeof AuthenticatedAdminLandingRoute
   '/_authenticated/admin_/lojas': typeof AuthenticatedAdminLojasRoute
   '/_authenticated/admin_/precos': typeof AuthenticatedAdminPrecosRoute
@@ -410,6 +429,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/encomendas'
     | '/faturamento'
+    | '/feedback'
     | '/lojas-premium'
     | '/minha-loja'
     | '/onboarding'
@@ -425,6 +445,7 @@ export interface FileRouteTypes {
     | '/s/$slug'
     | '/admin/assinaturas'
     | '/admin/faturamento'
+    | '/admin/feedback'
     | '/admin/landing'
     | '/admin/lojas'
     | '/admin/precos'
@@ -451,6 +472,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/encomendas'
     | '/faturamento'
+    | '/feedback'
     | '/lojas-premium'
     | '/minha-loja'
     | '/onboarding'
@@ -466,6 +488,7 @@ export interface FileRouteTypes {
     | '/s/$slug'
     | '/admin/assinaturas'
     | '/admin/faturamento'
+    | '/admin/feedback'
     | '/admin/landing'
     | '/admin/lojas'
     | '/admin/precos'
@@ -493,6 +516,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/encomendas'
     | '/_authenticated/faturamento'
+    | '/_authenticated/feedback'
     | '/_authenticated/lojas-premium'
     | '/_authenticated/minha-loja'
     | '/_authenticated/onboarding'
@@ -508,6 +532,7 @@ export interface FileRouteTypes {
     | '/s/$slug'
     | '/_authenticated/admin_/assinaturas'
     | '/_authenticated/admin_/faturamento'
+    | '/_authenticated/admin_/feedback'
     | '/_authenticated/admin_/landing'
     | '/_authenticated/admin_/lojas'
     | '/_authenticated/admin_/precos'
@@ -673,6 +698,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFaturamentoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/feedback': {
+      id: '/_authenticated/feedback'
+      path: '/feedback'
+      fullPath: '/feedback'
+      preLoaderRoute: typeof AuthenticatedFeedbackRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/lojas-premium': {
       id: '/_authenticated/lojas-premium'
       path: '/lojas-premium'
@@ -778,6 +810,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminFaturamentoRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/admin_/feedback': {
+      id: '/_authenticated/admin_/feedback'
+      path: '/admin/feedback'
+      fullPath: '/admin/feedback'
+      preLoaderRoute: typeof AuthenticatedAdminFeedbackRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin_/landing': {
       id: '/_authenticated/admin_/landing'
       path: '/admin/landing'
@@ -828,6 +867,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEncomendasRoute: typeof AuthenticatedEncomendasRoute
   AuthenticatedFaturamentoRoute: typeof AuthenticatedFaturamentoRoute
+  AuthenticatedFeedbackRoute: typeof AuthenticatedFeedbackRoute
   AuthenticatedLojasPremiumRoute: typeof AuthenticatedLojasPremiumRoute
   AuthenticatedMinhaLojaRoute: typeof AuthenticatedMinhaLojaRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -840,6 +880,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedRoupasTreinoRoute: typeof AuthenticatedRoupasTreinoRoute
   AuthenticatedAdminAssinaturasRoute: typeof AuthenticatedAdminAssinaturasRoute
   AuthenticatedAdminFaturamentoRoute: typeof AuthenticatedAdminFaturamentoRoute
+  AuthenticatedAdminFeedbackRoute: typeof AuthenticatedAdminFeedbackRoute
   AuthenticatedAdminLandingRoute: typeof AuthenticatedAdminLandingRoute
   AuthenticatedAdminLojasRoute: typeof AuthenticatedAdminLojasRoute
   AuthenticatedAdminPrecosRoute: typeof AuthenticatedAdminPrecosRoute
@@ -858,6 +899,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEncomendasRoute: AuthenticatedEncomendasRoute,
   AuthenticatedFaturamentoRoute: AuthenticatedFaturamentoRoute,
+  AuthenticatedFeedbackRoute: AuthenticatedFeedbackRoute,
   AuthenticatedLojasPremiumRoute: AuthenticatedLojasPremiumRoute,
   AuthenticatedMinhaLojaRoute: AuthenticatedMinhaLojaRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
@@ -870,6 +912,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedRoupasTreinoRoute: AuthenticatedRoupasTreinoRoute,
   AuthenticatedAdminAssinaturasRoute: AuthenticatedAdminAssinaturasRoute,
   AuthenticatedAdminFaturamentoRoute: AuthenticatedAdminFaturamentoRoute,
+  AuthenticatedAdminFeedbackRoute: AuthenticatedAdminFeedbackRoute,
   AuthenticatedAdminLandingRoute: AuthenticatedAdminLandingRoute,
   AuthenticatedAdminLojasRoute: AuthenticatedAdminLojasRoute,
   AuthenticatedAdminPrecosRoute: AuthenticatedAdminPrecosRoute,
