@@ -989,7 +989,7 @@ function MyStore() {
                       <button
                         key={value}
                         type="button"
-                        onClick={() => setSuggestionNiche(value)}
+                        onClick={() => setSuggestionNiche(value ?? "roupas")}
                         className={`rounded-xl border p-3 text-left text-sm ${suggestionNiche === value ? "border-primary bg-primary/10" : ""}`}
                       >
                         {label}
