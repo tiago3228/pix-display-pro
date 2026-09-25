@@ -345,6 +345,9 @@ function Landing() {
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <span>© {new Date().getFullYear()} Vitrini · By: Tiago Cardoso</span>
           <nav className="flex flex-wrap gap-x-4 gap-y-2" aria-label="Informações públicas">
+            <a href="/softwares" className="hover:text-foreground">
+              Softwares
+            </a>
             <Link to="/suporte" className="hover:text-foreground">
               Suporte
             </Link>

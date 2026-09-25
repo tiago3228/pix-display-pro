@@ -16,6 +16,7 @@ import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SoftwaresRouteImport } from './routes/softwares'
 import { Route as SuporteRouteImport } from './routes/suporte'
 import { Route as TermosRouteImport } from './routes/termos'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -44,6 +45,7 @@ import { Route as AuthenticatedRoupasTreinoRouteImport } from './routes/_authent
 import { Route as CobrancaTokenRouteImport } from './routes/cobranca.$token'
 import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
 import { Route as SSlugRouteImport } from './routes/s.$slug'
+import { Route as SoftwaresSlugRouteImport } from './routes/softwares.$slug'
 import { Route as AuthenticatedAdminAssinaturasRouteImport } from './routes/_authenticated/admin_.assinaturas'
 import { Route as AuthenticatedAdminFaturamentoRouteImport } from './routes/_authenticated/admin_.faturamento'
 import { Route as AuthenticatedAdminFeedbackRouteImport } from './routes/_authenticated/admin_.feedback'
@@ -51,6 +53,7 @@ import { Route as AuthenticatedAdminLandingRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminLojasRouteImport } from './routes/_authenticated/admin_.lojas'
 import { Route as AuthenticatedAdminNotificacoesRouteImport } from './routes/_authenticated/admin_.notificacoes'
 import { Route as AuthenticatedAdminPrecosRouteImport } from './routes/_authenticated/admin_.precos'
+import { Route as AuthenticatedAdminSoftwaresRouteImport } from './routes/_authenticated/admin_.softwares'
 import { Route as AuthenticatedAdminSolicitacoesProRouteImport } from './routes/_authenticated/admin_.solicitacoes-pro'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public/webhooks/mercadopago'
 
@@ -86,6 +89,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SoftwaresRoute = SoftwaresRouteImport.update({
+  id: '/softwares',
+  path: '/softwares',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SuporteRoute = SuporteRouteImport.update({
@@ -235,6 +243,11 @@ const SSlugRoute = SSlugRouteImport.update({
   path: '/s/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SoftwaresSlugRoute = SoftwaresSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => SoftwaresRoute,
+} as any)
 const AuthenticatedAdminAssinaturasRoute =
   AuthenticatedAdminAssinaturasRouteImport.update({
     id: '/admin_/assinaturas',
@@ -276,6 +289,12 @@ const AuthenticatedAdminPrecosRoute =
     path: '/admin/precos',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAdminSoftwaresRoute =
+  AuthenticatedAdminSoftwaresRouteImport.update({
+    id: '/admin_/softwares',
+    path: '/admin/softwares',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminSolicitacoesProRoute =
   AuthenticatedAdminSolicitacoesProRouteImport.update({
     id: '/admin_/solicitacoes-pro',
@@ -296,6 +315,7 @@ export interface FileRoutesByFullPath {
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/softwares': typeof SoftwaresRouteWithChildren
   '/suporte': typeof SuporteRoute
   '/termos': typeof TermosRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -324,6 +344,7 @@ export interface FileRoutesByFullPath {
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
   '/s/$slug': typeof SSlugRoute
+  '/softwares/$slug': typeof SoftwaresSlugRoute
   '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
   '/admin/faturamento': typeof AuthenticatedAdminFaturamentoRoute
   '/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
@@ -331,6 +352,7 @@ export interface FileRoutesByFullPath {
   '/admin/lojas': typeof AuthenticatedAdminLojasRoute
   '/admin/notificacoes': typeof AuthenticatedAdminNotificacoesRoute
   '/admin/precos': typeof AuthenticatedAdminPrecosRoute
+  '/admin/softwares': typeof AuthenticatedAdminSoftwaresRoute
   '/admin/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
@@ -341,6 +363,7 @@ export interface FileRoutesByTo {
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/softwares': typeof SoftwaresRouteWithChildren
   '/suporte': typeof SuporteRoute
   '/termos': typeof TermosRoute
   '/admin': typeof AuthenticatedAdminRoute
@@ -369,6 +392,7 @@ export interface FileRoutesByTo {
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
   '/s/$slug': typeof SSlugRoute
+  '/softwares/$slug': typeof SoftwaresSlugRoute
   '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
   '/admin/faturamento': typeof AuthenticatedAdminFaturamentoRoute
   '/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
@@ -376,6 +400,7 @@ export interface FileRoutesByTo {
   '/admin/lojas': typeof AuthenticatedAdminLojasRoute
   '/admin/notificacoes': typeof AuthenticatedAdminNotificacoesRoute
   '/admin/precos': typeof AuthenticatedAdminPrecosRoute
+  '/admin/softwares': typeof AuthenticatedAdminSoftwaresRoute
   '/admin/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
@@ -388,6 +413,7 @@ export interface FileRoutesById {
   '/recuperar-senha': typeof RecuperarSenhaRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/softwares': typeof SoftwaresRouteWithChildren
   '/suporte': typeof SuporteRoute
   '/termos': typeof TermosRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
@@ -416,6 +442,7 @@ export interface FileRoutesById {
   '/cobranca/$token': typeof CobrancaTokenRoute
   '/loja/$slug': typeof LojaSlugRoute
   '/s/$slug': typeof SSlugRoute
+  '/softwares/$slug': typeof SoftwaresSlugRoute
   '/_authenticated/admin_/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
   '/_authenticated/admin_/faturamento': typeof AuthenticatedAdminFaturamentoRoute
   '/_authenticated/admin_/feedback': typeof AuthenticatedAdminFeedbackRoute
@@ -423,6 +450,7 @@ export interface FileRoutesById {
   '/_authenticated/admin_/lojas': typeof AuthenticatedAdminLojasRoute
   '/_authenticated/admin_/notificacoes': typeof AuthenticatedAdminNotificacoesRoute
   '/_authenticated/admin_/precos': typeof AuthenticatedAdminPrecosRoute
+  '/_authenticated/admin_/softwares': typeof AuthenticatedAdminSoftwaresRoute
   '/_authenticated/admin_/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
@@ -435,6 +463,7 @@ export interface FileRouteTypes {
     | '/recuperar-senha'
     | '/reset-password'
     | '/signup'
+    | '/softwares'
     | '/suporte'
     | '/termos'
     | '/admin'
@@ -463,6 +492,7 @@ export interface FileRouteTypes {
     | '/cobranca/$token'
     | '/loja/$slug'
     | '/s/$slug'
+    | '/softwares/$slug'
     | '/admin/assinaturas'
     | '/admin/faturamento'
     | '/admin/feedback'
@@ -470,6 +500,7 @@ export interface FileRouteTypes {
     | '/admin/lojas'
     | '/admin/notificacoes'
     | '/admin/precos'
+    | '/admin/softwares'
     | '/admin/solicitacoes-pro'
     | '/api/public/webhooks/mercadopago'
   fileRoutesByTo: FileRoutesByTo
@@ -480,6 +511,7 @@ export interface FileRouteTypes {
     | '/recuperar-senha'
     | '/reset-password'
     | '/signup'
+    | '/softwares'
     | '/suporte'
     | '/termos'
     | '/admin'
@@ -508,6 +540,7 @@ export interface FileRouteTypes {
     | '/cobranca/$token'
     | '/loja/$slug'
     | '/s/$slug'
+    | '/softwares/$slug'
     | '/admin/assinaturas'
     | '/admin/faturamento'
     | '/admin/feedback'
@@ -515,6 +548,7 @@ export interface FileRouteTypes {
     | '/admin/lojas'
     | '/admin/notificacoes'
     | '/admin/precos'
+    | '/admin/softwares'
     | '/admin/solicitacoes-pro'
     | '/api/public/webhooks/mercadopago'
   id:
@@ -526,6 +560,7 @@ export interface FileRouteTypes {
     | '/recuperar-senha'
     | '/reset-password'
     | '/signup'
+    | '/softwares'
     | '/suporte'
     | '/termos'
     | '/_authenticated/admin'
@@ -554,6 +589,7 @@ export interface FileRouteTypes {
     | '/cobranca/$token'
     | '/loja/$slug'
     | '/s/$slug'
+    | '/softwares/$slug'
     | '/_authenticated/admin_/assinaturas'
     | '/_authenticated/admin_/faturamento'
     | '/_authenticated/admin_/feedback'
@@ -561,6 +597,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin_/lojas'
     | '/_authenticated/admin_/notificacoes'
     | '/_authenticated/admin_/precos'
+    | '/_authenticated/admin_/softwares'
     | '/_authenticated/admin_/solicitacoes-pro'
     | '/api/public/webhooks/mercadopago'
   fileRoutesById: FileRoutesById
@@ -573,6 +610,7 @@ export interface RootRouteChildren {
   RecuperarSenhaRoute: typeof RecuperarSenhaRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  SoftwaresRoute: typeof SoftwaresRouteWithChildren
   SuporteRoute: typeof SuporteRoute
   TermosRoute: typeof TermosRoute
   CobrancaTokenRoute: typeof CobrancaTokenRoute
@@ -630,6 +668,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/softwares': {
+      id: '/softwares'
+      path: '/softwares'
+      fullPath: '/softwares'
+      preLoaderRoute: typeof SoftwaresRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/suporte': {
@@ -828,6 +873,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/softwares/$slug': {
+      id: '/softwares/$slug'
+      path: '/$slug'
+      fullPath: '/softwares/$slug'
+      preLoaderRoute: typeof SoftwaresSlugRouteImport
+      parentRoute: typeof SoftwaresRoute
+    }
     '/_authenticated/admin_/assinaturas': {
       id: '/_authenticated/admin_/assinaturas'
       path: '/admin/assinaturas'
@@ -875,6 +927,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/precos'
       fullPath: '/admin/precos'
       preLoaderRoute: typeof AuthenticatedAdminPrecosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin_/softwares': {
+      id: '/_authenticated/admin_/softwares'
+      path: '/admin/softwares'
+      fullPath: '/admin/softwares'
+      preLoaderRoute: typeof AuthenticatedAdminSoftwaresRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/admin_/solicitacoes-pro': {
@@ -925,6 +984,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminLojasRoute: typeof AuthenticatedAdminLojasRoute
   AuthenticatedAdminNotificacoesRoute: typeof AuthenticatedAdminNotificacoesRoute
   AuthenticatedAdminPrecosRoute: typeof AuthenticatedAdminPrecosRoute
+  AuthenticatedAdminSoftwaresRoute: typeof AuthenticatedAdminSoftwaresRoute
   AuthenticatedAdminSolicitacoesProRoute: typeof AuthenticatedAdminSolicitacoesProRoute
 }
 
@@ -959,12 +1019,25 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminLojasRoute: AuthenticatedAdminLojasRoute,
   AuthenticatedAdminNotificacoesRoute: AuthenticatedAdminNotificacoesRoute,
   AuthenticatedAdminPrecosRoute: AuthenticatedAdminPrecosRoute,
+  AuthenticatedAdminSoftwaresRoute: AuthenticatedAdminSoftwaresRoute,
   AuthenticatedAdminSolicitacoesProRoute:
     AuthenticatedAdminSolicitacoesProRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
+interface SoftwaresRouteChildren {
+  SoftwaresSlugRoute: typeof SoftwaresSlugRoute
+}
+
+const SoftwaresRouteChildren: SoftwaresRouteChildren = {
+  SoftwaresSlugRoute: SoftwaresSlugRoute,
+}
+
+const SoftwaresRouteWithChildren = SoftwaresRoute._addFileChildren(
+  SoftwaresRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -974,6 +1047,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecuperarSenhaRoute: RecuperarSenhaRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  SoftwaresRoute: SoftwaresRouteWithChildren,
   SuporteRoute: SuporteRoute,
   TermosRoute: TermosRoute,
   CobrancaTokenRoute: CobrancaTokenRoute,

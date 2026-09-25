@@ -18,6 +18,7 @@ import {
   MessageSquarePlus,
   Package,
   QrCode,
+  Rocket,
   Settings,
   ShieldCheck,
   ShoppingCart,
@@ -401,6 +402,7 @@ export function AppShell({
                 </Link>
               ))}
               {isAdmin ? (
+                <>
                 <Link
                   to="/admin"
                   className={cn(
@@ -412,6 +414,18 @@ export function AppShell({
                 >
                   <ShieldCheck className="size-4" /> Administração
                 </Link>
+                <Link
+                  to="/admin/softwares"
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
+                    pathname.startsWith("/admin/softwares")
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-muted-foreground hover:bg-sidebar-accent/60",
+                  )}
+                >
+                  <Rocket className="size-4" /> Meus Softwares
+                </Link>
+                </>
               ) : null}
             </nav>
           </ScrollArea>
@@ -607,6 +621,7 @@ export function AppShell({
                   </Link>
                 ))}
                 {isAdmin ? (
+                  <>
                   <Link
                     to="/admin"
                     onClick={() => setMoreOpen(false)}
@@ -614,6 +629,19 @@ export function AppShell({
                   >
                     <ShieldCheck className="size-4" /> Administração
                   </Link>
+                  <Link
+                    to="/admin/softwares"
+                    onClick={() => setMoreOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition",
+                      pathname.startsWith("/admin/softwares")
+                        ? "bg-accent text-accent-foreground"
+                        : "text-muted-foreground hover:bg-accent/60",
+                    )}
+                  >
+                    <Rocket className="size-4" /> Meus Softwares
+                  </Link>
+                  </>
                 ) : null}
                 <button
                   type="button"

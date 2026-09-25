@@ -354,6 +354,185 @@ export type Database = {
           },
         ]
       }
+      digital_product_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      digital_products: {
+        Row: {
+          background_color: string
+          banner_image_path: string | null
+          banner_subtitle: string | null
+          banner_title: string | null
+          benefits: string[]
+          card_clickable: boolean
+          category_id: string | null
+          click_count: number
+          custom_type_label: string | null
+          contract_cta_label: string
+          contract_url: string | null
+          created_at: string
+          created_by: string | null
+          cta_label: string
+          description: string
+          demo_cta_label: string
+          demo_url: string | null
+          faqs: Json
+          features: string[]
+          gallery_image_paths: string[]
+          id: string
+          is_active: boolean
+          is_featured: boolean
+          logo_image_path: string | null
+          main_image_path: string | null
+          name: string
+          open_new_tab: boolean
+          plans: Json
+          primary_color: string
+          product_type: string
+          secondary_color: string
+          seo_description: string | null
+          seo_title: string | null
+          share_image_path: string | null
+          short_description: string
+          slug: string
+          sort_order: number
+          support_cta_label: string
+          support_url: string | null
+          updated_at: string
+          updated_by: string | null
+          url: string
+          video_url: string | null
+          view_count: number
+        }
+        Insert: {
+          background_color?: string
+          banner_image_path?: string | null
+          banner_subtitle?: string | null
+          banner_title?: string | null
+          benefits?: string[]
+          card_clickable?: boolean
+          category_id?: string | null
+          click_count?: number
+          contract_cta_label?: string
+          contract_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string
+          description?: string
+          demo_cta_label?: string
+          demo_url?: string | null
+          faqs?: Json
+          features?: string[]
+          gallery_image_paths?: string[]
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          logo_image_path?: string | null
+          main_image_path?: string | null
+          custom_type_label?: string | null
+          name: string
+          open_new_tab?: boolean
+          plans?: Json
+          primary_color?: string
+          product_type?: string
+          secondary_color?: string
+          seo_description?: string | null
+          seo_title?: string | null
+          share_image_path?: string | null
+          short_description?: string
+          slug: string
+          sort_order?: number
+          support_cta_label?: string
+          support_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          url: string
+          video_url?: string | null
+          view_count?: number
+        }
+        Update: {
+          background_color?: string
+          banner_image_path?: string | null
+          banner_subtitle?: string | null
+          banner_title?: string | null
+          benefits?: string[]
+          card_clickable?: boolean
+          category_id?: string | null
+          click_count?: number
+          contract_cta_label?: string
+          contract_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string
+          description?: string
+          demo_cta_label?: string
+          demo_url?: string | null
+          faqs?: Json
+          features?: string[]
+          gallery_image_paths?: string[]
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          logo_image_path?: string | null
+          main_image_path?: string | null
+          custom_type_label?: string | null
+          name?: string
+          open_new_tab?: boolean
+          plans?: Json
+          primary_color?: string
+          product_type?: string
+          secondary_color?: string
+          seo_description?: string | null
+          seo_title?: string | null
+          share_image_path?: string | null
+          short_description?: string
+          slug?: string
+          sort_order?: number
+          support_cta_label?: string
+          support_url?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          url?: string
+          video_url?: string | null
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digital_products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "digital_product_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       encomendas: {
         Row: {
           created_at: string

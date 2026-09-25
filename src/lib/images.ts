@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export const ASSET_BUCKET = "store-assets";
+export const DIGITAL_PRODUCT_ASSET_BUCKET = "digital-product-assets";
 
 const cache = new Map<string, string>();
 
@@ -46,6 +47,36 @@ export async function uploadAsset(userId: string, file: File) {
     });
     throw error;
   }
+  return path;
+}
+
+/** Imagens de apresentação do catálogo global ficam em bucket próprio público. */
+export function resolveDigitalProductAsset(path?: string | null): string | null {
+  if (!path) return null;
+  if (/^https?:\/\//i.test(path)) return path;
+  return (
+    supabase.storage.from(DIGITAL_PRODUCT_ASSET_BUCKET).getPublicUrl(path).data.publicUrl || null
+  );
+}
+
+export async function uploadDigitalProductAsset(userId: string, file: File) {
+  const extensionByType: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "image/avif": "avif",
+  };
+  const extension = extensionByType[file.type];
+  if (!extension) throw new Error("Selecione um arquivo de imagem válido.");
+  if (file.size > 10 * 1024 * 1024) throw new Error("A imagem deve ter no máximo 10 MB.");
+  const path = `${userId}/${crypto.randomUUID()}.${extension}`;
+  const { error } = await supabase.storage.from(DIGITAL_PRODUCT_ASSET_BUCKET).upload(path, file, {
+    upsert: false,
+    contentType: file.type,
+    cacheControl: "31536000",
+  });
+  if (error) throw error;
   return path;
 }
 
