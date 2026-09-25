@@ -1178,9 +1178,12 @@ function Products() {
         </div>
       ) : null}
 
-      <div className="surface mb-4 p-4">
-        <p className="text-sm font-semibold">Categorias</p>
-        <div className="mt-2 space-y-2">
+      <CollapsibleSection
+        title="Categorias"
+        description={`${categories?.length ?? 0} ${(categories?.length ?? 0) === 1 ? "categoria" : "categorias"}`}
+        className="mb-4"
+      >
+        <div className="space-y-2">
           {(categories ?? []).map((category, index) => {
             const active = category.is_active !== false;
             const siblings = (categories ?? []).filter((item) => item.module === category.module && item.is_active !== false);
@@ -1222,7 +1225,7 @@ function Products() {
             Adicionar
           </Button>
         </div>
-      </div>
+      </CollapsibleSection>
 
       <div className="space-y-3">
         {(products ?? []).map((product) => (
