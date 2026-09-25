@@ -2445,6 +2445,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      default_store_module: {
+        Args: { store_category: string }
+        Returns: string
+      }
       enforce_subscription_grace: { Args: never; Returns: number }
       get_public_store: {
         Args: { _slug: string }
