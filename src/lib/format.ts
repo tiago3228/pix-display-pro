@@ -40,7 +40,7 @@ export const PIX_KEY_TYPES = [
 export const STORE_CATEGORIES = [
   "Doces",
   "Roupas",
-  "Joias e acessórios",
+  "Joias e Semijoias",
   "Cosméticos",
   "Alimentação",
   "Artesanato",

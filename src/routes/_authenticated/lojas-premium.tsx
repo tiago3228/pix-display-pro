@@ -56,6 +56,7 @@ function PremiumStores() {
   function moduleKey(item: CatalogItem) {
     if (item.slug === "roupas-esportivas") return "roupas_esportivas";
     if (item.slug === "roupas-treino") return "roupas_treino";
+    if (item.slug === "joias-semijoias") return "joias";
     return item.slug;
   }
   async function toggle(item: CatalogItem, value: boolean) {
@@ -139,8 +140,8 @@ function PremiumStores() {
                       </a>
                     </Button>
                   ) : available ? (
-                    <Button size="sm" variant="outline" disabled>
-                      🔒 Exclusivo PRO
+                    <Button size="sm" variant="outline" asChild>
+                      <a href={item.route}>🔒 Exclusivo PRO</a>
                     </Button>
                   ) : (
                     <Button size="sm" variant="outline" disabled>

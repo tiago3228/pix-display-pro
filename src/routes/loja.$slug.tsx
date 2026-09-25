@@ -38,6 +38,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { getStoreModuleLabel } from "@/lib/store-niche";
+import { isJewelryOfferCurrent } from "@/lib/jewelry";
 import { EncomendaDialog } from "@/components/EncomendaDialog";
 
 function instagramHref(value: string | null | undefined) {
@@ -206,9 +207,15 @@ export function StorePage() {
         : activeCategory === "featured"
           ? mealProducts.filter((p) => p.is_featured)
           : activeCategory === "new-releases"
-            ? mealProducts.filter((p) => p.sportsIsNewRelease)
+            ? mealProducts.filter((p) =>
+                p.module === "joias" ? p.jewelryIsNewRelease : p.sportsIsNewRelease,
+              )
             : activeCategory === "offers"
-              ? mealProducts.filter((p) => p.sportsOfferActive)
+              ? mealProducts.filter((p) =>
+                  p.module === "joias"
+                    ? isJewelryOfferCurrent(p.jewelryOfferActive, p.jewelryOfferExpiresAt)
+                    : p.sportsOfferActive,
+                )
               : activeCategory === "retro"
                 ? mealProducts.filter((p) => p.sportsIsRetro)
                 : mealProducts.filter((p) => p.category_id === activeCategory);
@@ -622,17 +629,33 @@ export function StorePage() {
             onSelect={setSelected}
           />
         ) : null}
-        {data.products.some((product) => product.sportsIsNewRelease) ? (
+        {data.products.some((product) =>
+          product.module === "joias" ? product.jewelryIsNewRelease : product.sportsIsNewRelease,
+        ) ? (
           <StorefrontShelf
             title="🆕 Novidades"
-            products={data.products.filter((product) => product.sportsIsNewRelease).slice(0, 6)}
+            products={data.products
+              .filter((product) =>
+                product.module === "joias" ? product.jewelryIsNewRelease : product.sportsIsNewRelease,
+              )
+              .slice(0, 6)}
             onSelect={setSelected}
           />
         ) : null}
-        {data.products.some((product) => product.sportsOfferActive) ? (
+        {data.products.some((product) =>
+          product.module === "joias"
+            ? isJewelryOfferCurrent(product.jewelryOfferActive, product.jewelryOfferExpiresAt)
+            : product.sportsOfferActive,
+        ) ? (
           <StorefrontShelf
             title="🔥 Ofertas"
-            products={data.products.filter((product) => product.sportsOfferActive).slice(0, 6)}
+            products={data.products
+              .filter((product) =>
+                product.module === "joias"
+                  ? isJewelryOfferCurrent(product.jewelryOfferActive, product.jewelryOfferExpiresAt)
+                  : product.sportsOfferActive,
+              )
+              .slice(0, 6)}
             onSelect={setSelected}
           />
         ) : null}
@@ -657,6 +680,8 @@ export function StorePage() {
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                 >
+                  {category.image ? <img src={category.image} alt="" className="mb-1 size-10 rounded-lg object-cover" /> : null}
+                  {category.image ? <img src={category.image} alt="" className="mb-1 size-10 rounded-lg object-cover" /> : null}
                   {category.name}
                 </button>
               ))}
@@ -673,7 +698,7 @@ export function StorePage() {
         }}
       >
         <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
-          {(["roupas", "roupas_esportivas", "roupas_treino", "calcados", "cafeteria", "marmitaria"] as const).map(
+          {(["roupas", "roupas_esportivas", "roupas_treino", "calcados", "cafeteria", "marmitaria", "joias"] as const).map(
             (module) => {
               return data.products.some((product) => product.module === module) ? (
                 <CategoryChip
@@ -775,7 +800,9 @@ export function StorePage() {
               color={data.sports.settings?.primary_color ?? store.primary_color}
             />
           ) : null}
-          {data.products.some((p) => p.sportsIsNewRelease) ? (
+          {data.products.some((p) =>
+            p.module === "joias" ? p.jewelryIsNewRelease : p.sportsIsNewRelease,
+          ) ? (
             <CategoryChip
               label="🆕 Lançamentos"
               active={activeCategory === "new-releases"}
@@ -783,7 +810,11 @@ export function StorePage() {
               color={store.primary_color}
             />
           ) : null}
-          {data.products.some((p) => p.sportsOfferActive) ? (
+          {data.products.some((p) =>
+            p.module === "joias"
+              ? isJewelryOfferCurrent(p.jewelryOfferActive, p.jewelryOfferExpiresAt)
+              : p.sportsOfferActive,
+          ) ? (
             <CategoryChip
               label="🔥 Ofertas"
               active={activeCategory === "offers"}
@@ -930,19 +961,19 @@ export function StorePage() {
                       {product.description}
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                      {product.sportsOfferActive && product.sportsOfferPrice !== null ? (
+                      {(product.sportsOfferActive && product.sportsOfferPrice !== null) || (isJewelryOfferCurrent(product.jewelryOfferActive, product.jewelryOfferExpiresAt) && product.jewelryOfferPrice !== null) ? (
                         <>
                           <span className="text-xs text-muted-foreground line-through">
-                            {brl(product.sportsOriginalPrice ?? product.price)}
+                            {brl(product.module === "joias" ? product.jewelryOriginalPrice ?? product.price : product.sportsOriginalPrice ?? product.price)}
                           </span>
                           <span
                             className="text-base font-bold"
                             style={{ color: store.theme_palette?.["prices"] ?? store.primary_color }}
                           >
-                            {brl(product.sportsOfferPrice)}
+                            {brl(product.module === "joias" ? product.jewelryOfferPrice ?? product.price : product.sportsOfferPrice ?? product.price)}
                           </span>
-                          {product.sportsOfferPercent ? (
-                            <Badge variant="secondary">{product.sportsOfferPercent}% OFF</Badge>
+                          {(product.module === "joias" ? product.jewelryOfferPercent : product.sportsOfferPercent) ? (
+                            <Badge variant="secondary">{product.module === "joias" ? product.jewelryOfferPercent : product.sportsOfferPercent}% OFF</Badge>
                           ) : null}
                         </>
                       ) : (
@@ -953,7 +984,7 @@ export function StorePage() {
                           {brl(product.price)}
                         </span>
                       )}
-                      {product.sportsIsNewRelease ? (
+                      {(product.module === "joias" ? product.jewelryIsNewRelease : product.sportsIsNewRelease) ? (
                         <Badge variant="secondary">🆕 Lançamento</Badge>
                       ) : null}
                       {status === "last" ? <Badge variant="secondary">Última unidade</Badge> : null}
@@ -1573,7 +1604,22 @@ function StorefrontShelf({
             </div>
             <div className="p-2.5">
               <p className="truncate text-xs font-semibold">{product.name}</p>
-              <p className="mt-1 text-sm font-bold">{brl(product.price)}</p>
+              {product.module === "joias" &&
+              isJewelryOfferCurrent(product.jewelryOfferActive, product.jewelryOfferExpiresAt) &&
+              product.jewelryOfferPrice !== null ? (
+                <p className="mt-1 text-xs text-muted-foreground line-through">
+                  {brl(product.jewelryOriginalPrice ?? product.price)}
+                </p>
+              ) : null}
+              <p className="mt-1 text-sm font-bold">
+                {brl(
+                  product.module === "joias" &&
+                    isJewelryOfferCurrent(product.jewelryOfferActive, product.jewelryOfferExpiresAt) &&
+                    product.jewelryOfferPrice !== null
+                    ? product.jewelryOfferPrice
+                    : product.price,
+                )}
+              </p>
             </div>
           </button>
         ))}
@@ -1601,12 +1647,13 @@ function ProductDetail({
 }) {
   const [choices, setChoices] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
-  const images = product.images.length ? product.images : product.image ? [product.image] : [];
+  const baseImages = product.images.length ? product.images : product.image ? [product.image] : [];
   const label = product.options
     .map((option) => choices[option.name])
     .filter(Boolean)
     .join(" / ");
   const variant = product.variants.find((item) => item.label === label) ?? null;
+  const images = variant?.image ? [variant.image, ...baseImages.filter((image) => image !== variant.image)] : baseImages;
   const complete = product.options.every((option) => choices[option.name]);
   const simpleProduct = product.options.length === 0;
   const outOfStock =
@@ -1616,9 +1663,11 @@ function ProductDetail({
       : !complete || !variant || variant.stock <= 0 || !variant.is_available);
   const unitPrice =
     variant?.price ??
-    (product.sportsOfferActive && product.sportsOfferPrice !== null
-      ? product.sportsOfferPrice
-      : product.price);
+    (isJewelryOfferCurrent(product.jewelryOfferActive, product.jewelryOfferExpiresAt) && product.jewelryOfferPrice !== null
+      ? product.jewelryOfferPrice
+      : product.sportsOfferActive && product.sportsOfferPrice !== null
+        ? product.sportsOfferPrice
+        : product.price);
   const maxQuantity = simpleProduct && product.track_stock ? product.stock : (variant?.stock ?? 99);
 
   function addToCart() {
@@ -1628,12 +1677,12 @@ function ProductDetail({
         key: simpleProduct ? product.id : `${product.id}:${variant!.id}`,
         productId: product.id,
         variantId: simpleProduct ? null : variant!.id,
-        variantLabel: simpleProduct ? null : variant!.label,
-        name: product.name,
-        description: product.description,
-        unitPrice,
-        imageUrl: product.image,
-        deliveryEnabled: product.deliveryEnabled,
+                variantLabel: simpleProduct ? null : variant!.label,
+                name: product.name,
+                description: product.description,
+                unitPrice,
+                imageUrl: variant?.image ?? product.image,
+                deliveryEnabled: product.deliveryEnabled,
         maxQuantity: product.track_stock || !simpleProduct ? maxQuantity : null,
       },
       quantity,
@@ -1650,7 +1699,7 @@ function ProductDetail({
           <button
             type="button"
             className="group relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-muted text-left"
-            onClick={() => images.length > 0 && onOpenGallery(product, 0)}
+            onClick={() => images.length > 0 && onOpenGallery({ ...product, image: images[0] ?? null, images }, 0)}
             aria-label={`Ampliar foto de ${product.name}`}
           >
             {images[0] ? (
@@ -1676,7 +1725,7 @@ function ProductDetail({
                 <button
                   key={url}
                   type="button"
-                  onClick={() => onOpenGallery(product, index)}
+                  onClick={() => onOpenGallery({ ...product, image: images[0] ?? null, images }, index)}
                   className="size-20 shrink-0 overflow-hidden rounded-lg border-2 border-transparent transition hover:border-[var(--store-accent)] sm:size-24"
                 >
                   <img
@@ -1698,13 +1747,21 @@ function ProductDetail({
             ) : (
               <Badge variant="outline">Esgotado</Badge>
             )}
-            {product.sportsIsNewRelease ? <Badge variant="secondary">🆕 Lançamento</Badge> : null}
-            {product.sportsOfferActive ? <Badge variant="secondary">🔥 Oferta</Badge> : null}
+            {(product.module === "joias" ? product.jewelryIsNewRelease : product.sportsIsNewRelease) ? <Badge variant="secondary">🆕 Lançamento</Badge> : null}
+            {(product.module === "joias" ? isJewelryOfferCurrent(product.jewelryOfferActive, product.jewelryOfferExpiresAt) : product.sportsOfferActive) ? <Badge variant="secondary">🔥 Oferta</Badge> : null}
+            {product.module === "joias" ? <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-muted-foreground">{product.jewelryMaterial ? <span>Material: {product.jewelryMaterial}</span> : null}{product.jewelryPlating ? <span>Banho: {product.jewelryPlating}</span> : null}{product.jewelryColor ? <span>Cor: {product.jewelryColor}</span> : null}{product.jewelryStone ? <span>Pedra: {product.jewelryStone}</span> : null}</div> : null}
           </div>
           <div>
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{product.name}</h1>
             <div className="mt-3 flex flex-wrap items-baseline gap-3">
-              {product.sportsOfferActive && product.sportsOfferPrice !== null ? (
+              {product.module === "joias" && isJewelryOfferCurrent(product.jewelryOfferActive, product.jewelryOfferExpiresAt) && product.jewelryOfferPrice !== null ? (
+                <>
+                  <span className="text-2xl font-bold">{brl(product.jewelryOfferPrice)}</span>
+                  <span className="text-sm text-muted-foreground line-through">{brl(product.jewelryOriginalPrice ?? product.price)}</span>
+                  {product.jewelryOfferPercent ? <Badge variant="secondary">{product.jewelryOfferPercent}% OFF</Badge> : null}
+                  {product.jewelryOfferExpiresAt ? <span className="w-full text-xs text-muted-foreground">Oferta válida até {new Date(`${product.jewelryOfferExpiresAt}T12:00:00`).toLocaleDateString("pt-BR")}</span> : null}
+                </>
+              ) : product.sportsOfferActive && product.sportsOfferPrice !== null ? (
                 <>
                   <span className="text-2xl font-bold">{brl(product.sportsOfferPrice)}</span>
                   <span className="text-sm text-muted-foreground line-through">
@@ -1884,6 +1941,16 @@ function VariantDialog({
                 </div>
               </div>
             ))}
+            {complete && variant?.image ? (
+              <img
+                src={variant.image}
+                alt={`${product.name} — ${variant.label}`}
+                className="mx-auto max-h-72 w-full rounded-xl object-contain"
+              />
+            ) : null}
+            {complete && variant?.sku ? (
+              <p className="text-xs text-muted-foreground">SKU: {variant.sku}</p>
+            ) : null}
             <div className="flex items-center justify-between border-t pt-3">
               <span className="text-lg font-bold">{brl(variant?.price ?? product.price)}</span>
               {complete ? (

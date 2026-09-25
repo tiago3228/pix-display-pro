@@ -42,6 +42,7 @@ const AVAILABLE_NICHES = [
   ["calcados", "👟 Calçados"],
   ["cafeteria", "☕ Cafeteria"],
   ["marmitaria", "🍱 Marmitaria"],
+  ["joias", "💎 Joias e Semijoias"],
   ["acessorios", "👜 Acessórios"],
   ["beleza", "💄 Beleza"],
   ["casa", "🏠 Casa e Decoração"],
@@ -253,6 +254,30 @@ const BANNER_SUGGESTIONS = [
     subtitle: "Café, salgados e doces preparados com carinho",
     cta: "Conhecer cardápio",
     gradient: "linear-gradient(120deg,#92400e,#f59e0b)",
+  },
+  {
+    key: "jewelry-details",
+    niche: "💎 Joias e Semijoias",
+    title: "Sua beleza em cada detalhe",
+    subtitle: "Joias que combinam com você",
+    cta: "Descobrir joias",
+    gradient: "linear-gradient(120deg,#111827,#d4af37)",
+  },
+  {
+    key: "jewelry-gifts",
+    niche: "💎 Joias e Semijoias",
+    title: "Presenteie quem você ama",
+    subtitle: "Encontre uma peça especial para cada momento",
+    cta: "Ver presentes",
+    gradient: "linear-gradient(120deg,#581c87,#d4af37)",
+  },
+  {
+    key: "jewelry-offers",
+    niche: "💎 Joias e Semijoias",
+    title: "Ofertas especiais",
+    subtitle: "Descubra nossas joias e lançamentos",
+    cta: "Ver ofertas",
+    gradient: "linear-gradient(120deg,#7f1d1d,#d4af37)",
   },
 ];
 
@@ -552,12 +577,26 @@ function MyStore() {
     if (!store) return;
     const selected = customNiche.trim() || selectedNiche;
     const label = AVAILABLE_NICHES.find(([value]) => value === selected)?.[1] ?? selected;
+    if (getStoreNicheModule(label) === "joias" && store.plan !== "pro") {
+      toast.error("Joias e Semijoias é exclusivo do Vitrini PRO.");
+      return;
+    }
     const { error } = await supabase
       .from("stores")
       .update({ category: label } as never)
       .eq("id", store.id);
     if (error) { toast.error("Não foi possível alterar o nicho."); return; }
     const module = getStoreNicheModule(label);
+    if (module === "joias") {
+      const { error: activationError } = await supabase.from("store_modules").upsert(
+        { store_id: store.id, module: "joias", name: "Joias e Semijoias", is_active: true, sort_order: 70 },
+        { onConflict: "store_id,module" },
+      );
+      if (activationError) {
+        toast.error("O nicho mudou, mas não foi possível ativar Joias. Confira o acesso PRO e a migration SQL.");
+        return;
+      }
+    }
     const { data: currentCategories } = await supabase
       .from("categories")
       .select("name")
@@ -570,6 +609,24 @@ function MyStore() {
       if (categoryError) {
         toast.error("O nicho foi alterado, mas não foi possível criar a categoria Geral.");
       }
+    }
+    if (module === "joias") {
+      const { data: jewelryCategories } = await supabase
+        .from("categories")
+        .select("name")
+        .eq("store_id", store.id)
+        .eq("module", "joias");
+      const known = new Set((jewelryCategories ?? []).map((item) => item.name));
+      const defaults = [
+        "Geral",
+        "💍 Anéis", "💎 Alianças", "📿 Colares", "⛓️ Correntes", "✨ Brincos",
+        "🔗 Pulseiras", "💎 Pingentes", "👑 Conjuntos", "⌚ Relógios e Acessórios",
+        "🎁 Presentes", "⭐ Lançamentos", "🔥 Ofertas",
+      ];
+      const additions = defaults
+        .filter((name) => !known.has(name))
+        .map((name, position) => ({ store_id: store.id, name, module: "joias", position }));
+      if (additions.length) await supabase.from("categories").insert(additions as never);
     }
     if (
       (selected === "cafeteria" || selected === "marmitaria") &&
@@ -601,6 +658,10 @@ function MyStore() {
 
   async function generateStoreSuggestion() {
     if (!store || !suggestionName.trim() || !suggestionColors.length || !suggestionNiche) return;
+    if (suggestionNiche === "joias" && store.plan !== "pro") {
+      toast.error("A Sugestão de Loja para Joias e Semijoias é exclusiva do Vitrini PRO.");
+      return;
+    }
     setGenerating(true);
     const steps = [
       "Analisando seu nicho...",
@@ -671,6 +732,21 @@ function MyStore() {
         "🔥 Ofertas",
       ],
       marmitaria: MARMITARIA_CATEGORIES,
+      joias: [
+        "Geral",
+        "💍 Anéis",
+        "💎 Alianças",
+        "📿 Colares",
+        "⛓️ Correntes",
+        "✨ Brincos",
+        "🔗 Pulseiras",
+        "💎 Pingentes",
+        "👑 Conjuntos",
+        "⌚ Relógios e Acessórios",
+        "🎁 Presentes",
+        "⭐ Lançamentos",
+        "🔥 Ofertas",
+      ],
     };
     const palette = {
       primary_color: colors[0],
@@ -707,6 +783,8 @@ function MyStore() {
                   ? "Cafeteria"
                 : suggestionNiche === "marmitaria"
                   ? "Marmitaria"
+                : suggestionNiche === "joias"
+                  ? "Joias e Semijoias"
                   : suggestionNiche === "roupas"
                     ? "Roupas"
                     : suggestionNiche,
@@ -716,6 +794,17 @@ function MyStore() {
     if (storeUpdate.error) {
       setGenerating(false);
       { toast.error("Não foi possível criar a sugestão da loja."); return; }
+    }
+    if (suggestionNiche === "joias") {
+      const { error: activationError } = await supabase.from("store_modules").upsert(
+        { store_id: store.id, module: "joias", name: "Joias e Semijoias", is_active: true, sort_order: 70 },
+        { onConflict: "store_id,module" },
+      );
+      if (activationError) {
+        setGenerating(false);
+        toast.error("Não foi possível ativar Joias; confira a migration SQL e o acesso PRO.");
+        return;
+      }
     }
     const categoryNames = categoriesByNiche[suggestionNiche] ?? ["Geral"];
     const { data: existingCategories } = await supabase
@@ -840,8 +929,10 @@ function MyStore() {
           ? banner.key === "training-performance"
           : suggestionNiche === "calcados"
             ? banner.key === "shoes-launch"
-            : suggestionNiche === "cafeteria"
-              ? banner.niche === "☕ Cafeteria"
+              : suggestionNiche === "cafeteria"
+                ? banner.niche === "☕ Cafeteria"
+              : suggestionNiche === "joias"
+                ? banner.niche === "💎 Joias e Semijoias"
               : banner.niche === "👕 Roupas",
     ).slice(0, 3);
     if (suggestions.length)
@@ -1002,6 +1093,7 @@ function MyStore() {
                       ["calcados", "👟 Calçados"],
                       ["cafeteria", "☕ Cafeteria"],
                       ["marmitaria", "🍱 Marmitaria"],
+                      ["joias", "💎 Joias e Semijoias"],
                     ].map(([value, label]) => (
                       <button
                         key={value}
@@ -1016,7 +1108,7 @@ function MyStore() {
                   <Input
                     placeholder="Ou digite outro nicho"
                     value={
-                      !["roupas", "esportes", "treino", "calcados", "cafeteria", "marmitaria"].includes(
+                      !["roupas", "esportes", "treino", "calcados", "cafeteria", "marmitaria", "joias"].includes(
                         suggestionNiche,
                       )
                         ? suggestionNiche

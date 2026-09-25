@@ -1,5 +1,11 @@
 export type StoreModule =
-  "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria" | "marmitaria";
+  | "roupas"
+  | "roupas_esportivas"
+  | "roupas_treino"
+  | "calcados"
+  | "cafeteria"
+  | "marmitaria"
+  | "joias";
 
 const MODULE_LABELS: Record<StoreModule, string> = {
   roupas: "👕 Roupas",
@@ -8,6 +14,7 @@ const MODULE_LABELS: Record<StoreModule, string> = {
   calcados: "👟 Calçados",
   cafeteria: "☕ Cafeteria",
   marmitaria: "🍱 Marmitaria",
+  joias: "💎 Joias e Semijoias",
 };
 
 function normalized(value: string | null | undefined) {
@@ -17,6 +24,14 @@ function normalized(value: string | null | undefined) {
 /** Relaciona as categorias gerais de uma loja ao módulo compatível com seu nicho. */
 export function getStoreNicheModule(category: string | null | undefined): StoreModule {
   const value = normalized(category);
+  if (
+    value.includes("joia") ||
+    value.includes("semijoia") ||
+    value.includes("bijuteria") ||
+    value.includes("acessório") ||
+    value.includes("acessorio")
+  )
+    return "joias";
   if (value.includes("marmit")) return "marmitaria";
   if (
     value.includes("cafeteria") ||

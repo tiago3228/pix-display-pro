@@ -21,6 +21,7 @@ import { AppShell } from "@/components/AppShell";
 import { ProductPhotos } from "@/components/ProductPhotos";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { getSignedAssetUrl } from "@/lib/images.functions";
+import { resolveAsset, uploadAsset } from "@/lib/images";
 import { FREE_PLAN_PRODUCT_LIMIT, brl } from "@/lib/format";
 import { searchProductDiscovery, type DiscoveryResult } from "@/lib/product-discovery.functions";
 import { listSportsNodes, sportsDb, type SportsNode } from "@/lib/sports";
@@ -50,10 +51,17 @@ export const Route = createFileRoute("/_authenticated/produtos")({
   component: Products,
 });
 
-type VariantDraft = { id?: string; label: string; price: string; stock: string };
+type VariantDraft = { id?: string; label: string; price: string; stock: string; sku: string; image_url: string | null };
 type OrderTierDraft = { minQuantity: string; unitPrice: string };
 type SmartSuggestion = {
-  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria" | "marmitaria";
+  module:
+    | "roupas"
+    | "roupas_esportivas"
+    | "roupas_treino"
+    | "calcados"
+    | "cafeteria"
+    | "marmitaria"
+    | "joias";
   brand: string | null;
   model: string | null;
   category: string;
@@ -76,6 +84,8 @@ function interpretProductText(
       ? "calcados"
       : /marmita|marmitex|prato feito|almoço|almoco|janta|refeição|refeicao/.test(lower)
         ? "marmitaria"
+        : /anel|aliança|alianca|brinco|colar|corrente|pulseira|pingente|semijoia|joia/.test(lower)
+          ? "joias"
         : /café|cafe|bolo|doce|brigadeiro|brownie|empada|pastel|cappuccino|bebida|salgado/.test(
               lower,
             )
@@ -135,6 +145,8 @@ function interpretProductText(
       ? "Tênis"
       : module === "marmitaria"
         ? "🍱 Marmitas"
+        : module === "joias"
+          ? lower.includes("alian") ? "💎 Alianças" : lower.includes("brinc") ? "✨ Brincos" : lower.includes("colar") ? "📿 Colares" : lower.includes("corren") ? "⛓️ Correntes" : lower.includes("pulseir") ? "🔗 Pulseiras" : lower.includes("pingent") ? "💎 Pingentes" : lower.includes("conjunt") ? "👑 Conjuntos" : "💍 Anéis"
         : module === "cafeteria"
           ? /café|cafe|cappuccino/.test(lower)
             ? "☕ Cafés"
@@ -162,7 +174,14 @@ function interpretProductText(
 
 type ProductRow = {
   id: string;
-  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria" | "marmitaria";
+  module:
+    | "roupas"
+    | "roupas_esportivas"
+    | "roupas_treino"
+    | "calcados"
+    | "cafeteria"
+    | "marmitaria"
+    | "joias";
   name: string;
   description: string;
   price: number;
@@ -173,7 +192,7 @@ type ProductRow = {
   is_featured: boolean;
   image_url: string | null;
   category_id: string | null;
-  product_variants: { id: string; label: string; price: number | null; stock: number }[];
+  product_variants: { id: string; label: string; price: number | null; stock: number; sku?: string | null; image_url?: string | null }[];
   order_enabled: boolean;
   order_unit_price: number | null;
   order_min_quantity: number;
@@ -199,10 +218,20 @@ type ProductRow = {
   shoe_color?: string | null;
   meal_period?: "lunch" | "dinner" | "both" | null;
   delivery_enabled?: boolean;
+  jewelry_material?: string | null;
+  jewelry_plating?: string | null;
+  jewelry_color?: string | null;
+  jewelry_stone?: string | null;
+  jewelry_is_new_release?: boolean;
+  jewelry_offer_active?: boolean;
+  jewelry_original_price?: number | null;
+  jewelry_offer_price?: number | null;
+  jewelry_offer_percent?: number | null;
+  jewelry_offer_expires_at?: string | null;
 };
 
 const emptyForm = {
-  module: "roupas" as "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria" | "marmitaria",
+  module: "roupas" as ProductRow["module"],
   name: "",
   description: "",
   price: "",
@@ -235,7 +264,27 @@ const emptyForm = {
   shoe_color: "",
   meal_period: "both" as "lunch" | "dinner" | "both",
   delivery_enabled: true,
+  jewelry_material: "",
+  jewelry_plating: "",
+  jewelry_color: "",
+  jewelry_stone: "",
+  jewelry_is_new_release: false,
+  jewelry_offer_active: false,
+  jewelry_original_price: "",
+  jewelry_offer_price: "",
+  jewelry_offer_expires_at: "",
 };
+
+function CategoryImagePreview({ path }: { path: string | null | undefined }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    void resolveAsset(path).then((resolved) => { if (active) setUrl(resolved); });
+    return () => { active = false; };
+  }, [path]);
+  return url ? <img src={url} alt="" className="size-10 rounded-lg object-cover" /> :
+    <span className="flex size-10 items-center justify-center rounded-lg bg-muted"><ImageIcon className="size-4" /></span>;
+}
 
 function Products() {
   const { data: store } = useMyStore();
@@ -250,6 +299,9 @@ function Products() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [saving, setSaving] = useState(false);
   const [newCategory, setNewCategory] = useState("");
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingCategoryName, setEditingCategoryName] = useState("");
+  const [categoryImageUploading, setCategoryImageUploading] = useState<string | null>(null);
   const [manualShoeBrand, setManualShoeBrand] = useState("");
   const [manualShoeModel, setManualShoeModel] = useState("");
   const [sportsNodeId, setSportsNodeId] = useState("none");
@@ -258,10 +310,12 @@ function Products() {
   const [shoesOnly, setShoesOnly] = useState(false);
   const [cafeteriaOnly, setCafeteriaOnly] = useState(false);
   const [marmitariaOnly, setMarmitariaOnly] = useState(false);
+  const [jewelryOnly, setJewelryOnly] = useState(false);
   const [sportsOnly, setSportsOnly] = useState(false);
   const sportsCatalogEnabled = ["roupas", "roupas_esportivas", "roupas_treino"].includes(form.module);
 
   function currentCategoryModule() {
+    if (jewelryOnly) return "joias";
     if (cafeteriaOnly) return "cafeteria";
     if (marmitariaOnly) return "marmitaria";
     if (shoesOnly) return "calcados";
@@ -301,6 +355,7 @@ function Products() {
     setSportsOnly(params.get("module") === "roupas_esportivas");
     setCafeteriaOnly(params.get("module") === "cafeteria");
     setMarmitariaOnly(params.get("module") === "marmitaria");
+    setJewelryOnly(params.get("module") === "joias");
     if (params.get("guided") === "1") setGuidedOpen(true);
   }, []);
 
@@ -312,6 +367,7 @@ function Products() {
       trainingOnly,
       shoesOnly,
       cafeteriaOnly, marmitariaOnly,
+      jewelryOnly,
       sportsOnly,
       open,
       form.module,
@@ -320,16 +376,15 @@ function Products() {
     queryFn: async () => {
       const query = supabase
         .from("categories")
-        .select("id, name, module, is_active")
-        .eq("store_id", store!.id)
-        .eq("is_active", true);
+        .select("id, name, module, is_active, position, image_url")
+        .eq("store_id", store!.id);
       const { data, error } = await query.order("position");
       if (error) throw error;
       const module = open ? form.module : currentCategoryModule();
       const moduleCategories = (data ?? []).filter((category) => category.module === module);
       const neutralCategory =
-        moduleCategories.find((category) => isNeutralCategoryName(category.name)) ??
-        (data ?? []).find((category) => isNeutralCategoryName(category.name));
+        moduleCategories.find((category) => category.is_active !== false && isNeutralCategoryName(category.name)) ??
+        (data ?? []).find((category) => category.is_active !== false && isNeutralCategoryName(category.name));
       const visible = [
         ...moduleCategories.filter((category) => !isNeutralCategoryName(category.name)),
         ...(neutralCategory ? [neutralCategory] : []),
@@ -377,19 +432,20 @@ function Products() {
   });
 
   const { data: products } = useQuery({
-    queryKey: ["products", store?.id, trainingOnly, shoesOnly, cafeteriaOnly],
+    queryKey: ["products", store?.id, trainingOnly, shoesOnly, cafeteriaOnly, marmitariaOnly, jewelryOnly],
     enabled: Boolean(store?.id),
     queryFn: async () => {
       let query = supabase
         .from("products")
         .select(
-          "id, module, name, description, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, meal_period, delivery_enabled, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, product_variants(id, label, price, stock), product_order_tiers(min_quantity, unit_price)",
+          "id, module, name, description, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, meal_period, delivery_enabled, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at, product_variants(id, label, price, stock, sku, image_url), product_order_tiers(min_quantity, unit_price)",
         )
         .eq("store_id", store!.id);
       if (trainingOnly) query = query.eq("module", "roupas_treino");
       if (shoesOnly) query = query.eq("module", "calcados");
       if (cafeteriaOnly) query = query.eq("module", "cafeteria");
       if (marmitariaOnly) query = query.eq("module", "marmitaria");
+      if (jewelryOnly) query = query.eq("module", "joias");
       const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
       return data as unknown as ProductRow[];
@@ -429,11 +485,14 @@ function Products() {
       return;
     }
     setEditing(null);
+    setImportedDiscovery(null);
     setManualShoeBrand("");
     setManualShoeModel("");
     setForm({
       ...emptyForm,
-      module: trainingOnly
+      module: jewelryOnly
+        ? "joias"
+        : trainingOnly
         ? "roupas_treino"
         : shoesOnly
           ? "calcados"
@@ -453,6 +512,7 @@ function Products() {
 
   function openEdit(product: ProductRow) {
     setEditing(product);
+    setImportedDiscovery(null);
     setManualShoeBrand("");
     setManualShoeModel("");
     if (product.shoe_brand_id) {
@@ -508,6 +568,17 @@ function Products() {
       shoe_color: product.shoe_color ?? "",
       meal_period: product.meal_period ?? "both",
       delivery_enabled: product.delivery_enabled ?? product.module === "marmitaria",
+      jewelry_material: product.jewelry_material ?? "",
+      jewelry_plating: product.jewelry_plating ?? "",
+      jewelry_color: product.jewelry_color ?? "",
+      jewelry_stone: product.jewelry_stone ?? "",
+      jewelry_is_new_release: Boolean(product.jewelry_is_new_release),
+      jewelry_offer_active: Boolean(product.jewelry_offer_active),
+      jewelry_original_price:
+        product.jewelry_original_price == null ? "" : String(product.jewelry_original_price),
+      jewelry_offer_price:
+        product.jewelry_offer_price == null ? "" : String(product.jewelry_offer_price),
+      jewelry_offer_expires_at: product.jewelry_offer_expires_at ?? "",
     });
     setSportsNodeId("none");
     setSportsCollectionId("none");
@@ -533,6 +604,8 @@ function Products() {
         label: v.label,
         price: v.price === null ? "" : String(v.price),
         stock: String(v.stock),
+        sku: v.sku ?? "",
+        image_url: v.image_url ?? null,
       })),
     );
     setOrderTiers(
@@ -554,14 +627,37 @@ function Products() {
     setOpen(true);
   }
 
+  async function uploadVariantImage(index: number, file: File) {
+    if (!store?.owner_id) return;
+    try {
+      const path = await uploadAsset(store.owner_id, file);
+      setVariants((current) => current.map((item, i) => i === index ? { ...item, image_url: path } : item));
+      toast.success("Imagem da variação adicionada.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível enviar a imagem da variação.");
+    }
+  }
+
   async function save() {
     if (!store) {
       toast.error("Crie sua loja antes de cadastrar produtos.");
       return;
     }
+    if (form.module === "joias" && store.plan !== "pro") {
+      toast.error("Joias e Semijoias é exclusivo do Vitrini PRO.");
+      return;
+    }
     if (!form.name.trim()) {
       toast.error("Informe o nome do produto.");
       return;
+    }
+    if (form.module === "joias" && form.jewelry_offer_active) {
+      const original = Number(String(form.jewelry_original_price).replace(",", "."));
+      const offer = Number(String(form.jewelry_offer_price).replace(",", "."));
+      if (!Number.isFinite(original) || !Number.isFinite(offer) || original <= 0 || offer < 0 || offer >= original) {
+        toast.error("Informe um preço promocional menor que o preço original.");
+        return;
+      }
     }
     const normalizedTiers = orderTiers.map((tier) => ({
       minQuantity: Number(tier.minQuantity),
@@ -693,7 +789,9 @@ function Products() {
     const cleanVariants = variants.filter((v) => v.label.trim());
     const payload = {
       store_id: store.id,
-      module: trainingOnly
+      module: jewelryOnly
+        ? "joias"
+        : trainingOnly
         ? "roupas_treino"
         : shoesOnly
           ? "calcados"
@@ -705,6 +803,28 @@ function Products() {
       name: form.name.trim(),
       meal_period: form.module === "marmitaria" || marmitariaOnly ? form.meal_period : "both",
       delivery_enabled: form.module === "marmitaria" || marmitariaOnly ? Boolean(form.delivery_enabled) : false,
+      jewelry_material: form.module === "joias" ? form.jewelry_material.trim() || null : null,
+      jewelry_plating: form.module === "joias" ? form.jewelry_plating.trim() || null : null,
+      jewelry_color: form.module === "joias" ? form.jewelry_color.trim() || null : null,
+      jewelry_stone: form.module === "joias" ? form.jewelry_stone.trim() || null : null,
+      jewelry_is_new_release: form.module === "joias" && Boolean(form.jewelry_is_new_release),
+      jewelry_offer_active: form.module === "joias" && Boolean(form.jewelry_offer_active),
+      jewelry_original_price:
+        form.module === "joias" && form.jewelry_offer_active && form.jewelry_original_price
+          ? Number(String(form.jewelry_original_price).replace(",", "."))
+          : null,
+      jewelry_offer_price:
+        form.module === "joias" && form.jewelry_offer_active && form.jewelry_offer_price
+          ? Number(String(form.jewelry_offer_price).replace(",", "."))
+          : null,
+      jewelry_offer_percent:
+        form.module === "joias" && form.jewelry_offer_active && form.jewelry_original_price && form.jewelry_offer_price
+          ? Math.max(0, Math.min(100, Math.round((1 - Number(String(form.jewelry_offer_price).replace(",", ".")) / Number(String(form.jewelry_original_price).replace(",", "."))) * 100)))
+          : null,
+      jewelry_offer_expires_at:
+        form.module === "joias" && form.jewelry_offer_active && form.jewelry_offer_expires_at
+          ? form.jewelry_offer_expires_at
+          : null,
       description: form.description ?? "",
       price: Number(String(form.price).replace(",", ".")) || 0,
       stock: Number(form.stock) || 0,
@@ -856,6 +976,8 @@ function Products() {
           label: v.label.trim(),
           price: v.price ? Number(v.price.replace(",", ".")) : null,
           stock: Number(v.stock) || 0,
+          sku: v.sku.trim() || null,
+          image_url: v.image_url,
         })),
       );
     }
@@ -935,6 +1057,50 @@ function Products() {
     queryClient.invalidateQueries({ queryKey: ["categories", store.id] });
   }
 
+  async function saveCategoryName(categoryId: string) {
+    if (!store || !editingCategoryName.trim()) return;
+    const { error } = await supabase.from("categories").update({ name: editingCategoryName.trim() }).eq("id", categoryId).eq("store_id", store.id);
+    if (error) { toast.error("Não foi possível renomear a categoria. Verifique se já existe outra com esse nome."); return; }
+    setEditingCategoryId(null);
+    await queryClient.invalidateQueries({ queryKey: ["categories", store.id] });
+  }
+
+  async function removeCategory(category: { id: string; name: string }) {
+    if (!store || !window.confirm(`Excluir a categoria “${category.name}”? Os produtos serão mantidos sem categoria.`)) return;
+    const { error } = await supabase.from("categories").delete().eq("id", category.id).eq("store_id", store.id);
+    if (error) { toast.error("Não foi possível excluir esta categoria."); return; }
+    await queryClient.invalidateQueries({ queryKey: ["categories", store.id] });
+    await queryClient.invalidateQueries({ queryKey: ["products", store.id] });
+  }
+
+  async function moveCategory(category: { id: string; module: string; position: number }, direction: -1 | 1) {
+    if (!store) return;
+    const siblings = (categories ?? []).filter((item) => item.module === category.module && item.is_active !== false)
+      .sort((a, b) => a.position - b.position);
+    const index = siblings.findIndex((item) => item.id === category.id);
+    const other = siblings[index + direction];
+    if (!other) return;
+    const { error } = await supabase.from("categories").update({ position: other.position }).eq("id", category.id).eq("store_id", store.id);
+    if (error) { toast.error("Não foi possível reordenar as categorias."); return; }
+    const { error: otherError } = await supabase.from("categories").update({ position: category.position }).eq("id", other.id).eq("store_id", store.id);
+    if (otherError) { toast.error("Não foi possível concluir a reordenação."); return; }
+    await queryClient.invalidateQueries({ queryKey: ["categories", store.id] });
+  }
+
+  async function uploadCategoryImage(categoryId: string, file: File) {
+    if (!store?.owner_id) return;
+    setCategoryImageUploading(categoryId);
+    try {
+      const path = await uploadAsset(store.owner_id, file);
+      const { error } = await supabase.from("categories").update({ image_url: path }).eq("id", categoryId).eq("store_id", store.id);
+      if (error) throw error;
+      await queryClient.invalidateQueries({ queryKey: ["categories", store.id] });
+      toast.success("Imagem da categoria atualizada.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível enviar a imagem.");
+    } finally { setCategoryImageUploading(null); }
+  }
+
   async function toggleCategory(category: { id: string; name: string; is_active: boolean | null }) {
     const next = category.is_active === false;
     const { error } = await supabase
@@ -948,6 +1114,25 @@ function Products() {
     }
     queryClient.invalidateQueries({ queryKey: ["categories", store?.id] });
     toast.success(`${category.name} ${next ? "ativada" : "desativada"}.`);
+  }
+
+  if ((jewelryOnly || currentCategoryModule() === "joias") && store && store.plan !== "pro") {
+    return (
+      <AppShell title="Joias e Semijoias" description="Loja especializada do catálogo Premium">
+        <div className="surface mx-auto mt-8 max-w-xl p-8 text-center">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-amber-500/10 text-3xl">
+            🔒
+          </div>
+          <h2 className="mt-4 text-2xl font-bold">Recurso exclusivo PRO</h2>
+          <p className="mx-auto mt-2 max-w-md text-muted-foreground">
+            Crie uma loja especializada em joias e semijoias com categorias prontas, personalização completa e uma vitrine profissional.
+          </p>
+          <Button className="mt-5" asChild>
+            <Link to="/assinatura">Conhecer o Vitrini PRO</Link>
+          </Button>
+        </div>
+      </AppShell>
+    );
   }
 
   return (
@@ -995,23 +1180,32 @@ function Products() {
 
       <div className="surface mb-4 p-4">
         <p className="text-sm font-semibold">Categorias</p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {(categories ?? []).map((category) => {
+        <div className="mt-2 space-y-2">
+          {(categories ?? []).map((category, index) => {
             const active = category.is_active !== false;
+            const siblings = (categories ?? []).filter((item) => item.module === category.module && item.is_active !== false);
             return (
-              <button
-                key={category.id}
-                type="button"
-                title={active ? "Toque para desativar" : "Toque para ativar"}
-                onClick={() => void toggleCategory(category)}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition active:scale-95 ${
-                  active
-                    ? "border-primary/20 bg-primary/10 text-foreground"
-                    : "border-dashed bg-muted/40 text-muted-foreground opacity-60 line-through"
-                }`}
-              >
-                {category.name} {active ? "✓" : "· desativada"}
-              </button>
+              <div key={category.id} className={`flex flex-wrap items-center gap-2 rounded-xl border p-2 ${active ? "" : "opacity-60"}`}>
+                <CategoryImagePreview path={category.image_url} />
+                {editingCategoryId === category.id ? (
+                  <Input className="min-w-36 flex-1" autoFocus value={editingCategoryName} onChange={(event) => setEditingCategoryName(event.target.value)} />
+                ) : <button type="button" className={`min-w-36 flex-1 text-left text-sm font-medium ${active ? "" : "line-through"}`} onClick={() => void toggleCategory(category)}>{category.name}{active ? " ✓" : " · desativada"}</button>}
+                <div className="flex items-center gap-1">
+                  {editingCategoryId === category.id ? <>
+                    <Button type="button" size="sm" onClick={() => void saveCategoryName(category.id)}>Salvar</Button>
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setEditingCategoryId(null)}>Cancelar</Button>
+                  </> : <>
+                    <Button type="button" size="icon" variant="ghost" title="Renomear" onClick={() => { setEditingCategoryId(category.id); setEditingCategoryName(category.name); }}><Pencil className="size-4" /></Button>
+                    <label className="inline-flex size-9 cursor-pointer items-center justify-center rounded-md hover:bg-muted" title="Alterar imagem">
+                      <ImageIcon className="size-4" />
+                      <input type="file" accept="image/*" className="sr-only" disabled={categoryImageUploading === category.id} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadCategoryImage(category.id, file); event.currentTarget.value = ""; }} />
+                    </label>
+                    <Button type="button" size="icon" variant="ghost" title="Mover para cima" disabled={!active || index === 0} onClick={() => void moveCategory(category, -1)}>↑</Button>
+                    <Button type="button" size="icon" variant="ghost" title="Mover para baixo" disabled={!active || index >= siblings.length - 1} onClick={() => void moveCategory(category, 1)}>↓</Button>
+                    <Button type="button" size="icon" variant="ghost" title="Excluir categoria" onClick={() => void removeCategory(category)}><Trash2 className="size-4" /></Button>
+                  </>}
+                </div>
+              </div>
             );
           })}
           {!categories?.length ? (
@@ -1056,7 +1250,19 @@ function Products() {
             Escolha o tipo e mostraremos somente as informações relevantes para esta loja.
           </p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {(shoesOnly
+            {(jewelryOnly || getStoreNicheModule(store?.category) === "joias"
+              ? [
+                  ["💍", "Anel"],
+                  ["💎", "Aliança"],
+                  ["📿", "Colar"],
+                  ["⛓️", "Corrente"],
+                  ["✨", "Brinco"],
+                  ["🔗", "Pulseira"],
+                  ["💎", "Pingente"],
+                  ["👑", "Conjunto"],
+                  ["🎁", "Outro"],
+                ]
+              : shoesOnly
               ? [
                   ["👟", "Tênis"],
                   ["👢", "Botas"],
@@ -1109,7 +1315,9 @@ function Products() {
                   className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-xl border p-2 text-center text-sm transition hover:border-primary hover:bg-primary/5"
                   onClick={() => {
                     setGuidedType(label);
-                    const module = cafeteriaOnly
+                    const module = jewelryOnly || getStoreNicheModule(store?.category) === "joias"
+                      ? "joias"
+                      : cafeteriaOnly
                       ? "cafeteria"
                       : marmitariaOnly
                         ? "marmitaria"
@@ -1120,16 +1328,33 @@ function Products() {
                             : trainingOnly
                               ? "roupas_treino"
                               : currentCategoryModule();
-                    const matchingCategory = categories?.find((category) =>
-                      category.name
-                        .toLocaleLowerCase("pt-BR")
-                        .includes(label.toLocaleLowerCase("pt-BR")),
-                    );
+                    const jewelryCategoryByType: Record<string, string> = {
+                      Anel: "aneis",
+                      Aliança: "aliancas",
+                      Colar: "colares",
+                      Corrente: "correntes",
+                      Brinco: "brincos",
+                      Pulseira: "pulseiras",
+                      Pingente: "pingentes",
+                      Conjunto: "conjuntos",
+                    };
+                    const normalizeCategory = (value: string) =>
+                      value
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .toLocaleLowerCase("pt-BR");
+                    const matchingCategory = categories?.find((category) => {
+                      const target = module === "joias" ? jewelryCategoryByType[label] : label;
+                      return Boolean(
+                        target && normalizeCategory(category.name).includes(normalizeCategory(target)),
+                      );
+                    });
                     setForm({
                       ...emptyForm,
                       module,
+                      name: module === "joias" && label !== "Outro" ? label : "",
                       category_id: matchingCategory?.id ?? "none",
-                      sports_product_type: label,
+                      sports_product_type: module === "joias" ? "none" : label,
                     });
                     setEditing(null);
                     setVariants([]);
@@ -1232,6 +1457,15 @@ function Products() {
                           size="sm"
                           onClick={() => {
                             const suggestion = interpretProductText(result.name, currentCategoryModule());
+                            if (suggestion.module === "joias" && store?.plan !== "pro") {
+                              toast.error("Joias e Semijoias é exclusivo do Vitrini PRO.");
+                              return;
+                            }
+                            setEditing(null);
+                            setImportedDiscovery(result);
+                            setVariants([]);
+                            setOrderTiers([]);
+                            setPhotos(result.image ? [result.image] : []);
                             setForm({
                               ...emptyForm,
                               module: suggestion.module,
@@ -1242,6 +1476,8 @@ function Products() {
                               shoe_gender: suggestion.gender ?? "unissex",
                               shoe_authenticity: "original",
                             });
+                            setManualShoeBrand("");
+                            setManualShoeModel("");
                             setInternetOpen(false);
                             setOpen(true);
                             toast.success(
@@ -1317,8 +1553,10 @@ function Products() {
                           ? "⚽ Esportivas"
                           : smartSuggestion.module === "cafeteria"
                             ? "☕ Cafeteria"
-                            : smartSuggestion.module === "marmitaria"
+                      : smartSuggestion.module === "marmitaria"
                               ? "🍱 Marmitaria"
+                            : smartSuggestion.module === "joias"
+                              ? "💎 Joias e Semijoias"
                               : "👕 Roupas",
                     ],
                     ["Marca", smartSuggestion.brand],
@@ -1368,9 +1606,14 @@ function Products() {
               ) : (
                 <Button
                   disabled={!smartText.trim()}
-                  onClick={() =>
-                    setSmartSuggestion(interpretProductText(smartText, currentCategoryModule()))
-                  }
+                  onClick={() => {
+                    const suggestion = interpretProductText(smartText, currentCategoryModule());
+                    if (suggestion.module === "joias" && store?.plan !== "pro") {
+                      toast.error("Joias e Semijoias é exclusivo do Vitrini PRO.");
+                      return;
+                    }
+                    setSmartSuggestion(suggestion);
+                  }}
                 >
                   Continuar <span className="ml-1">→</span>
                 </Button>
@@ -1395,9 +1638,11 @@ function Products() {
             >
               <div className="space-y-1.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
                 <Label>Módulo da loja</Label>
-                {trainingOnly || shoesOnly || cafeteriaOnly || marmitariaOnly ? (
+                {trainingOnly || shoesOnly || cafeteriaOnly || marmitariaOnly || jewelryOnly ? (
                   <div className="rounded-md border bg-background px-3 py-2 text-sm font-medium">
-                    {marmitariaOnly
+                    {jewelryOnly
+                      ? "💎 Joias e Semijoias"
+                      : marmitariaOnly
                       ? "🍱 Marmitaria"
                       : cafeteriaOnly
                       ? "☕ Cafeteria"
@@ -1415,7 +1660,8 @@ function Products() {
                         | "roupas_treino"
                         | "calcados"
                         | "cafeteria"
-                        | "marmitaria",
+                        | "marmitaria"
+                        | "joias",
                     ) => setForm({ ...form, module: value })}
                   >
                     <SelectTrigger>
@@ -1428,6 +1674,7 @@ function Products() {
                       <SelectItem value="calcados">👟 Calçados</SelectItem>
                       <SelectItem value="cafeteria">☕ Cafeteria</SelectItem>
                       <SelectItem value="marmitaria">🍱 Marmitaria</SelectItem>
+                      {store?.plan === "pro" ? <SelectItem value="joias">💎 Joias e Semijoias</SelectItem> : null}
                     </SelectContent>
                   </Select>
                 )}
@@ -1515,6 +1762,21 @@ function Products() {
                   </SelectContent>
                 </Select>
               </div>
+              {form.module === "joias" || jewelryOnly ? (
+                <div className="space-y-3 rounded-xl border border-amber-300/60 bg-gradient-to-br from-amber-50/70 to-background p-4 dark:border-amber-900/60 dark:from-amber-950/20">
+                  <div><p className="font-semibold">💎 Detalhes da joia</p><p className="text-xs text-muted-foreground">Material, banho, cor e pedra são opcionais.</p></div>
+                  <div className="grid grid-cols-2 gap-3">
+                    {([["jewelry_material", "Material", "Ouro, prata, aço"], ["jewelry_plating", "Banho", "Ouro 18K, ródio"], ["jewelry_color", "Cor", "Dourado, rosé"], ["jewelry_stone", "Pedra", "Zircônia, pérola"]] as const).map(([field, label, placeholder]) => <div key={field} className="space-y-1.5"><Label>{label}</Label><Input placeholder={placeholder} value={form[field]} onChange={(event) => setForm({ ...form, [field]: event.target.value })} /></div>)}
+                  </div>
+                  <ToggleRow label="⭐ Exibir nos Lançamentos" checked={form.jewelry_is_new_release} onChange={(value) => setForm({ ...form, jewelry_is_new_release: value })} />
+                  <ToggleRow label="🔥 Ativar oferta" checked={form.jewelry_offer_active} onChange={(value) => setForm({ ...form, jewelry_offer_active: value })} />
+                  {form.jewelry_offer_active ? <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5"><Label>Preço original</Label><Input inputMode="decimal" value={form.jewelry_original_price} onChange={(event) => setForm({ ...form, jewelry_original_price: event.target.value })} /></div>
+                    <div className="space-y-1.5"><Label>Preço promocional</Label><Input inputMode="decimal" value={form.jewelry_offer_price} onChange={(event) => setForm({ ...form, jewelry_offer_price: event.target.value })} /></div>
+                    <div className="col-span-2 space-y-1.5"><Label>Validade (opcional)</Label><Input type="date" value={form.jewelry_offer_expires_at} onChange={(event) => setForm({ ...form, jewelry_offer_expires_at: event.target.value })} /></div>
+                  </div> : null}
+                </div>
+              ) : null}
             </CollapsibleSection>
             {form.module === "calcados" ? (
               <div className="space-y-3 rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:border-amber-900 dark:bg-amber-950/20">
@@ -1819,7 +2081,7 @@ function Products() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => setVariants([...variants, { label: "", price: "", stock: "" }])}
+                  onClick={() => setVariants([...variants, { label: "", price: "", stock: "", sku: "", image_url: null }])}
                 >
                   <Plus className="size-4" />
                 </Button>
@@ -1835,7 +2097,8 @@ function Products() {
                 </div>
               ) : null}
               {variants.map((variant, index) => (
-                <div key={index} className="grid grid-cols-[1fr_84px_72px_auto] items-end gap-2">
+                <div key={index} className="grid grid-cols-[1fr_84px_72px_auto] items-end gap-2 rounded-lg border p-2">
+                  <div className="space-y-2">
                   <Input
                     placeholder="Opção"
                     value={variant.label}
@@ -1845,6 +2108,8 @@ function Products() {
                       setVariants(next);
                     }}
                   />
+                  <Input placeholder="SKU (opcional)" value={variant.sku} onChange={(e) => { const next = [...variants]; next[index] = { ...variant, sku: e.target.value }; setVariants(next); }} />
+                  </div>
                   <Input
                     placeholder="Preço"
                     inputMode="decimal"
@@ -1865,6 +2130,14 @@ function Products() {
                       setVariants(next);
                     }}
                   />
+                  <label className="inline-flex items-center gap-1 text-xs text-muted-foreground" title="Imagem própria da variação">
+                    <CategoryImagePreview path={variant.image_url} />
+                    <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const file = e.target.files?.[0]; if (file) void uploadVariantImage(index, file); e.currentTarget.value = ""; }} />
+                  </label>
+                  <label className="inline-flex items-center gap-1 text-xs text-muted-foreground" title="Imagem própria da variação">
+                    <CategoryImagePreview path={variant.image_url} />
+                    <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const file = e.target.files?.[0]; if (file) void uploadVariantImage(index, file); e.currentTarget.value = ""; }} />
+                  </label>
                   <Button
                     size="icon"
                     variant="ghost"

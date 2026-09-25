@@ -4,6 +4,7 @@ import { getStoreNicheModule, isNeutralCategoryName } from "@/lib/store-niche";
 import { createPublicClient } from "./supabase-public.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizePhone } from "@/lib/format";
+import { isJewelryOfferCurrent } from "@/lib/jewelry";
 
 export type StorefrontVariant = {
   id: string;
@@ -11,11 +12,13 @@ export type StorefrontVariant = {
   price: number | null;
   stock: number;
   is_available: boolean;
+  sku: string | null;
+  image: string | null;
 };
 
 export type StorefrontProduct = {
   id: string;
-  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria" | "marmitaria";
+  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria" | "marmitaria" | "joias";
   mealPeriod: "lunch" | "dinner" | "both";
   deliveryEnabled: boolean;
   name: string;
@@ -50,6 +53,16 @@ export type StorefrontProduct = {
   sportsOfferPrice: number | null;
   sportsOfferPercent: number | null;
   sportsCollectionNames: string[];
+  jewelryMaterial: string | null;
+  jewelryPlating: string | null;
+  jewelryColor: string | null;
+  jewelryStone: string | null;
+  jewelryIsNewRelease: boolean;
+  jewelryOfferActive: boolean;
+  jewelryOriginalPrice: number | null;
+  jewelryOfferPrice: number | null;
+  jewelryOfferPercent: number | null;
+  jewelryOfferExpiresAt: string | null;
 };
 
 export type StorefrontSportsNode = {
@@ -105,7 +118,7 @@ export type Storefront = {
     max_installments: number;
     min_installment_amount: number;
   };
-  categories: { id: string; name: string; module?: string }[];
+  categories: { id: string; name: string; module?: string; image: string | null }[];
   sports: {
     settings: {
       name: string;
@@ -126,7 +139,7 @@ export type Storefront = {
 
 type StorefrontProductDbRow = {
   id: string;
-  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria" | "marmitaria";
+  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria" | "marmitaria" | "joias";
   name: string;
   description: string;
   price: number | string;
@@ -162,6 +175,16 @@ type StorefrontProductDbRow = {
   shoe_gender: string | null;
   shoe_size: string | null;
   shoe_color: string | null;
+  jewelry_material: string | null;
+  jewelry_plating: string | null;
+  jewelry_color: string | null;
+  jewelry_stone: string | null;
+  jewelry_is_new_release: boolean;
+  jewelry_offer_active: boolean;
+  jewelry_original_price: number | string | null;
+  jewelry_offer_price: number | string | null;
+  jewelry_offer_percent: number | null;
+  jewelry_offer_expires_at: string | null;
 };
 
 export const getStorefront = createServerFn({ method: "GET" })
@@ -178,13 +201,13 @@ export const getStorefront = createServerFn({ method: "GET" })
     const [{ data: categories }, { data: productsRaw }] = await Promise.all([
       supabase
         .from("categories")
-        .select("id, name, module, position, is_active")
+        .select("id, name, module, position, is_active, image_url")
         .eq("store_id", store.id)
         .order("position"),
       supabase
         .from("products")
         .select(
-          "id, module, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, meal_period, delivery_enabled, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color",
+          "id, module, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, meal_period, delivery_enabled, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at",
         )
         .eq("store_id", store.id)
         .eq("is_hidden", false)
@@ -293,7 +316,7 @@ export const getStorefront = createServerFn({ method: "GET" })
       productIds.length
         ? supabase
             .from("product_variants")
-            .select("id, product_id, label, price, stock, is_available")
+            .select("id, product_id, label, price, stock, is_available, sku, image_url")
             .in("product_id", productIds)
         : Promise.resolve({ data: [] as never[] }),
       productIds.length
@@ -311,6 +334,8 @@ export const getStorefront = createServerFn({ method: "GET" })
       sportsSettings?.logo_url,
       sportsSettings?.banner_url,
       ...(products ?? []).map((p) => p.image_url),
+      ...(categories ?? []).map((c) => c.image_url),
+      ...(variants ?? []).map((variant) => variant.image_url),
       ...(gallery ?? []).map((g) => g.image_url),
     ].filter((p): p is string => Boolean(p) && !p!.startsWith("http"));
     const signed = new Map<string, string>();
@@ -373,10 +398,11 @@ export const getStorefront = createServerFn({ method: "GET" })
         min_installment_amount: Number(store.min_installment_amount),
       },
       categories: visibleCategories.map((c) => {
-        const category = c as unknown as { id: string; name: string; module?: string };
+        const category = c as unknown as { id: string; name: string; module?: string; image_url?: string | null };
         return {
           id: category.id,
           name: category.name,
+          image: resolve(category.image_url ?? null),
           ...(category.module === undefined ? {} : { module: category.module }),
         };
       }),
@@ -439,6 +465,8 @@ export const getStorefront = createServerFn({ method: "GET" })
             price: v.price === null ? null : Number(v.price),
             stock: v.stock,
             is_available: v.is_available,
+            sku: v.sku ?? null,
+            image: resolve(v.image_url),
           })),
         orderEnabled: Boolean(p.order_enabled),
         orderUnitPrice: p.order_unit_price === null ? null : Number(p.order_unit_price),
@@ -475,6 +503,17 @@ export const getStorefront = createServerFn({ method: "GET" })
               )?.name,
           )
           .filter((name: string | undefined): name is string => Boolean(name)),
+        jewelryMaterial: p.jewelry_material ?? null,
+        jewelryPlating: p.jewelry_plating ?? null,
+        jewelryColor: p.jewelry_color ?? null,
+        jewelryStone: p.jewelry_stone ?? null,
+        jewelryIsNewRelease: Boolean(p.jewelry_is_new_release),
+        jewelryOfferActive: Boolean(p.jewelry_offer_active),
+        jewelryOriginalPrice:
+          p.jewelry_original_price == null ? null : Number(p.jewelry_original_price),
+        jewelryOfferPrice: p.jewelry_offer_price == null ? null : Number(p.jewelry_offer_price),
+        jewelryOfferPercent: p.jewelry_offer_percent ?? null,
+        jewelryOfferExpiresAt: p.jewelry_offer_expires_at ?? null,
       })),
     };
   });
@@ -521,6 +560,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       .eq("id", data.storeId)
       .maybeSingle();
     if (!store || !store.is_active) throw new Error("Loja indisponível");
+    const hasProAccess = store.plan === "pro" || Boolean(store.pro_trial_ends_at && new Date(store.pro_trial_ends_at).getTime() > Date.now());
     const normalizedCustomerWhatsapp = data.customerWhatsapp
       ? normalizePhone(data.customerWhatsapp, store.default_ddd ?? "31").replace(/^55/, "")
       : "";
@@ -528,7 +568,7 @@ export const submitOrder = createServerFn({ method: "POST" })
     const { data: productsRaw } = await supabaseAdmin
       .from("products")
       .select(
-        "id, name, price, store_id, is_hidden, is_available, order_enabled, stock, track_stock, has_variants, sports_offer_active, sports_offer_price",
+        "id, module, name, price, store_id, is_hidden, is_available, order_enabled, stock, track_stock, has_variants, sports_offer_active, sports_offer_price, jewelry_offer_active, jewelry_offer_price, jewelry_offer_expires_at",
       )
       .in(
         "id",
@@ -539,7 +579,7 @@ export const submitOrder = createServerFn({ method: "POST" })
     })[];
     const { data: variants } = await supabaseAdmin
       .from("product_variants")
-      .select("id, product_id, label, price, stock, is_available")
+      .select("id, product_id, label, price, stock, is_available, sku, image_url")
       .in(
         "id",
         data.items.map((i) => i.variantId).filter((v): v is string => Boolean(v)),
@@ -551,6 +591,9 @@ export const submitOrder = createServerFn({ method: "POST" })
         (p) => p.id === item.productId && p.store_id === store.id && !p.is_hidden && p.is_available,
       );
       if (!product) throw new Error("Produto indisponível para pedido");
+      if (product.module === "joias" && !hasProAccess) {
+        throw new Error("Esta loja Premium está temporariamente indisponível.");
+      }
       const variant = item.variantId
         ? (variants ?? []).find((v) => v.id === item.variantId && v.product_id === product.id)
         : null;
@@ -559,8 +602,13 @@ export const submitOrder = createServerFn({ method: "POST" })
         throw new Error(`Selecione uma variação para "${product.name}".`);
       if (variant && !variant.is_available)
         throw new Error(`A variação "${variant.label}" está indisponível.`);
-      const productPrice =
-        product.sports_offer_active && product.sports_offer_price !== null
+      const jewelryOfferCurrent = isJewelryOfferCurrent(
+        product.jewelry_offer_active,
+        product.jewelry_offer_expires_at,
+      ) && product.jewelry_offer_price !== null;
+      const productPrice = jewelryOfferCurrent
+        ? product.jewelry_offer_price!
+        : product.sports_offer_active && product.sports_offer_price !== null
           ? product.sports_offer_price
           : product.price;
       const unitPrice = Number(variant?.price ?? productPrice);

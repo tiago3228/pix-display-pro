@@ -30,6 +30,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedEncomendasRouteImport } from './routes/_authenticated/encomendas'
 import { Route as AuthenticatedFaturamentoRouteImport } from './routes/_authenticated/faturamento'
 import { Route as AuthenticatedFeedbackRouteImport } from './routes/_authenticated/feedback'
+import { Route as AuthenticatedJoiasRouteImport } from './routes/_authenticated/joias'
 import { Route as AuthenticatedLojasPremiumRouteImport } from './routes/_authenticated/lojas-premium'
 import { Route as AuthenticatedMinhaLojaRouteImport } from './routes/_authenticated/minha-loja'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
@@ -159,6 +160,11 @@ const AuthenticatedFaturamentoRoute =
 const AuthenticatedFeedbackRoute = AuthenticatedFeedbackRouteImport.update({
   id: '/feedback',
   path: '/feedback',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedJoiasRoute = AuthenticatedJoiasRouteImport.update({
+  id: '/joias',
+  path: '/joias',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedLojasPremiumRoute =
@@ -304,6 +310,7 @@ export interface FileRoutesByFullPath {
   '/encomendas': typeof AuthenticatedEncomendasRoute
   '/faturamento': typeof AuthenticatedFaturamentoRoute
   '/feedback': typeof AuthenticatedFeedbackRoute
+  '/joias': typeof AuthenticatedJoiasRoute
   '/lojas-premium': typeof AuthenticatedLojasPremiumRoute
   '/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -348,6 +355,7 @@ export interface FileRoutesByTo {
   '/encomendas': typeof AuthenticatedEncomendasRoute
   '/faturamento': typeof AuthenticatedFaturamentoRoute
   '/feedback': typeof AuthenticatedFeedbackRoute
+  '/joias': typeof AuthenticatedJoiasRoute
   '/lojas-premium': typeof AuthenticatedLojasPremiumRoute
   '/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -394,6 +402,7 @@ export interface FileRoutesById {
   '/_authenticated/encomendas': typeof AuthenticatedEncomendasRoute
   '/_authenticated/faturamento': typeof AuthenticatedFaturamentoRoute
   '/_authenticated/feedback': typeof AuthenticatedFeedbackRoute
+  '/_authenticated/joias': typeof AuthenticatedJoiasRoute
   '/_authenticated/lojas-premium': typeof AuthenticatedLojasPremiumRoute
   '/_authenticated/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -440,6 +449,7 @@ export interface FileRouteTypes {
     | '/encomendas'
     | '/faturamento'
     | '/feedback'
+    | '/joias'
     | '/lojas-premium'
     | '/minha-loja'
     | '/onboarding'
@@ -484,6 +494,7 @@ export interface FileRouteTypes {
     | '/encomendas'
     | '/faturamento'
     | '/feedback'
+    | '/joias'
     | '/lojas-premium'
     | '/minha-loja'
     | '/onboarding'
@@ -529,6 +540,7 @@ export interface FileRouteTypes {
     | '/_authenticated/encomendas'
     | '/_authenticated/faturamento'
     | '/_authenticated/feedback'
+    | '/_authenticated/joias'
     | '/_authenticated/lojas-premium'
     | '/_authenticated/minha-loja'
     | '/_authenticated/onboarding'
@@ -718,6 +730,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFeedbackRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/joias': {
+      id: '/_authenticated/joias'
+      path: '/joias'
+      fullPath: '/joias'
+      preLoaderRoute: typeof AuthenticatedJoiasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/lojas-premium': {
       id: '/_authenticated/lojas-premium'
       path: '/lojas-premium'
@@ -888,6 +907,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEncomendasRoute: typeof AuthenticatedEncomendasRoute
   AuthenticatedFaturamentoRoute: typeof AuthenticatedFaturamentoRoute
   AuthenticatedFeedbackRoute: typeof AuthenticatedFeedbackRoute
+  AuthenticatedJoiasRoute: typeof AuthenticatedJoiasRoute
   AuthenticatedLojasPremiumRoute: typeof AuthenticatedLojasPremiumRoute
   AuthenticatedMinhaLojaRoute: typeof AuthenticatedMinhaLojaRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -921,6 +941,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEncomendasRoute: AuthenticatedEncomendasRoute,
   AuthenticatedFaturamentoRoute: AuthenticatedFaturamentoRoute,
   AuthenticatedFeedbackRoute: AuthenticatedFeedbackRoute,
+  AuthenticatedJoiasRoute: AuthenticatedJoiasRoute,
   AuthenticatedLojasPremiumRoute: AuthenticatedLojasPremiumRoute,
   AuthenticatedMinhaLojaRoute: AuthenticatedMinhaLojaRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,

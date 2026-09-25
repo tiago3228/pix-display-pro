@@ -235,6 +235,7 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          image_url: string | null
           is_active: boolean
           module: string
           name: string
@@ -244,6 +245,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          image_url?: string | null
           is_active?: boolean
           module?: string
           name: string
@@ -253,6 +255,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          image_url?: string | null
           is_active?: boolean
           module?: string
           name?: string
@@ -1268,26 +1271,32 @@ export type Database = {
       product_variants: {
         Row: {
           id: string
+          image_url: string | null
           is_available: boolean
           label: string
           price: number | null
           product_id: string
+          sku: string | null
           stock: number
         }
         Insert: {
           id?: string
+          image_url?: string | null
           is_available?: boolean
           label: string
           price?: number | null
           product_id: string
+          sku?: string | null
           stock?: number
         }
         Update: {
           id?: string
+          image_url?: string | null
           is_available?: boolean
           label?: string
           price?: number | null
           product_id?: string
+          sku?: string | null
           stock?: number
         }
         Relationships: [
@@ -1318,6 +1327,16 @@ export type Database = {
           is_available: boolean
           is_featured: boolean
           is_hidden: boolean
+          jewelry_color: string | null
+          jewelry_is_new_release: boolean
+          jewelry_material: string | null
+          jewelry_offer_active: boolean
+          jewelry_offer_expires_at: string | null
+          jewelry_offer_percent: number | null
+          jewelry_offer_price: number | null
+          jewelry_original_price: number | null
+          jewelry_plating: string | null
+          jewelry_stone: string | null
           meal_period: string
           module: string
           name: string
@@ -1370,6 +1389,16 @@ export type Database = {
           is_available?: boolean
           is_featured?: boolean
           is_hidden?: boolean
+          jewelry_color?: string | null
+          jewelry_is_new_release?: boolean
+          jewelry_material?: string | null
+          jewelry_offer_active?: boolean
+          jewelry_offer_expires_at?: string | null
+          jewelry_offer_percent?: number | null
+          jewelry_offer_price?: number | null
+          jewelry_original_price?: number | null
+          jewelry_plating?: string | null
+          jewelry_stone?: string | null
           meal_period?: string
           module?: string
           name: string
@@ -1422,6 +1451,16 @@ export type Database = {
           is_available?: boolean
           is_featured?: boolean
           is_hidden?: boolean
+          jewelry_color?: string | null
+          jewelry_is_new_release?: boolean
+          jewelry_material?: string | null
+          jewelry_offer_active?: boolean
+          jewelry_offer_expires_at?: string | null
+          jewelry_offer_percent?: number | null
+          jewelry_offer_price?: number | null
+          jewelry_original_price?: number | null
+          jewelry_plating?: string | null
+          jewelry_stone?: string | null
           meal_period?: string
           module?: string
           name?: string
