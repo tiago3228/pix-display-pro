@@ -212,7 +212,11 @@ export const getStorefront = createServerFn({ method: "GET" })
           "id, module, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, meal_period, delivery_enabled, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at",
         )
         .eq("store_id", store.id)
-        .eq("module", activeModule)
+        .or(
+          activeModule === "roupas"
+            ? "module.eq.roupas"
+            : `module.eq.${activeModule},and(module.eq.roupas,category_id.is.null)`,
+        )
         .eq("is_hidden", false)
         .order("position"),
     ]);
@@ -433,9 +437,13 @@ export const getStorefront = createServerFn({ method: "GET" })
             ? ((sportsCollections ?? []) as StorefrontSportsCollection[])
             : [],
       },
-      products: (products ?? []).map((p) => ({
+      products: (products ?? []).map((p) => {
+        // Produtos legados sem categoria herdaram o módulo roupas por padrão.
+        const isUncategorizedLegacyProduct =
+          activeModule !== "roupas" && p.module === "roupas" && p.category_id === null;
+        return {
         id: p.id,
-        module: p.module ?? "roupas",
+        module: isUncategorizedLegacyProduct ? activeModule : (p.module ?? activeModule),
         name: p.name,
         description: p.description,
         price: Number(p.price),
@@ -524,7 +532,8 @@ export const getStorefront = createServerFn({ method: "GET" })
         jewelryOfferPrice: p.jewelry_offer_price == null ? null : Number(p.jewelry_offer_price),
         jewelryOfferPercent: p.jewelry_offer_percent ?? null,
         jewelryOfferExpiresAt: p.jewelry_offer_expires_at ?? null,
-      })),
+        };
+      }),
     };
   });
 
