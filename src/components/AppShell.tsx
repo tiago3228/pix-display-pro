@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -7,6 +7,8 @@ import {
   Bell,
   BellRing,
   Calculator,
+  ChevronDown,
+  ChevronUp,
   CreditCard,
   HelpCircle,
   LayoutDashboard,
@@ -143,6 +145,9 @@ export function AppShell({
   const { data: store, isLoading: storeLoading } = useMyStore();
   const { price: proPrice } = useProPricing();
   const [moreOpen, setMoreOpen] = useState(false);
+  const sidebarNavRef = useRef<HTMLElement | null>(null);
+  const [canScrollSidebarUp, setCanScrollSidebarUp] = useState(false);
+  const [canScrollSidebarDown, setCanScrollSidebarDown] = useState(false);
   const getPublicKey = useServerFn(getPushPublicKey);
   const saveSubscription = useServerFn(savePushSubscription);
   const [pushReady, setPushReady] = useState(false);
@@ -166,6 +171,34 @@ export function AppShell({
       return (data ?? []).filter((order) => !["entregue", "cancelado"].includes(order.status));
     },
   });
+
+  useEffect(() => {
+    const nav = sidebarNavRef.current;
+    if (!nav) return;
+
+    const updateScrollButtons = () => {
+      setCanScrollSidebarUp(nav.scrollTop > 2);
+      setCanScrollSidebarDown(nav.scrollHeight - nav.clientHeight - nav.scrollTop > 2);
+    };
+
+    updateScrollButtons();
+    nav.addEventListener("scroll", updateScrollButtons, { passive: true });
+    const observer = new ResizeObserver(updateScrollButtons);
+    observer.observe(nav);
+    return () => {
+      nav.removeEventListener("scroll", updateScrollButtons);
+      observer.disconnect();
+    };
+  }, [isAdmin]);
+
+  function scrollSidebar(direction: "up" | "down") {
+    const nav = sidebarNavRef.current;
+    if (!nav) return;
+    nav.scrollBy({
+      top: (direction === "down" ? 1 : -1) * Math.max(180, nav.clientHeight * 0.7),
+      behavior: "smooth",
+    });
+  }
 
   useEffect(() => {
     if (!ordersAlertKey || typeof window === "undefined") {
@@ -340,7 +373,10 @@ export function AppShell({
           </span>
           <span className="font-[family-name:var(--font-display)]">Vitrini</span>
         </Link>
-        <nav className="flex-1 space-y-1">
+        <nav
+          ref={sidebarNavRef}
+          className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pr-1"
+        >
           {NAV.map((item) => (
             <Link
               key={item.to}
@@ -374,6 +410,34 @@ export function AppShell({
             </Link>
           ) : null}
         </nav>
+        {canScrollSidebarUp || canScrollSidebarDown ? (
+          <div className="flex shrink-0 gap-2 py-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              aria-label="Rolar menu para cima"
+              title="Rolar menu para cima"
+              disabled={!canScrollSidebarUp}
+              onClick={() => scrollSidebar("up")}
+            >
+              <ChevronUp className="mr-1 size-4" /> Subir
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              aria-label="Rolar menu para baixo"
+              title="Rolar menu para baixo"
+              disabled={!canScrollSidebarDown}
+              onClick={() => scrollSidebar("down")}
+            >
+              <ChevronDown className="mr-1 size-4" /> Descer
+            </Button>
+          </div>
+        ) : null}
         {store && store.plan !== "pro" ? (
           <Link
             to="/assinatura"

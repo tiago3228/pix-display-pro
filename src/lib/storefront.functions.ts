@@ -187,6 +187,38 @@ type StorefrontProductDbRow = {
   jewelry_offer_expires_at: string | null;
 };
 
+function normalizeCategoryText(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function inferLegacyJewelryCategoryId(
+  productName: string,
+  categories: { id: string; name: string }[],
+) {
+  const name = normalizeCategoryText(productName);
+  const jewelryCategory = [
+    { pattern: /\b(?:anel|aneis)\b/, category: "aneis" },
+    { pattern: /\baliancas?\b/, category: "aliancas" },
+    { pattern: /\bcolares?\b/, category: "colares" },
+    { pattern: /\bcorrentes?\b/, category: "correntes" },
+    { pattern: /\bbrincos?\b/, category: "brincos" },
+    { pattern: /\bpulseiras?\b/, category: "pulseiras" },
+    { pattern: /\bpingentes?\b/, category: "pingentes" },
+    { pattern: /\bconjuntos?\b/, category: "conjuntos" },
+    { pattern: /\brelogios?\b/, category: "relogios" },
+    { pattern: /\bpresentes?\b/, category: "presentes" },
+  ].find((item) => item.pattern.test(name))?.category;
+  const targetCategory = jewelryCategory
+    ? categories.find((category) => normalizeCategoryText(category.name).includes(jewelryCategory))
+    : categories.find((category) => normalizeCategoryText(category.name) === "geral");
+  return targetCategory?.id ?? categories.find((category) => normalizeCategoryText(category.name) === "geral")?.id ?? null;
+}
+
 export const getStorefront = createServerFn({ method: "GET" })
   .validator((data: { slug: string }) => z.object({ slug: z.string().min(1) }).parse(data))
   .handler(async ({ data }): Promise<Storefront> => {
@@ -213,15 +245,31 @@ export const getStorefront = createServerFn({ method: "GET" })
         )
         .eq("store_id", store.id)
         .or(
-          activeModule === "roupas"
-            ? "module.eq.roupas"
-            : `module.eq.${activeModule},and(module.eq.roupas,category_id.is.null)`,
+          activeModule === "joias"
+            ? "module.eq.joias,and(module.eq.roupas,category_id.is.null)"
+            : `module.eq.${activeModule}`,
         )
         .eq("is_hidden", false)
         .order("position"),
     ]);
 
     const products = (productsRaw ?? []) as unknown as StorefrontProductDbRow[];
+    const legacyJewelryCategoryIds = new Map<string, string | null>();
+    const storefrontProducts = products.filter((product) => {
+      if (product.module === activeModule) return true;
+      if (
+        activeModule !== "joias" ||
+        product.module !== "roupas" ||
+        product.category_id !== null
+      ) {
+        return false;
+      }
+      legacyJewelryCategoryIds.set(
+        product.id,
+        inferLegacyJewelryCategoryId(product.name, (categories ?? []).map(({ id, name }) => ({ id, name }))),
+      );
+      return true;
+    });
     const activeCategories = (categories ?? []).filter((category) => {
       const item = category as unknown as { module?: string; is_active?: boolean };
       return (
@@ -260,7 +308,7 @@ export const getStorefront = createServerFn({ method: "GET" })
       .order("position")
       .limit(1)
       .maybeSingle();
-    const productIds = products.map((p) => p.id);
+    const productIds = storefrontProducts.map((p) => p.id);
     // These tables are introduced by the migrations in this change; generated
     // Supabase types are refreshed by Lovable when the SQL is published.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -341,7 +389,7 @@ export const getStorefront = createServerFn({ method: "GET" })
       store.banner_url,
       sportsSettings?.logo_url,
       sportsSettings?.banner_url,
-      ...(products ?? []).map((p) => p.image_url),
+      ...storefrontProducts.map((p) => p.image_url),
       ...(categories ?? []).map((c) => c.image_url),
       ...(variants ?? []).map((variant) => variant.image_url),
       ...(gallery ?? []).map((g) => g.image_url),
@@ -437,13 +485,12 @@ export const getStorefront = createServerFn({ method: "GET" })
             ? ((sportsCollections ?? []) as StorefrontSportsCollection[])
             : [],
       },
-      products: (products ?? []).map((p) => {
+      products: storefrontProducts.map((p) => {
         // Produtos legados sem categoria herdaram o módulo roupas por padrão.
-        const isUncategorizedLegacyProduct =
-          activeModule !== "roupas" && p.module === "roupas" && p.category_id === null;
+        const legacyJewelryCategoryId = legacyJewelryCategoryIds.get(p.id);
         return {
         id: p.id,
-        module: isUncategorizedLegacyProduct ? activeModule : (p.module ?? activeModule),
+        module: legacyJewelryCategoryIds.has(p.id) ? "joias" : (p.module ?? activeModule),
         name: p.name,
         description: p.description,
         price: Number(p.price),
@@ -462,7 +509,7 @@ export const getStorefront = createServerFn({ method: "GET" })
         is_available: p.is_available,
         is_featured: p.is_featured,
         has_variants: p.has_variants,
-        category_id: p.category_id,
+        category_id: legacyJewelryCategoryId ?? p.category_id,
         mealPeriod: p.meal_period ?? "both",
         deliveryEnabled: Boolean(p.delivery_enabled),
         options: (options ?? [])
