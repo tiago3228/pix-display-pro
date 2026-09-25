@@ -34,6 +34,7 @@ import { getPushPublicKey, savePushSubscription } from "@/lib/push.functions";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { BackButton } from "@/components/BackButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -145,7 +146,7 @@ export function AppShell({
   const { data: store, isLoading: storeLoading } = useMyStore();
   const { price: proPrice } = useProPricing();
   const [moreOpen, setMoreOpen] = useState(false);
-  const sidebarNavRef = useRef<HTMLElement | null>(null);
+  const sidebarAreaRef = useRef<HTMLDivElement | null>(null);
   const [canScrollSidebarUp, setCanScrollSidebarUp] = useState(false);
   const [canScrollSidebarDown, setCanScrollSidebarDown] = useState(false);
   const getPublicKey = useServerFn(getPushPublicKey);
@@ -173,29 +174,33 @@ export function AppShell({
   });
 
   useEffect(() => {
-    const nav = sidebarNavRef.current;
-    if (!nav) return;
+    const area = sidebarAreaRef.current;
+    const viewport = area?.querySelector<HTMLElement>("[data-radix-scroll-area-viewport]");
+    if (!area || !viewport) return;
 
     const updateScrollButtons = () => {
-      setCanScrollSidebarUp(nav.scrollTop > 2);
-      setCanScrollSidebarDown(nav.scrollHeight - nav.clientHeight - nav.scrollTop > 2);
+      setCanScrollSidebarUp(viewport.scrollTop > 2);
+      setCanScrollSidebarDown(viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 2);
     };
 
     updateScrollButtons();
-    nav.addEventListener("scroll", updateScrollButtons, { passive: true });
+    viewport.addEventListener("scroll", updateScrollButtons, { passive: true });
     const observer = new ResizeObserver(updateScrollButtons);
-    observer.observe(nav);
+    observer.observe(viewport);
+    if (viewport.firstElementChild) observer.observe(viewport.firstElementChild);
     return () => {
-      nav.removeEventListener("scroll", updateScrollButtons);
+      viewport.removeEventListener("scroll", updateScrollButtons);
       observer.disconnect();
     };
   }, [isAdmin]);
 
   function scrollSidebar(direction: "up" | "down") {
-    const nav = sidebarNavRef.current;
-    if (!nav) return;
-    nav.scrollBy({
-      top: (direction === "down" ? 1 : -1) * Math.max(180, nav.clientHeight * 0.7),
+    const viewport = sidebarAreaRef.current?.querySelector<HTMLElement>(
+      "[data-radix-scroll-area-viewport]",
+    );
+    if (!viewport) return;
+    viewport.scrollBy({
+      top: (direction === "down" ? 1 : -1) * Math.max(180, viewport.clientHeight * 0.7),
       behavior: "smooth",
     });
   }
@@ -373,71 +378,70 @@ export function AppShell({
           </span>
           <span className="font-[family-name:var(--font-display)]">Vitrini</span>
         </Link>
-        <nav
-          ref={sidebarNavRef}
-          className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pr-1"
-        >
-          {NAV.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
-                pathname === item.to
-                  ? item.featured
-                    ? "bg-amber-500 text-amber-950 shadow-sm"
-                    : "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : item.featured
-                    ? "bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 dark:text-amber-300"
-                    : "text-muted-foreground hover:bg-sidebar-accent/60",
-              )}
-            >
-              <item.icon className="size-4" />
-              {item.label}
-            </Link>
-          ))}
-          {isAdmin ? (
-            <Link
-              to="/admin"
-              className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
-                pathname === "/admin"
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-muted-foreground hover:bg-sidebar-accent/60",
-              )}
-            >
-              <ShieldCheck className="size-4" /> Administração
-            </Link>
-          ) : null}
-        </nav>
-        {canScrollSidebarUp || canScrollSidebarDown ? (
-          <div className="flex shrink-0 gap-2 py-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              aria-label="Rolar menu para cima"
-              title="Rolar menu para cima"
-              disabled={!canScrollSidebarUp}
-              onClick={() => scrollSidebar("up")}
-            >
-              <ChevronUp className="mr-1 size-4" /> Subir
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="flex-1"
-              aria-label="Rolar menu para baixo"
-              title="Rolar menu para baixo"
-              disabled={!canScrollSidebarDown}
-              onClick={() => scrollSidebar("down")}
-            >
-              <ChevronDown className="mr-1 size-4" /> Descer
-            </Button>
-          </div>
-        ) : null}
+        <div ref={sidebarAreaRef} className="h-[min(60vh,30rem)] w-full shrink-0">
+          <ScrollArea type="always" className="h-full w-full">
+            <nav className="space-y-1 pr-3">
+              {NAV.map((item) => (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
+                    pathname === item.to
+                      ? item.featured
+                        ? "bg-amber-500 text-amber-950 shadow-sm"
+                        : "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : item.featured
+                        ? "bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 dark:text-amber-300"
+                        : "text-muted-foreground hover:bg-sidebar-accent/60",
+                  )}
+                >
+                  <item.icon className="size-4" />
+                  {item.label}
+                </Link>
+              ))}
+              {isAdmin ? (
+                <Link
+                  to="/admin"
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
+                    pathname === "/admin"
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-muted-foreground hover:bg-sidebar-accent/60",
+                  )}
+                >
+                  <ShieldCheck className="size-4" /> Administração
+                </Link>
+              ) : null}
+            </nav>
+          </ScrollArea>
+        </div>
+        <div className="flex shrink-0 gap-2 py-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            aria-label="Rolar menu para cima"
+            title="Rolar menu para cima"
+            disabled={!canScrollSidebarUp}
+            onClick={() => scrollSidebar("up")}
+          >
+            <ChevronUp className="mr-1 size-4" /> Subir
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="flex-1"
+            aria-label="Rolar menu para baixo"
+            title="Rolar menu para baixo"
+            disabled={!canScrollSidebarDown}
+            onClick={() => scrollSidebar("down")}
+          >
+            <ChevronDown className="mr-1 size-4" /> Descer
+          </Button>
+        </div>
         {store && store.plan !== "pro" ? (
           <Link
             to="/assinatura"
@@ -562,12 +566,13 @@ export function AppShell({
             </SheetTrigger>
             <SheetContent
               side="bottom"
-              className="max-h-[85vh] overflow-y-auto rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+              className="flex max-h-[85vh] flex-col rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
             >
               <SheetHeader className="text-left">
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
-              <div className="grid gap-1 px-4 pb-6">
+              <ScrollArea type="always" className="h-[65vh] w-full shrink-0">
+                <div className="grid gap-1 px-4 pb-6 pr-4">
                 <div className="mb-2 flex items-center justify-between rounded-lg border border-border px-3 py-2">
                   <span className="text-sm font-medium">Aparência</span>
                   <ThemeToggle compact />
@@ -620,7 +625,8 @@ export function AppShell({
                 >
                   <LogOut className="size-4" /> Sair
                 </button>
-              </div>
+                </div>
+              </ScrollArea>
             </SheetContent>
           </Sheet>
         </div>
