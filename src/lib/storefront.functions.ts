@@ -197,12 +197,14 @@ export const getStorefront = createServerFn({ method: "GET" })
     const store = stores?.[0] ?? null;
 
     if (!store) return null;
+    const activeModule = getStoreNicheModule(store.category);
 
     const [{ data: categories }, { data: productsRaw }] = await Promise.all([
       supabase
         .from("categories")
         .select("id, name, module, position, is_active, image_url")
         .eq("store_id", store.id)
+        .eq("module", activeModule)
         .order("position"),
       supabase
         .from("products")
@@ -210,25 +212,27 @@ export const getStorefront = createServerFn({ method: "GET" })
           "id, module, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, meal_period, delivery_enabled, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at",
         )
         .eq("store_id", store.id)
+        .eq("module", activeModule)
         .eq("is_hidden", false)
         .order("position"),
     ]);
 
     const products = (productsRaw ?? []) as unknown as StorefrontProductDbRow[];
-    const activeModule = getStoreNicheModule(store.category);
-    const visibleModules = new Set<string>([activeModule, ...products.map((product) => product.module)]);
     const activeCategories = (categories ?? []).filter((category) => {
       const item = category as unknown as { module?: string; is_active?: boolean };
       return (
         item.is_active !== false &&
-        item.module !== undefined &&
-        visibleModules.has(item.module) &&
+        item.module === activeModule &&
         !isNeutralCategoryName(category.name)
       );
     });
     const neutralCategories = (categories ?? []).filter((category) => {
       const item = category as unknown as { module?: string; is_active?: boolean };
-      return item.is_active !== false && isNeutralCategoryName(category.name);
+      return (
+        item.is_active !== false &&
+        item.module === activeModule &&
+        isNeutralCategoryName(category.name)
+      );
     });
     const defaultNeutral =
       neutralCategories.find(
@@ -407,7 +411,7 @@ export const getStorefront = createServerFn({ method: "GET" })
         };
       }),
       sports: {
-        settings: sportsSettings
+        settings: activeModule === "roupas_esportivas" && sportsSettings
           ? {
               name: sportsSettings.name,
               description: sportsSettings.description,
@@ -420,8 +424,14 @@ export const getStorefront = createServerFn({ method: "GET" })
               text_color: sportsSettings.text_color,
             }
           : null,
-        nodes: (sportsNodes ?? []) as StorefrontSportsNode[],
-        collections: (sportsCollections ?? []) as StorefrontSportsCollection[],
+        nodes:
+          activeModule === "roupas_esportivas"
+            ? ((sportsNodes ?? []) as StorefrontSportsNode[])
+            : [],
+        collections:
+          activeModule === "roupas_esportivas"
+            ? ((sportsCollections ?? []) as StorefrontSportsCollection[])
+            : [],
       },
       products: (products ?? []).map((p) => ({
         id: p.id,
