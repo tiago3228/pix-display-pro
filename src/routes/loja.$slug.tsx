@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 import { getStoreModuleLabel } from "@/lib/store-niche";
 import { isJewelryOfferCurrent } from "@/lib/jewelry";
 import { EncomendaDialog } from "@/components/EncomendaDialog";
+import { BackButton } from "@/components/BackButton";
 
 function instagramHref(value: string | null | undefined) {
   const raw = value?.trim();
@@ -495,6 +496,9 @@ export function StorePage() {
         color: store.text_color,
       }}
     >
+      <div className="mx-auto max-w-3xl px-4 pt-3">
+        <BackButton fallbackTo="/" label="Voltar" variant="outline" className="bg-background/90" />
+      </div>
       <header className="relative">
         <div
           className="h-36 w-full sm:h-52"

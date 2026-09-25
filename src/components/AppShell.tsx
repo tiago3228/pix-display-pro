@@ -334,7 +334,7 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-muted/30">
       <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-border bg-sidebar px-3 py-4 lg:flex">
-        <Link to="/dashboard" className="mb-6 flex items-center gap-2 px-2 font-semibold">
+        <Link to="/" className="mb-6 flex items-center gap-2 px-2 font-semibold">
           <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
             <Store className="size-4" />
           </span>
