@@ -394,15 +394,15 @@ export type Database = {
           card_clickable: boolean
           category_id: string | null
           click_count: number
-          custom_type_label: string | null
           contract_cta_label: string
           contract_url: string | null
           created_at: string
           created_by: string | null
           cta_label: string
-          description: string
+          custom_type_label: string | null
           demo_cta_label: string
           demo_url: string | null
+          description: string
           faqs: Json
           features: string[]
           gallery_image_paths: string[]
@@ -445,9 +445,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           cta_label?: string
-          description?: string
+          custom_type_label?: string | null
           demo_cta_label?: string
           demo_url?: string | null
+          description?: string
           faqs?: Json
           features?: string[]
           gallery_image_paths?: string[]
@@ -456,7 +457,6 @@ export type Database = {
           is_featured?: boolean
           logo_image_path?: string | null
           main_image_path?: string | null
-          custom_type_label?: string | null
           name: string
           open_new_tab?: boolean
           plans?: Json
@@ -491,9 +491,10 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           cta_label?: string
-          description?: string
+          custom_type_label?: string | null
           demo_cta_label?: string
           demo_url?: string | null
+          description?: string
           faqs?: Json
           features?: string[]
           gallery_image_paths?: string[]
@@ -502,7 +503,6 @@ export type Database = {
           is_featured?: boolean
           logo_image_path?: string | null
           main_image_path?: string | null
-          custom_type_label?: string | null
           name?: string
           open_new_tab?: boolean
           plans?: Json
@@ -2732,6 +2732,10 @@ export type Database = {
         }
         Returns: string
       }
+      seed_jewelry_categories: {
+        Args: { target_store_id: string }
+        Returns: undefined
+      }
       seed_national_football: {
         Args: { target_store_id: string }
         Returns: undefined
@@ -2751,6 +2755,35 @@ export type Database = {
       store_has_pro_access: {
         Args: { target_store_id: string }
         Returns: boolean
+      }
+      write_audit_log: {
+        Args: {
+          _action: string
+          _after?: Json
+          _before?: Json
+          _entity?: string
+          _entity_id?: string
+          _meta?: Json
+          _organization_id: string
+          _severity?: string
+        }
+        Returns: {
+          action: string
+          created_at: string
+          id: string
+          metadata: Json
+          reference: string | null
+          resource_id: string | null
+          resource_type: string | null
+          store_id: string | null
+          user_id: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "audit_logs"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
     }
     Enums: {
