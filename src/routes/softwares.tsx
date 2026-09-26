@@ -188,11 +188,13 @@ function SoftwareCard({
             <Rocket className="size-12 opacity-70" />
           </div>
         )}
-        {product.is_featured ? <Badge className="absolute left-4 top-4">⭐ Destaque</Badge> : null}
       </a>
       <div
         className={`pointer-events-none relative z-10 flex flex-col p-5 ${featured ? "justify-center sm:p-7" : "h-full"}`}
       >
+        {product.is_featured ? (
+          <Badge className="pointer-events-auto mb-3 w-fit">⭐ Destaque</Badge>
+        ) : null}
         <div className="flex items-center gap-3">
           {product.logo_image_url ? (
             <img
