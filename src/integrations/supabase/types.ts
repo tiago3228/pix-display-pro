@@ -393,6 +393,7 @@ export type Database = {
           benefits: string[]
           card_clickable: boolean
           category_id: string | null
+          category_ids: string[]
           click_count: number
           contract_cta_label: string
           contract_url: string | null
@@ -412,7 +413,6 @@ export type Database = {
           logo_image_path: string | null
           main_image_path: string | null
           name: string
-          category_ids: string[]
           open_new_tab: boolean
           plans: Json
           primary_color: string
@@ -440,6 +440,7 @@ export type Database = {
           benefits?: string[]
           card_clickable?: boolean
           category_id?: string | null
+          category_ids?: string[]
           click_count?: number
           contract_cta_label?: string
           contract_url?: string | null
@@ -459,7 +460,6 @@ export type Database = {
           logo_image_path?: string | null
           main_image_path?: string | null
           name: string
-          category_ids?: string[]
           open_new_tab?: boolean
           plans?: Json
           primary_color?: string
@@ -487,6 +487,7 @@ export type Database = {
           benefits?: string[]
           card_clickable?: boolean
           category_id?: string | null
+          category_ids?: string[]
           click_count?: number
           contract_cta_label?: string
           contract_url?: string | null
@@ -506,7 +507,6 @@ export type Database = {
           logo_image_path?: string | null
           main_image_path?: string | null
           name?: string
-          category_ids?: string[]
           open_new_tab?: boolean
           plans?: Json
           primary_color?: string
