@@ -253,7 +253,7 @@ function ProductPresentation({ product }: { product: DigitalProductView }) {
                 <img
                   src={activeImage}
                   alt={`Apresentação de ${product.name}`}
-                  className="aspect-[4/3] w-full rounded-2xl object-cover"
+                  className="aspect-[4/3] w-full rounded-2xl bg-muted object-contain p-1"
                 />
               </a>
             ) : (
@@ -275,7 +275,7 @@ function ProductPresentation({ product }: { product: DigitalProductView }) {
                     aria-label={`Ver imagem ${index + 1}`}
                     className={`size-14 shrink-0 overflow-hidden rounded-lg border-2 ${activeImage === image ? "border-white" : "border-transparent"}`}
                   >
-                    <img src={image} alt="" className="size-full object-cover" />
+                    <img src={image} alt="" className="size-full bg-muted object-contain p-0.5" />
                   </button>
                 ))}
               </div>

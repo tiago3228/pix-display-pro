@@ -181,7 +181,7 @@ function SoftwareCard({
           <img
             src={product.main_image_url}
             alt={`Imagem do ${product.name}`}
-            className="h-full w-full object-cover transition duration-500 hover:scale-[1.02]"
+            className="h-full w-full object-contain bg-muted p-1 transition duration-500"
           />
         ) : (
           <div className="flex h-full min-h-56 items-center justify-center bg-gradient-to-br from-slate-900 to-blue-900 text-white">

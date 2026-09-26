@@ -59,7 +59,7 @@ Moto PRO — sua moto, seus gastos e sua manutenção organizados em um só luga
     'https://vitrini-br.lovable.app/moto-pro.png',
     'https://vitrini-br.lovable.app/moto-pro.png',
     'https://vitrini-br.lovable.app/moto-pro.png',
-    'https://swift-bookings.lovable.app/',
+    'https://moto-pro-control.lovable.app',
     'Conhecer Moto PRO',
     'Cuide da sua moto como um profissional.',
     'Gestão, manutenção e controle para deixar sua moto sempre em ordem.',
@@ -92,7 +92,7 @@ Moto PRO — sua moto, seus gastos e sua manutenção organizados em um só luga
           'Documentos e lembretes',
           'Painel de saúde da moto'
         ),
-        'url', 'https://swift-bookings.lovable.app/'
+        'url', 'https://moto-pro-control.lovable.app'
       ),
       jsonb_build_object(
         'name', 'Premium',
@@ -103,7 +103,7 @@ Moto PRO — sua moto, seus gastos e sua manutenção organizados em um só luga
           'Mais relatórios e histórico',
           'Funcionalidades exclusivas'
         ),
-        'url', 'https://swift-bookings.lovable.app/'
+        'url', 'https://moto-pro-control.lovable.app'
       )
     ),
     jsonb_build_array(
