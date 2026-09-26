@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   ArrowDown,
   ArrowUp,
+  Copy,
   ExternalLink,
   Eye,
   ImagePlus,
@@ -53,6 +54,7 @@ type CategoryRow = Pick<
 >;
 const EMPTY_PRODUCTS: ProductRow[] = [];
 const EMPTY_CATEGORIES: CategoryRow[] = [];
+const DIGITAL_CATALOG_URL = "https://vitrini-br.lovable.app/softwares";
 type PlanDraft = {
   name: string;
   price: string;
@@ -257,6 +259,15 @@ function AdminDigitalProducts() {
     [products],
   );
   const featuredCount = products.filter((product) => product.is_featured).length;
+
+  async function copyCatalogLink() {
+    try {
+      await navigator.clipboard.writeText(DIGITAL_CATALOG_URL);
+      toast.success("Link do catálogo copiado.");
+    } catch {
+      toast.error("Não foi possível copiar o link neste navegador.");
+    }
+  }
 
   function openNew() {
     setDraft({ ...newDraft(), sortOrder: products.length * 10 });
@@ -576,6 +587,36 @@ function AdminDigitalProducts() {
           <Badge variant="secondary">{products.length} cadastrados</Badge>
           <Badge>{products.filter((item) => item.is_active).length} publicados</Badge>
           {featuredCount ? <Badge variant="outline">⭐ {featuredCount} destaque(s)</Badge> : null}
+        </div>
+      </section>
+
+      <section className="surface mb-5 flex flex-col gap-3 border-primary/30 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div className="min-w-0">
+          <p className="font-semibold">Divulgue seus softwares</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Compartilhe o catálogo completo ou envie a página individual de cada aplicativo.
+          </p>
+          <a
+            href={DIGITAL_CATALOG_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-block break-all text-sm font-medium text-primary underline underline-offset-4"
+          >
+            {DIGITAL_CATALOG_URL}
+          </a>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Páginas individuais: /softwares/vitrini · /softwares/agendou · /softwares/aura
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Button variant="outline" onClick={() => void copyCatalogLink()}>
+            <Copy className="mr-2 size-4" /> Copiar link
+          </Button>
+          <Button asChild>
+            <a href="/softwares" target="_blank" rel="noopener noreferrer">
+              <Eye className="mr-2 size-4" /> Abrir catálogo
+            </a>
+          </Button>
         </div>
       </section>
 

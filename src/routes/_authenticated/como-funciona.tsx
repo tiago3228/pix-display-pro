@@ -393,7 +393,8 @@ const SECTIONS: TutorialSection[] = [
       },
       {
         title: "Acompanhe o período gratuito",
-        description: "Confira na assinatura a situação do trial e a data de término dos 30 dias PRO.",
+        description:
+          "Confira na assinatura a situação do trial e a data de término dos 30 dias PRO.",
         details: [
           "O trial começa na criação da nova loja.",
           "Durante o período, recursos como IA, estoque, variações, faturamento e módulos Premium ficam disponíveis.",
@@ -494,6 +495,76 @@ function ComoFunciona() {
             title="Manutenção"
             text="Atualize preços, disponibilidade e mensagem sempre que precisar."
           />
+        </section>
+
+        <section className="surface border-primary/30 p-5 sm:p-7">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Megaphone className="size-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+                Divulgação dos aplicativos
+              </p>
+              <h2 className="mt-1 text-xl font-bold sm:text-2xl">
+                Onde encontrar os links do Vitrini, Agendou e Aura
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                No menu lateral, abra <strong className="text-foreground">Meus Softwares</strong> e
+                clique em <strong className="text-foreground">Abrir vitrine</strong>. Esse é o
+                catálogo público para compartilhar. Para divulgar um aplicativo específico, envie
+                diretamente o endereço da página dele.
+              </p>
+              <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <strong className="text-foreground">Catálogo completo:</strong>{" "}
+                  <a className="text-primary underline underline-offset-4" href="/softwares">
+                    vitrini-br.lovable.app/softwares
+                  </a>
+                </li>
+                <li>
+                  <strong className="text-foreground">Páginas diretas:</strong>{" "}
+                  <a
+                    className="text-primary underline underline-offset-4"
+                    href="/softwares/vitrini"
+                  >
+                    Vitrini
+                  </a>
+                  {" · "}
+                  <a
+                    className="text-primary underline underline-offset-4"
+                    href="/softwares/agendou"
+                  >
+                    Agendou
+                  </a>
+                  {" · "}
+                  <a className="text-primary underline underline-offset-4" href="/softwares/aura">
+                    Aura
+                  </a>
+                </li>
+                <li>
+                  Na página de cada aplicativo, o botão e a imagem principal levam ao site externo
+                  correspondente.
+                </li>
+              </ul>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Link
+                  to="/softwares"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+                >
+                  Abrir catálogo público <ArrowRight className="size-4" />
+                </Link>
+                <Link
+                  to="/admin/softwares"
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-border px-4 text-sm font-semibold transition hover:bg-accent"
+                >
+                  Ir para Meus Softwares
+                </Link>
+              </div>
+            </div>
+          </div>
         </section>
 
         <div className="space-y-5">
