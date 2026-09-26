@@ -17,7 +17,8 @@ export const getLandingBanner = createServerFn({ method: "GET" }).handler(
     const row = (data as Record<string, string | null> | null) ?? null;
     let image = row?.["image_url"] ?? null;
     if (image && !image.startsWith("http")) {
-      const { data: signed } = await supabase.storage
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: signed } = await supabaseAdmin.storage
         .from("store-assets")
         .createSignedUrl(image, 60 * 60);
       image = signed?.signedUrl ?? null;
