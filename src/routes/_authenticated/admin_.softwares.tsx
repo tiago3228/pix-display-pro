@@ -352,7 +352,7 @@ function AdminDigitalProducts() {
           return await saveProduct({
             data: {
               ...draft,
-              categoryIds: [...new Set(draft.categoryIds)],
+              categoryIds: [...new Set(draft.categoryIds ?? [])],
               mainImagePath: paths.mainImagePath,
               logoImagePath: paths.logoImagePath,
               bannerImagePath: paths.bannerImagePath,
@@ -460,7 +460,7 @@ function AdminDigitalProducts() {
       setCategorySlug("");
       setCategoryEditingId(null);
       void queryClient.invalidateQueries({ queryKey: ["digital-product-admin"] });
-      patch("categoryIds", [...new Set([...draft.categoryIds, category.id])]);
+      patch("categoryIds", [...new Set([...(draft.categoryIds ?? []), category.id])]);
     },
     onError: (error: unknown) =>
       toast.error(error instanceof Error ? error.message : "Não foi possível criar a categoria."),
@@ -811,13 +811,13 @@ function AdminDigitalProducts() {
                           <input
                             type="checkbox"
                             className="size-4 accent-primary"
-                            checked={draft.categoryIds.includes(category.id)}
+                            checked={(draft.categoryIds ?? []).includes(category.id)}
                             onChange={(event) =>
                               patch(
                                 "categoryIds",
                                 event.target.checked
-                                  ? [...new Set([...draft.categoryIds, category.id])]
-                                  : draft.categoryIds.filter((id) => id !== category.id),
+                                  ? [...new Set([...(draft.categoryIds ?? []), category.id])]
+                                  : (draft.categoryIds ?? []).filter((id) => id !== category.id),
                               )
                             }
                           />
