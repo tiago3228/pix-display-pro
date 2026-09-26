@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { ArrowRight, ExternalLink, Rocket } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +39,9 @@ export const Route = createFileRoute("/softwares")({
 function DigitalProductsCatalog() {
   const { products, categories } = Route.useLoaderData();
   const [category, setCategory] = useState<string | null>(null);
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+  if (pathname !== "/softwares" && pathname !== "/softwares/") return <Outlet />;
+
   const visibleProducts = category
     ? products.filter((product) => product.category_slug === category)
     : products;
