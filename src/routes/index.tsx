@@ -238,6 +238,38 @@ function Landing() {
           <p className="mt-5 text-sm text-muted-foreground">E muito mais.</p>
         </section>
 
+        <section className="mx-auto max-w-6xl px-4 pb-20">
+          <div className="surface flex flex-col items-center gap-4 bg-primary/8 p-8 text-center">
+            <Share2 className="size-6 text-primary" />
+            <h2 className="text-2xl font-bold">Você vende pelo WhatsApp. Nós organizamos.</h2>
+            <p className="max-w-lg text-muted-foreground">
+              Veja uma loja de exemplo funcionando agora mesmo.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <Button asChild size="lg">
+                <Link to="/signup">Começar 30 dias grátis</Link>
+              </Button>
+              <Button asChild size="lg" variant="outline">
+                <Link to="/s/$slug" params={{ slug: "atena-joias" }}>
+                  Ver loja de exemplo
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-3xl px-4 py-16">
+          <h2 className="text-2xl font-bold sm:text-3xl">Perguntas frequentes</h2>
+          <Accordion type="single" collapsible className="mt-6">
+            {FAQ.map(({ q, a }) => (
+              <AccordionItem key={q} value={q}>
+                <AccordionTrigger className="text-left">{q}</AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">{a}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </section>
+
         <section id="precos" className="border-y border-border bg-card/60 py-16">
           <div className="mx-auto max-w-4xl px-4">
             <h2 className="text-2xl font-bold sm:text-3xl">Preço simples</h2>
@@ -304,38 +336,6 @@ function Landing() {
                   <Link to="/signup">Começar 30 dias grátis</Link>
                 </Button>
               </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-3xl px-4 py-16">
-          <h2 className="text-2xl font-bold sm:text-3xl">Perguntas frequentes</h2>
-          <Accordion type="single" collapsible className="mt-6">
-            {FAQ.map(({ q, a }) => (
-              <AccordionItem key={q} value={q}>
-                <AccordionTrigger className="text-left">{q}</AccordionTrigger>
-                <AccordionContent className="text-muted-foreground">{a}</AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </section>
-
-        <section className="mx-auto max-w-6xl px-4 pb-20">
-          <div className="surface flex flex-col items-center gap-4 bg-primary/8 p-8 text-center">
-            <Share2 className="size-6 text-primary" />
-            <h2 className="text-2xl font-bold">Você vende pelo WhatsApp. Nós organizamos.</h2>
-            <p className="max-w-lg text-muted-foreground">
-              Veja uma loja de exemplo funcionando agora mesmo.
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <Button asChild size="lg">
-                <Link to="/signup">Começar 30 dias grátis</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link to="/s/$slug" params={{ slug: "atena-joias" }}>
-                  Ver loja de exemplo
-                </Link>
-              </Button>
             </div>
           </div>
         </section>
