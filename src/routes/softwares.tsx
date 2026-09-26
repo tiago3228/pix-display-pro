@@ -43,7 +43,7 @@ function DigitalProductsCatalog() {
   if (pathname !== "/softwares" && pathname !== "/softwares/") return <Outlet />;
 
   const visibleProducts = category
-    ? products.filter((product) => product.category_slug === category)
+    ? products.filter((product) => product.category_slugs.includes(category))
     : products;
   const featured = visibleProducts.filter((product) => product.is_featured);
   const regular = visibleProducts.filter((product) => !product.is_featured);
@@ -207,8 +207,8 @@ function SoftwareCard({
                 {product.name}
               </a>
             </h3>
-            {product.category_name ? (
-              <p className="text-xs text-muted-foreground">{product.category_name}</p>
+            {product.category_names.length ? (
+              <p className="text-xs text-muted-foreground">{product.category_names.join(" · ")}</p>
             ) : null}
             <Badge variant="outline" className="mt-1 w-fit text-[10px]">
               {product.product_type_label}

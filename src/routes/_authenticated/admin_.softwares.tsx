@@ -70,7 +70,7 @@ type Draft = {
   name: string;
   productType: string;
   customProductType: string;
-  categoryId: string;
+  categoryIds: string[];
   shortDescription: string;
   description: string;
   mainImagePath: string | null;
@@ -110,7 +110,7 @@ const newDraft = (): Draft => ({
   name: "",
   productType: "software",
   customProductType: "",
-  categoryId: "",
+  categoryIds: [],
   shortDescription: "",
   description: "",
   mainImagePath: null,
@@ -175,7 +175,12 @@ function rowToDraft(product: ProductRow): Draft {
     name: product.name,
     productType: product.product_type,
     customProductType: product.custom_type_label ?? "",
-    categoryId: product.category_id ?? "",
+    categoryIds:
+      product.category_ids?.length > 0
+        ? product.category_ids
+        : product.category_id
+          ? [product.category_id]
+          : [],
     shortDescription: product.short_description,
     description: product.description,
     mainImagePath: product.main_image_path,
@@ -347,7 +352,7 @@ function AdminDigitalProducts() {
           return await saveProduct({
             data: {
               ...draft,
-              categoryId: draft.categoryId || null,
+              categoryIds: [...new Set(draft.categoryIds)],
               mainImagePath: paths.mainImagePath,
               logoImagePath: paths.logoImagePath,
               bannerImagePath: paths.bannerImagePath,
@@ -455,7 +460,7 @@ function AdminDigitalProducts() {
       setCategorySlug("");
       setCategoryEditingId(null);
       void queryClient.invalidateQueries({ queryKey: ["digital-product-admin"] });
-      patch("categoryId", category.id);
+      patch("categoryIds", [...new Set([...draft.categoryIds, category.id])]);
     },
     onError: (error: unknown) =>
       toast.error(error instanceof Error ? error.message : "Não foi possível criar a categoria."),
@@ -717,7 +722,7 @@ function AdminDigitalProducts() {
             <DigitalProductAdminCard
               key={product.id}
               product={product}
-              category={categories.find((item) => item.id === product.category_id)}
+              categories={categories}
               first={index === 0}
               last={index === orderedProducts.length - 1}
               onEdit={() => openEdit(product)}
@@ -795,19 +800,42 @@ function AdminDigitalProducts() {
                     /softwares/{draft.slug || "seu-software"}
                   </p>
                 </Field>
-                <Field label="Categoria">
-                  <select
-                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                    value={draft.categoryId}
-                    onChange={(event) => patch("categoryId", event.target.value)}
-                  >
-                    <option value="">Sem categoria</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
+                <Field label="Categorias">
+                  <div className="grid gap-2 rounded-md border border-input bg-background p-3 sm:grid-cols-2">
+                    {categories.length ? (
+                      categories.map((category) => (
+                        <label
+                          key={category.id}
+                          className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+                        >
+                          <input
+                            type="checkbox"
+                            className="size-4 accent-primary"
+                            checked={draft.categoryIds.includes(category.id)}
+                            onChange={(event) =>
+                              patch(
+                                "categoryIds",
+                                event.target.checked
+                                  ? [...new Set([...draft.categoryIds, category.id])]
+                                  : draft.categoryIds.filter((id) => id !== category.id),
+                              )
+                            }
+                          />
+                          <span>
+                            {category.name}
+                            {category.is_active ? "" : " (inativa)"}
+                          </span>
+                        </label>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Nenhuma categoria cadastrada. Você pode salvar sem categoria.
+                      </p>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Selecione todas as categorias que combinam com este software.
+                  </p>
                 </Field>
                 <Field label="Descrição curta">
                   <Input
@@ -1164,7 +1192,7 @@ function AdminDigitalProducts() {
 
 function DigitalProductAdminCard({
   product,
-  category,
+  categories,
   first,
   last,
   onEdit,
@@ -1174,7 +1202,7 @@ function DigitalProductAdminCard({
   onToggleFeatured,
 }: {
   product: ProductRow;
-  category: CategoryRow | undefined;
+  categories: CategoryRow[];
   first: boolean;
   last: boolean;
   onEdit: () => void;
@@ -1183,6 +1211,15 @@ function DigitalProductAdminCard({
   onToggleActive: (active: boolean) => void;
   onToggleFeatured: (featured: boolean) => void;
 }) {
+  const categoryNames = (
+    product.category_ids?.length
+      ? product.category_ids
+      : product.category_id
+        ? [product.category_id]
+        : []
+  )
+    .map((id) => categories.find((item) => item.id === id)?.name)
+    .filter((name): name is string => Boolean(name));
   return (
     <article className="surface flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
       <AssetThumb path={product.main_image_path} className="h-24 w-full shrink-0 sm:w-36" />
@@ -1201,7 +1238,7 @@ function DigitalProductAdminCard({
           {product.custom_type_label ||
             PRODUCT_TYPES.find(([value]) => value === product.product_type)?.[1] ||
             "Produto digital"}{" "}
-          · {category?.name || "Sem categoria"} · /softwares/{product.slug}
+          · {categoryNames.join(", ") || "Sem categoria"} · /softwares/{product.slug}
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-1 sm:justify-end">

@@ -46,7 +46,7 @@ const productSchema = z.object({
   name: z.string().trim().min(1).max(120),
   productType,
   customProductType: z.string().trim().max(80),
-  categoryId: z.string().uuid().nullable(),
+  categoryIds: z.array(z.string().uuid()).max(100),
   shortDescription: z.string().trim().max(240),
   description: z.string().trim().max(10000),
   mainImagePath: imagePath,
@@ -139,6 +139,9 @@ export type DigitalProductView = {
   category_id: string | null;
   category_name: string | null;
   category_slug: string | null;
+  category_ids: string[];
+  category_names: string[];
+  category_slugs: string[];
 };
 
 function publicImage(client: ReturnType<typeof createPublicClient>, path: string | null) {
@@ -151,7 +154,7 @@ function publicImage(client: ReturnType<typeof createPublicClient>, path: string
 
 function mapProduct(
   row: Record<string, unknown>,
-  category: Record<string, unknown> | null,
+  categories: Array<Record<string, unknown>>,
 ): Omit<
   DigitalProductView,
   | "main_image_url"
@@ -168,6 +171,15 @@ function mapProduct(
 } {
   const type = String(row["product_type"]);
   const customType = String(row["custom_type_label"] ?? "").trim();
+  const categoryIds =
+    ((row["category_ids"] as string[] | null) ?? []).length > 0
+      ? (row["category_ids"] as string[])
+      : row["category_id"]
+        ? [String(row["category_id"])]
+        : [];
+  const selectedCategories = categoryIds
+    .map((id) => categories.find((category) => category["id"] === id))
+    .filter((category): category is Record<string, unknown> => Boolean(category));
   return {
     id: String(row["id"]),
     slug: String(row["slug"]),
@@ -208,18 +220,21 @@ function mapProduct(
     open_new_tab: row["open_new_tab"] !== false,
     is_featured: Boolean(row["is_featured"]),
     sort_order: Number(row["sort_order"] ?? 0),
-    category_id: (row["category_id"] as string | null) ?? null,
-    category_name: (category?.["name"] as string | null) ?? null,
-    category_slug: (category?.["slug"] as string | null) ?? null,
+    category_id: categoryIds[0] ?? null,
+    category_name: (selectedCategories[0]?.["name"] as string | undefined) ?? null,
+    category_slug: (selectedCategories[0]?.["slug"] as string | undefined) ?? null,
+    category_ids: categoryIds,
+    category_names: selectedCategories.map((category) => String(category["name"])),
+    category_slugs: selectedCategories.map((category) => String(category["slug"])),
   };
 }
 
 async function toPublicProduct(
   client: ReturnType<typeof createPublicClient>,
   row: Record<string, unknown>,
-  category: Record<string, unknown> | null,
+  categories: Array<Record<string, unknown>>,
 ): Promise<DigitalProductView> {
-  const product = mapProduct(row, category);
+  const product = mapProduct(row, categories);
   const [main, logo, banner, share, ...gallery] = [
     publicImage(client, product.main_image_path),
     publicImage(client, product.logo_image_path),
@@ -243,23 +258,37 @@ export const listPublicDigitalProducts = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const client = createPublicClient();
-    const { data: rows, error } = await client
-      .from("digital_products")
-      .select("*, digital_product_categories(name, slug)")
-      .eq("is_active", true)
-      .order("is_featured", { ascending: false })
-      .order("sort_order", { ascending: true })
-      .order("name", { ascending: true });
-    if (error) throw new Error("Não foi possível carregar os produtos digitais.");
-    const visibleRows = (rows ?? []).filter(
-      (row) => !data.categorySlug || row.digital_product_categories?.slug === data.categorySlug,
-    );
+    const [{ data: rows, error }, { data: categories, error: categoryError }] = await Promise.all([
+      client
+        .from("digital_products")
+        .select("*")
+        .eq("is_active", true)
+        .order("is_featured", { ascending: false })
+        .order("sort_order", { ascending: true })
+        .order("name", { ascending: true }),
+      client.from("digital_product_categories").select("id, name, slug").eq("is_active", true),
+    ]);
+    if (error || categoryError) throw new Error("Não foi possível carregar os produtos digitais.");
+    const visibleRows = (rows ?? []).filter((row) => {
+      if (!data.categorySlug) return true;
+      const categoryIds =
+        ((row.category_ids as string[] | null) ?? []).length > 0
+          ? (row.category_ids as string[])
+          : row.category_id
+            ? [row.category_id]
+            : [];
+      return categoryIds.some((id) =>
+        (categories ?? []).some(
+          (category) => category.id === id && category.slug === data.categorySlug,
+        ),
+      );
+    });
     return Promise.all(
       visibleRows.map((row) =>
         toPublicProduct(
           client,
           row as unknown as Record<string, unknown>,
-          row.digital_product_categories as unknown as Record<string, unknown> | null,
+          (categories ?? []) as unknown as Array<Record<string, unknown>>,
         ),
       ),
     );
@@ -269,17 +298,20 @@ export const getPublicDigitalProduct = createServerFn({ method: "GET" })
   .validator((data: unknown) => z.object({ slug: z.string().min(1).max(100) }).parse(data))
   .handler(async ({ data }) => {
     const client = createPublicClient();
-    const { data: row, error } = await client
-      .from("digital_products")
-      .select("*, digital_product_categories(name, slug)")
-      .eq("slug", data.slug)
-      .eq("is_active", true)
-      .maybeSingle();
-    if (error || !row) return null;
+    const [{ data: row, error }, { data: categories, error: categoryError }] = await Promise.all([
+      client
+        .from("digital_products")
+        .select("*")
+        .eq("slug", data.slug)
+        .eq("is_active", true)
+        .maybeSingle(),
+      client.from("digital_product_categories").select("id, name, slug").eq("is_active", true),
+    ]);
+    if (error || categoryError || !row) return null;
     return toPublicProduct(
       client,
       row as unknown as Record<string, unknown>,
-      row.digital_product_categories as unknown as Record<string, unknown> | null,
+      (categories ?? []) as unknown as Array<Record<string, unknown>>,
     );
   });
 
@@ -325,7 +357,8 @@ export const saveDigitalProduct = createServerFn({ method: "POST" })
       name: data.name,
       product_type: data.productType,
       custom_type_label: data.productType === "other" ? data.customProductType || null : null,
-      category_id: data.categoryId,
+      category_ids: data.categoryIds,
+      category_id: data.categoryIds[0] ?? null,
       short_description: data.shortDescription,
       description: data.description,
       main_image_path: data.mainImagePath,

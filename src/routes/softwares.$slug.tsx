@@ -197,11 +197,14 @@ function ProductPresentation({ product }: { product: DigitalProductView }) {
                   <Rocket className="size-7" />
                 </span>
               )}
-              {product.category_name ? (
-                <Badge className="border-white/20 bg-white/10 text-white hover:bg-white/10">
-                  {product.category_name}
+              {product.category_names.map((categoryName) => (
+                <Badge
+                  key={categoryName}
+                  className="border-white/20 bg-white/10 text-white hover:bg-white/10"
+                >
+                  {categoryName}
                 </Badge>
-              ) : null}
+              ))}
               <Badge className="border-white/20 bg-white/10 text-white hover:bg-white/10">
                 {product.product_type_label}
               </Badge>

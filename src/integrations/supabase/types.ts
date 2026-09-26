@@ -412,6 +412,7 @@ export type Database = {
           logo_image_path: string | null
           main_image_path: string | null
           name: string
+          category_ids: string[]
           open_new_tab: boolean
           plans: Json
           primary_color: string
@@ -458,6 +459,7 @@ export type Database = {
           logo_image_path?: string | null
           main_image_path?: string | null
           name: string
+          category_ids?: string[]
           open_new_tab?: boolean
           plans?: Json
           primary_color?: string
@@ -504,6 +506,7 @@ export type Database = {
           logo_image_path?: string | null
           main_image_path?: string | null
           name?: string
+          category_ids?: string[]
           open_new_tab?: boolean
           plans?: Json
           primary_color?: string
