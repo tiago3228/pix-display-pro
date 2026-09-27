@@ -1534,9 +1534,11 @@ export type Database = {
           price: number
           shoe_authenticity: string
           shoe_brand_id: string | null
+          shoe_brand_manual: string | null
           shoe_color: string | null
           shoe_gender: string | null
           shoe_model_id: string | null
+          shoe_model_manual: string | null
           shoe_size: string | null
           sku: string | null
           sports_audience: string | null
@@ -1596,9 +1598,11 @@ export type Database = {
           price?: number
           shoe_authenticity?: string
           shoe_brand_id?: string | null
+          shoe_brand_manual?: string | null
           shoe_color?: string | null
           shoe_gender?: string | null
           shoe_model_id?: string | null
+          shoe_model_manual?: string | null
           shoe_size?: string | null
           sku?: string | null
           sports_audience?: string | null
@@ -1658,9 +1662,11 @@ export type Database = {
           price?: number
           shoe_authenticity?: string
           shoe_brand_id?: string | null
+          shoe_brand_manual?: string | null
           shoe_color?: string | null
           shoe_gender?: string | null
           shoe_model_id?: string | null
+          shoe_model_manual?: string | null
           shoe_size?: string | null
           sku?: string | null
           sports_audience?: string | null
