@@ -1,7 +1,9 @@
 // Um único service worker controla o escopo "/": os handlers de Push vêm de /push-sw.js.
 importScripts("/push-sw.js");
 
-const CACHE_VERSION = "vitrini-shell-v2";
+// Incrementar esta versão invalida apenas o shell estático antigo no próximo
+// activate; dados de sessão, Supabase e APIs nunca entram neste cache.
+const CACHE_VERSION = "vitrini-shell-v3";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const APP_SHELL = [
   "/",
@@ -72,7 +74,9 @@ self.addEventListener("fetch", (event) => {
       caches.match(request).then((cached) => {
         const refresh = fetch(request)
           .then((response) => {
-            if (response.ok) {
+            // Só armazena respostas públicas e completas. Respostas opacas,
+            // redirecionamentos ou falhas não podem contaminar o cache do app.
+            if (response.ok && response.type === "basic") {
               const copy = response.clone();
               void caches.open(STATIC_CACHE).then((cache) => cache.put(request, copy));
             }
