@@ -17,6 +17,11 @@ export default defineConfig({
     // which left the browser with two React copies (blank screen).
     optimizeDeps: {
       include: [
+        "react",
+        "react-dom",
+        "react-dom/client",
+        "react/jsx-runtime",
+        "react/jsx-dev-runtime",
         "@tanstack/history",
         "@tanstack/router-core",
         "@tanstack/router-core/isServer",
