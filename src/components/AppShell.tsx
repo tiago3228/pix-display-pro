@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
   CreditCard,
+  Download,
   HelpCircle,
   LayoutDashboard,
   LogOut,
@@ -40,6 +41,7 @@ import { BackButton } from "@/components/BackButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { isAppInstalled, openInstallPrompt } from "@/lib/install-app";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", short: "Início", icon: LayoutDashboard, featured: false },
@@ -105,7 +107,9 @@ async function getPushRegistration(): Promise<ServiceWorkerRegistration> {
   const stale = await navigator.serviceWorker.getRegistrations();
   await Promise.all(
     stale
-      .filter((r) => [r.active, r.waiting, r.installing].some((w) => w?.scriptURL.endsWith("/push-sw.js")))
+      .filter((r) =>
+        [r.active, r.waiting, r.installing].some((w) => w?.scriptURL.endsWith("/push-sw.js")),
+      )
       .map((r) => r.unregister()),
   );
   const registered = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
@@ -147,6 +151,7 @@ export function AppShell({
   const { data: store, isLoading: storeLoading } = useMyStore();
   const { price: proPrice } = useProPricing();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [appInstalled, setAppInstalled] = useState(false);
   const sidebarAreaRef = useRef<HTMLDivElement | null>(null);
   const [canScrollSidebarUp, setCanScrollSidebarUp] = useState(false);
   const [canScrollSidebarDown, setCanScrollSidebarDown] = useState(false);
@@ -158,6 +163,12 @@ export function AppShell({
     "default",
   );
   const [ordersAcknowledgedAt, setOrdersAcknowledgedAt] = useState(0);
+  useEffect(() => {
+    const updateInstallState = () => setAppInstalled(isAppInstalled());
+    updateInstallState();
+    window.addEventListener("appinstalled", updateInstallState);
+    return () => window.removeEventListener("appinstalled", updateInstallState);
+  }, []);
   const ordersAlertKey = store?.id ? `vitrini:orders-alert:${store.id}` : null;
   const { data: alertOrders = [] } = useQuery({
     queryKey: ["orders-alert", store?.id],
@@ -181,7 +192,9 @@ export function AppShell({
 
     const updateScrollButtons = () => {
       setCanScrollSidebarUp(viewport.scrollTop > 2);
-      setCanScrollSidebarDown(viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 2);
+      setCanScrollSidebarDown(
+        viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop > 2,
+      );
     };
 
     updateScrollButtons();
@@ -259,7 +272,11 @@ export function AppShell({
     setPushBusy(true);
     let step = "início";
     try {
-      if (!window.isSecureContext || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      if (
+        !window.isSecureContext ||
+        !("serviceWorker" in navigator) ||
+        !("PushManager" in window)
+      ) {
         throw new Error("Este navegador ou endereço não oferece suporte a notificações Push.");
       }
       const isIos =
@@ -403,28 +420,28 @@ export function AppShell({
               ))}
               {isAdmin ? (
                 <>
-                <Link
-                  to="/admin"
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
-                    pathname === "/admin"
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-muted-foreground hover:bg-sidebar-accent/60",
-                  )}
-                >
-                  <ShieldCheck className="size-4" /> Administração
-                </Link>
-                <Link
-                  to="/admin/softwares"
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
-                    pathname.startsWith("/admin/softwares")
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-muted-foreground hover:bg-sidebar-accent/60",
-                  )}
-                >
-                  <Rocket className="size-4" /> Meus Softwares
-                </Link>
+                  <Link
+                    to="/admin"
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
+                      pathname === "/admin"
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-muted-foreground hover:bg-sidebar-accent/60",
+                    )}
+                  >
+                    <ShieldCheck className="size-4" /> Administração
+                  </Link>
+                  <Link
+                    to="/admin/softwares"
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
+                      pathname.startsWith("/admin/softwares")
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                        : "text-muted-foreground hover:bg-sidebar-accent/60",
+                    )}
+                  >
+                    <Rocket className="size-4" /> Meus Softwares
+                  </Link>
                 </>
               ) : null}
             </nav>
@@ -464,6 +481,15 @@ export function AppShell({
             <Sparkles className="size-4" /> Assinar PRO — {brl(proPrice)}
           </Link>
         ) : null}
+        <Button
+          variant="ghost"
+          className="mb-1 justify-start"
+          onClick={openInstallPrompt}
+          disabled={appInstalled}
+        >
+          <Download className="mr-2 size-4" />
+          {appInstalled ? "Aplicativo já instalado" : "Instalar aplicativo"}
+        </Button>
         <Button variant="ghost" className="justify-start" onClick={signOut}>
           <LogOut className="mr-2 size-4" /> Sair
         </Button>
@@ -503,10 +529,7 @@ export function AppShell({
                 <Button
                   variant={hasOpenOrders ? "destructive" : "ghost"}
                   size="icon"
-                  className={cn(
-                    "relative shrink-0",
-                    hasUnacknowledgedOrders && "animate-pulse",
-                  )}
+                  className={cn("relative shrink-0", hasUnacknowledgedOrders && "animate-pulse")}
                   aria-label={hasOpenOrders ? "Ver pedidos pendentes" : "Ver pedidos"}
                   title={hasOpenOrders ? "Há pedidos pendentes" : "Pedidos"}
                   onClick={acknowledgeOrders}
@@ -587,72 +610,84 @@ export function AppShell({
               </SheetHeader>
               <ScrollArea type="always" className="h-[65vh] w-full shrink-0">
                 <div className="grid gap-1 px-4 pb-6 pr-4">
-                <div className="mb-2 flex items-center justify-between rounded-lg border border-border px-3 py-2">
-                  <span className="text-sm font-medium">Aparência</span>
-                  <ThemeToggle compact />
-                </div>
-                {store && store.plan !== "pro" ? (
-                  <Link
-                    to="/assinatura"
-                    onClick={() => setMoreOpen(false)}
-                    className="mb-1 flex items-center gap-3 rounded-lg bg-primary px-3 py-3 text-sm font-semibold text-primary-foreground"
+                  <div className="mb-2 flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                    <span className="text-sm font-medium">Aparência</span>
+                    <ThemeToggle compact />
+                  </div>
+                  {store && store.plan !== "pro" ? (
+                    <Link
+                      to="/assinatura"
+                      onClick={() => setMoreOpen(false)}
+                      className="mb-1 flex items-center gap-3 rounded-lg bg-primary px-3 py-3 text-sm font-semibold text-primary-foreground"
+                    >
+                      <Sparkles className="size-4" /> Assinar PRO — {brl(proPrice)}/mês
+                    </Link>
+                  ) : null}
+                  {MOBILE_MORE.map((item) => (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      onClick={() => setMoreOpen(false)}
+                      className={cn(
+                        "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition",
+                        pathname === item.to
+                          ? item.featured
+                            ? "bg-amber-500 text-amber-950"
+                            : "bg-accent text-accent-foreground"
+                          : item.featured
+                            ? "bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 dark:text-amber-300"
+                            : "text-muted-foreground hover:bg-accent/60",
+                      )}
+                    >
+                      <item.icon className="size-4" />
+                      {item.label}
+                    </Link>
+                  ))}
+                  {isAdmin ? (
+                    <>
+                      <Link
+                        to="/admin"
+                        onClick={() => setMoreOpen(false)}
+                        className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground transition hover:bg-accent/60"
+                      >
+                        <ShieldCheck className="size-4" /> Administração
+                      </Link>
+                      <Link
+                        to="/admin/softwares"
+                        onClick={() => setMoreOpen(false)}
+                        className={cn(
+                          "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition",
+                          pathname.startsWith("/admin/softwares")
+                            ? "bg-accent text-accent-foreground"
+                            : "text-muted-foreground hover:bg-accent/60",
+                        )}
+                      >
+                        <Rocket className="size-4" /> Meus Softwares
+                      </Link>
+                    </>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMoreOpen(false);
+                      if (!appInstalled) openInstallPrompt();
+                    }}
+                    disabled={appInstalled}
+                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium text-muted-foreground transition hover:bg-accent/60 disabled:cursor-default disabled:opacity-70"
                   >
-                    <Sparkles className="size-4" /> Assinar PRO — {brl(proPrice)}/mês
-                  </Link>
-                ) : null}
-                {MOBILE_MORE.map((item) => (
-                  <Link
-                    key={item.to}
-                    to={item.to}
-                    onClick={() => setMoreOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition",
-                      pathname === item.to
-                        ? item.featured
-                          ? "bg-amber-500 text-amber-950"
-                          : "bg-accent text-accent-foreground"
-                        : item.featured
-                          ? "bg-amber-500/15 text-amber-700 hover:bg-amber-500/25 dark:text-amber-300"
-                          : "text-muted-foreground hover:bg-accent/60",
-                    )}
+                    <Download className="size-4" />
+                    {appInstalled ? "Aplicativo já instalado" : "Instalar aplicativo"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMoreOpen(false);
+                      void signOut();
+                    }}
+                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium text-muted-foreground transition hover:bg-accent/60"
                   >
-                    <item.icon className="size-4" />
-                    {item.label}
-                  </Link>
-                ))}
-                {isAdmin ? (
-                  <>
-                  <Link
-                    to="/admin"
-                    onClick={() => setMoreOpen(false)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground transition hover:bg-accent/60"
-                  >
-                    <ShieldCheck className="size-4" /> Administração
-                  </Link>
-                  <Link
-                    to="/admin/softwares"
-                    onClick={() => setMoreOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition",
-                      pathname.startsWith("/admin/softwares")
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground hover:bg-accent/60",
-                    )}
-                  >
-                    <Rocket className="size-4" /> Meus Softwares
-                  </Link>
-                  </>
-                ) : null}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMoreOpen(false);
-                    void signOut();
-                  }}
-                  className="flex items-center gap-3 rounded-lg px-3 py-3 text-left text-sm font-medium text-muted-foreground transition hover:bg-accent/60"
-                >
-                  <LogOut className="size-4" /> Sair
-                </button>
+                    <LogOut className="size-4" /> Sair
+                  </button>
                 </div>
               </ScrollArea>
             </SheetContent>

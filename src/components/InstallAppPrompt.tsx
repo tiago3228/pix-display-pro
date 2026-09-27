@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Download, Share, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { isAppInstalled, OPEN_INSTALL_EVENT } from "@/lib/install-app";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -11,9 +12,7 @@ const DISMISS_KEY = "vitrini:install-dismissed-at";
 const DISMISS_DAYS = 14;
 
 function isStandalone() {
-  if (typeof window === "undefined") return false;
-  const iosStandalone = (window.navigator as unknown as { standalone?: boolean }).standalone;
-  return window.matchMedia("(display-mode: standalone)").matches || iosStandalone === true;
+  return isAppInstalled();
 }
 
 function isIos() {
@@ -40,11 +39,14 @@ export function InstallAppPrompt() {
   const [iosHelp, setIosHelp] = useState(false);
 
   useEffect(() => {
-    if (isStandalone() || recentlyDismissed()) return;
-
     function onPrompt(event: Event) {
       event.preventDefault();
       setDeferred(event as BeforeInstallPromptEvent);
+      setVisible(true);
+    }
+    function onOpenInstall() {
+      if (isStandalone()) return;
+      setIosHelp(isIos());
       setVisible(true);
     }
     function onInstalled() {
@@ -53,16 +55,18 @@ export function InstallAppPrompt() {
     }
 
     window.addEventListener("beforeinstallprompt", onPrompt);
+    window.addEventListener(OPEN_INSTALL_EVENT, onOpenInstall);
     window.addEventListener("appinstalled", onInstalled);
 
     let timer: ReturnType<typeof setTimeout> | undefined;
-    if (isIos()) {
+    if (!isStandalone() && !recentlyDismissed() && isIos()) {
       setIosHelp(true);
       timer = setTimeout(() => setVisible(true), 2500);
     }
 
     return () => {
       window.removeEventListener("beforeinstallprompt", onPrompt);
+      window.removeEventListener(OPEN_INSTALL_EVENT, onOpenInstall);
       window.removeEventListener("appinstalled", onInstalled);
       if (timer) clearTimeout(timer);
     };
