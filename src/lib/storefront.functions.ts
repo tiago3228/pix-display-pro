@@ -18,7 +18,14 @@ export type StorefrontVariant = {
 
 export type StorefrontProduct = {
   id: string;
-  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria" | "marmitaria" | "joias";
+  module:
+    | "roupas"
+    | "roupas_esportivas"
+    | "roupas_treino"
+    | "calcados"
+    | "cafeteria"
+    | "marmitaria"
+    | "joias";
   mealPeriod: "lunch" | "dinner" | "both";
   deliveryEnabled: boolean;
   name: string;
@@ -53,6 +60,8 @@ export type StorefrontProduct = {
   sportsOfferPrice: number | null;
   sportsOfferPercent: number | null;
   sportsCollectionNames: string[];
+  shoeBrand: string | null;
+  shoeModel: string | null;
   jewelryMaterial: string | null;
   jewelryPlating: string | null;
   jewelryColor: string | null;
@@ -139,7 +148,14 @@ export type Storefront = {
 
 type StorefrontProductDbRow = {
   id: string;
-  module: "roupas" | "roupas_esportivas" | "roupas_treino" | "calcados" | "cafeteria" | "marmitaria" | "joias";
+  module:
+    | "roupas"
+    | "roupas_esportivas"
+    | "roupas_treino"
+    | "calcados"
+    | "cafeteria"
+    | "marmitaria"
+    | "joias";
   name: string;
   description: string;
   price: number | string;
@@ -171,6 +187,8 @@ type StorefrontProductDbRow = {
   sports_offer_percent: number | null;
   shoe_brand_id: string | null;
   shoe_model_id: string | null;
+  shoe_brands?: { name: string } | null;
+  shoe_models?: { name: string } | null;
   shoe_authenticity: "original" | "replica";
   shoe_gender: string | null;
   shoe_size: string | null;
@@ -216,7 +234,11 @@ function inferLegacyJewelryCategoryId(
   const targetCategory = jewelryCategory
     ? categories.find((category) => normalizeCategoryText(category.name).includes(jewelryCategory))
     : categories.find((category) => normalizeCategoryText(category.name) === "geral");
-  return targetCategory?.id ?? categories.find((category) => normalizeCategoryText(category.name) === "geral")?.id ?? null;
+  return (
+    targetCategory?.id ??
+    categories.find((category) => normalizeCategoryText(category.name) === "geral")?.id ??
+    null
+  );
 }
 
 export const getStorefront = createServerFn({ method: "GET" })
@@ -241,7 +263,7 @@ export const getStorefront = createServerFn({ method: "GET" })
       supabase
         .from("products")
         .select(
-          "id, module, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, meal_period, delivery_enabled, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at",
+          "id, module, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, meal_period, delivery_enabled, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, shoe_brand_id, shoe_model_id, shoe_brands(name), shoe_models(name), shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at",
         )
         .eq("store_id", store.id)
         .or(
@@ -257,16 +279,15 @@ export const getStorefront = createServerFn({ method: "GET" })
     const legacyJewelryCategoryIds = new Map<string, string | null>();
     const storefrontProducts = products.filter((product) => {
       if (product.module === activeModule) return true;
-      if (
-        activeModule !== "joias" ||
-        product.module !== "roupas" ||
-        product.category_id !== null
-      ) {
+      if (activeModule !== "joias" || product.module !== "roupas" || product.category_id !== null) {
         return false;
       }
       legacyJewelryCategoryIds.set(
         product.id,
-        inferLegacyJewelryCategoryId(product.name, (categories ?? []).map(({ id, name }) => ({ id, name }))),
+        inferLegacyJewelryCategoryId(
+          product.name,
+          (categories ?? []).map(({ id, name }) => ({ id, name })),
+        ),
       );
       return true;
     });
@@ -294,10 +315,7 @@ export const getStorefront = createServerFn({ method: "GET" })
       ) ??
       neutralCategories.find((category) => category.module === activeModule) ??
       neutralCategories[0];
-    const visibleCategories = [
-      ...activeCategories,
-      ...(defaultNeutral ? [defaultNeutral] : []),
-    ];
+    const visibleCategories = [...activeCategories, ...(defaultNeutral ? [defaultNeutral] : [])];
     const { data: promoBanner } = await supabase
       .from("storefront_banners")
       .select("title, subtitle, cta_label, cta_href, image_url")
@@ -454,7 +472,12 @@ export const getStorefront = createServerFn({ method: "GET" })
         min_installment_amount: Number(store.min_installment_amount),
       },
       categories: visibleCategories.map((c) => {
-        const category = c as unknown as { id: string; name: string; module?: string; image_url?: string | null };
+        const category = c as unknown as {
+          id: string;
+          name: string;
+          module?: string;
+          image_url?: string | null;
+        };
         return {
           id: category.id,
           name: category.name,
@@ -463,19 +486,20 @@ export const getStorefront = createServerFn({ method: "GET" })
         };
       }),
       sports: {
-        settings: activeModule === "roupas_esportivas" && sportsSettings
-          ? {
-              name: sportsSettings.name,
-              description: sportsSettings.description,
-              primary_node_id: sportsSettings.primary_node_id,
-              logo_url: resolve(sportsSettings.logo_url),
-              banner_url: resolve(sportsSettings.banner_url),
-              primary_color: sportsSettings.primary_color,
-              secondary_color: sportsSettings.secondary_color,
-              background_color: sportsSettings.background_color,
-              text_color: sportsSettings.text_color,
-            }
-          : null,
+        settings:
+          activeModule === "roupas_esportivas" && sportsSettings
+            ? {
+                name: sportsSettings.name,
+                description: sportsSettings.description,
+                primary_node_id: sportsSettings.primary_node_id,
+                logo_url: resolve(sportsSettings.logo_url),
+                banner_url: resolve(sportsSettings.banner_url),
+                primary_color: sportsSettings.primary_color,
+                secondary_color: sportsSettings.secondary_color,
+                background_color: sportsSettings.background_color,
+                text_color: sportsSettings.text_color,
+              }
+            : null,
         nodes:
           activeModule === "roupas_esportivas"
             ? ((sportsNodes ?? []) as StorefrontSportsNode[])
@@ -489,96 +513,100 @@ export const getStorefront = createServerFn({ method: "GET" })
         // Produtos legados sem categoria herdaram o módulo roupas por padrão.
         const legacyJewelryCategoryId = legacyJewelryCategoryIds.get(p.id);
         return {
-        id: p.id,
-        module: legacyJewelryCategoryIds.has(p.id) ? "joias" : (p.module ?? activeModule),
-        name: p.name,
-        description: p.description,
-        price: Number(p.price),
-        image: resolve(p.image_url),
-        images: (() => {
-          const list = (gallery ?? [])
-            .filter((g) => g.product_id === p.id)
-            .map((g) => resolve(g.image_url))
-            .filter((u): u is string => Boolean(u));
-          const main = resolve(p.image_url);
-          if (main && !list.includes(main)) list.unshift(main);
-          return list;
-        })(),
-        stock: p.stock,
-        track_stock: p.track_stock,
-        is_available: p.is_available,
-        is_featured: p.is_featured,
-        has_variants: p.has_variants,
-        category_id: legacyJewelryCategoryId ?? p.category_id,
-        mealPeriod: p.meal_period ?? "both",
-        deliveryEnabled: Boolean(p.delivery_enabled),
-        options: (options ?? [])
-          .filter((o) => o.product_id === p.id)
-          .map((o) => ({
-            id: o.id,
-            name: o.name,
-            values: (o.product_option_values ?? [])
-              .slice()
-              .sort((a, b) => a.position - b.position)
-              .map((v) => v.value),
-          })),
-        variants: (variants ?? [])
-          .filter((v) => v.product_id === p.id)
-          .map((v) => ({
-            id: v.id,
-            label: v.label,
-            price: v.price === null ? null : Number(v.price),
-            stock: v.stock,
-            is_available: v.is_available,
-            sku: v.sku ?? null,
-            image: resolve(v.image_url),
-          })),
-        orderEnabled: Boolean(p.order_enabled),
-        orderUnitPrice: p.order_unit_price === null ? null : Number(p.order_unit_price),
-        orderMinQuantity: Number(p.order_min_quantity ?? 1),
-        orderMaxQuantity: p.order_max_quantity === null ? null : Number(p.order_max_quantity),
-        orderLeadTime: p.order_lead_time ?? null,
-        orderNotes: p.order_notes ?? null,
-        orderProgressivePricing: Boolean(p.order_progressive_pricing),
-        orderTiers: (orderTiers ?? [])
-          .filter((tier) => tier.product_id === p.id)
-          .map((tier) => ({
-            minQuantity: Number(tier.min_quantity),
-            unitPrice: Number(tier.unit_price),
-          })),
-        sportsNodeIds: (productSports ?? [])
-          .filter((link: { product_id: string }) => link.product_id === p.id)
-          .map((link: { node_id: string }) => link.node_id),
-        sportsProductType: p.sports_product_type ?? null,
-        sportsAudience: p.sports_audience ?? null,
-        sportsIsRetro: Boolean(p.sports_is_retro),
-        sportsIsNewRelease: Boolean(p.sports_is_new_release),
-        sportsIsCustomized: Boolean(p.sports_is_customized),
-        sportsOfferActive: Boolean(p.sports_offer_active),
-        sportsOriginalPrice:
-          p.sports_original_price === null ? null : Number(p.sports_original_price),
-        sportsOfferPrice: p.sports_offer_price === null ? null : Number(p.sports_offer_price),
-        sportsOfferPercent: p.sports_offer_percent === null ? null : Number(p.sports_offer_percent),
-        sportsCollectionNames: (collectionProducts ?? [])
-          .filter((link: { product_id: string }) => link.product_id === p.id)
-          .map(
-            (link: { collection_id: string }) =>
-              (sportsCollections ?? []).find(
-                (collection: { id: string; name: string }) => collection.id === link.collection_id,
-              )?.name,
-          )
-          .filter((name: string | undefined): name is string => Boolean(name)),
-        jewelryMaterial: p.jewelry_material ?? null,
-        jewelryPlating: p.jewelry_plating ?? null,
-        jewelryColor: p.jewelry_color ?? null,
-        jewelryStone: p.jewelry_stone ?? null,
-        jewelryIsNewRelease: Boolean(p.jewelry_is_new_release),
-        jewelryOfferActive: Boolean(p.jewelry_offer_active),
-        jewelryOriginalPrice:
-          p.jewelry_original_price == null ? null : Number(p.jewelry_original_price),
-        jewelryOfferPrice: p.jewelry_offer_price == null ? null : Number(p.jewelry_offer_price),
-        jewelryOfferPercent: p.jewelry_offer_percent ?? null,
-        jewelryOfferExpiresAt: p.jewelry_offer_expires_at ?? null,
+          id: p.id,
+          module: legacyJewelryCategoryIds.has(p.id) ? "joias" : (p.module ?? activeModule),
+          name: p.name,
+          description: p.description,
+          price: Number(p.price),
+          image: resolve(p.image_url),
+          images: (() => {
+            const list = (gallery ?? [])
+              .filter((g) => g.product_id === p.id)
+              .map((g) => resolve(g.image_url))
+              .filter((u): u is string => Boolean(u));
+            const main = resolve(p.image_url);
+            if (main && !list.includes(main)) list.unshift(main);
+            return list;
+          })(),
+          stock: p.stock,
+          track_stock: p.track_stock,
+          is_available: p.is_available,
+          is_featured: p.is_featured,
+          has_variants: p.has_variants,
+          category_id: legacyJewelryCategoryId ?? p.category_id,
+          mealPeriod: p.meal_period ?? "both",
+          deliveryEnabled: Boolean(p.delivery_enabled),
+          options: (options ?? [])
+            .filter((o) => o.product_id === p.id)
+            .map((o) => ({
+              id: o.id,
+              name: o.name,
+              values: (o.product_option_values ?? [])
+                .slice()
+                .sort((a, b) => a.position - b.position)
+                .map((v) => v.value),
+            })),
+          variants: (variants ?? [])
+            .filter((v) => v.product_id === p.id)
+            .map((v) => ({
+              id: v.id,
+              label: v.label,
+              price: v.price === null ? null : Number(v.price),
+              stock: v.stock,
+              is_available: v.is_available,
+              sku: v.sku ?? null,
+              image: resolve(v.image_url),
+            })),
+          orderEnabled: Boolean(p.order_enabled),
+          orderUnitPrice: p.order_unit_price === null ? null : Number(p.order_unit_price),
+          orderMinQuantity: Number(p.order_min_quantity ?? 1),
+          orderMaxQuantity: p.order_max_quantity === null ? null : Number(p.order_max_quantity),
+          orderLeadTime: p.order_lead_time ?? null,
+          orderNotes: p.order_notes ?? null,
+          orderProgressivePricing: Boolean(p.order_progressive_pricing),
+          orderTiers: (orderTiers ?? [])
+            .filter((tier) => tier.product_id === p.id)
+            .map((tier) => ({
+              minQuantity: Number(tier.min_quantity),
+              unitPrice: Number(tier.unit_price),
+            })),
+          sportsNodeIds: (productSports ?? [])
+            .filter((link: { product_id: string }) => link.product_id === p.id)
+            .map((link: { node_id: string }) => link.node_id),
+          sportsProductType: p.sports_product_type ?? null,
+          sportsAudience: p.sports_audience ?? null,
+          sportsIsRetro: Boolean(p.sports_is_retro),
+          sportsIsNewRelease: Boolean(p.sports_is_new_release),
+          sportsIsCustomized: Boolean(p.sports_is_customized),
+          sportsOfferActive: Boolean(p.sports_offer_active),
+          sportsOriginalPrice:
+            p.sports_original_price === null ? null : Number(p.sports_original_price),
+          sportsOfferPrice: p.sports_offer_price === null ? null : Number(p.sports_offer_price),
+          sportsOfferPercent:
+            p.sports_offer_percent === null ? null : Number(p.sports_offer_percent),
+          shoeBrand: p.shoe_brands?.name ?? null,
+          shoeModel: p.shoe_models?.name ?? null,
+          sportsCollectionNames: (collectionProducts ?? [])
+            .filter((link: { product_id: string }) => link.product_id === p.id)
+            .map(
+              (link: { collection_id: string }) =>
+                (sportsCollections ?? []).find(
+                  (collection: { id: string; name: string }) =>
+                    collection.id === link.collection_id,
+                )?.name,
+            )
+            .filter((name: string | undefined): name is string => Boolean(name)),
+          jewelryMaterial: p.jewelry_material ?? null,
+          jewelryPlating: p.jewelry_plating ?? null,
+          jewelryColor: p.jewelry_color ?? null,
+          jewelryStone: p.jewelry_stone ?? null,
+          jewelryIsNewRelease: Boolean(p.jewelry_is_new_release),
+          jewelryOfferActive: Boolean(p.jewelry_offer_active),
+          jewelryOriginalPrice:
+            p.jewelry_original_price == null ? null : Number(p.jewelry_original_price),
+          jewelryOfferPrice: p.jewelry_offer_price == null ? null : Number(p.jewelry_offer_price),
+          jewelryOfferPercent: p.jewelry_offer_percent ?? null,
+          jewelryOfferExpiresAt: p.jewelry_offer_expires_at ?? null,
         };
       }),
     };
@@ -589,7 +617,18 @@ const orderSchema = z.object({
   customerName: z.string().max(120).optional().default(""),
   customerWhatsapp: z.string().max(30).optional().default(""),
   note: z.string().max(500).optional().default(""),
-  deliveryAddress: z.object({ cep: z.string().max(9), address: z.string().max(160), number: z.string().max(20), complement: z.string().max(100).optional().default(""), neighborhood: z.string().max(100), city: z.string().max(100), state: z.string().max(2) }).nullable().optional(),
+  deliveryAddress: z
+    .object({
+      cep: z.string().max(9),
+      address: z.string().max(160),
+      number: z.string().max(20),
+      complement: z.string().max(100).optional().default(""),
+      neighborhood: z.string().max(100),
+      city: z.string().max(100),
+      state: z.string().max(2),
+    })
+    .nullable()
+    .optional(),
   paymentDeclared: z.boolean().default(false),
   paymentMethod: z.enum(["pix_avista", "parcelado"]).default("pix_avista"),
   installments: z.number().int().min(1).max(12).default(1),
@@ -626,7 +665,9 @@ export const submitOrder = createServerFn({ method: "POST" })
       .eq("id", data.storeId)
       .maybeSingle();
     if (!store || !store.is_active) throw new Error("Loja indisponível");
-    const hasProAccess = store.plan === "pro" || Boolean(store.pro_trial_ends_at && new Date(store.pro_trial_ends_at).getTime() > Date.now());
+    const hasProAccess =
+      store.plan === "pro" ||
+      Boolean(store.pro_trial_ends_at && new Date(store.pro_trial_ends_at).getTime() > Date.now());
     const normalizedCustomerWhatsapp = data.customerWhatsapp
       ? normalizePhone(data.customerWhatsapp, store.default_ddd ?? "31").replace(/^55/, "")
       : "";
@@ -668,10 +709,9 @@ export const submitOrder = createServerFn({ method: "POST" })
         throw new Error(`Selecione uma variação para "${product.name}".`);
       if (variant && !variant.is_available)
         throw new Error(`A variação "${variant.label}" está indisponível.`);
-      const jewelryOfferCurrent = isJewelryOfferCurrent(
-        product.jewelry_offer_active,
-        product.jewelry_offer_expires_at,
-      ) && product.jewelry_offer_price !== null;
+      const jewelryOfferCurrent =
+        isJewelryOfferCurrent(product.jewelry_offer_active, product.jewelry_offer_expires_at) &&
+        product.jewelry_offer_price !== null;
       const productPrice = jewelryOfferCurrent
         ? product.jewelry_offer_price!
         : product.sports_offer_active && product.sports_offer_price !== null
