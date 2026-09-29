@@ -5,7 +5,7 @@
  * - O Access Token NUNCA sai daqui (nunca é retornado, logado ou enviado ao frontend).
  * - Produção é usada quando MERCADOPAGO_PROD_ACCESS_TOKEN existe.
  *   MERCADOPAGO_ENVIRONMENT="test" força o sandbox mesmo assim.
- * - Endpoints usados (API oficial de Assinaturas):
+ * - Endpoints usados (API oficial de Assinaturas e Pix):
  *     POST /preapproval_plan
  *     GET  /preapproval_plan/search
  *     POST /preapproval
@@ -40,7 +40,7 @@ function accessToken(): string {
 
 /** Nome interno do plano — usado para busca idempotente no Mercado Pago. */
 export const PRO_PLAN_REASON = "Vitrini PRO";
-export const PRO_PLAN_AMOUNT = 9.9;
+export const PRO_PLAN_AMOUNT = 19.9;
 export const PRO_PLAN_CURRENCY = "BRL";
 /** Dias de tolerância após uma falha de cobrança antes de suspender o PRO. */
 export const GRACE_PERIOD_DAYS = 3;
@@ -209,10 +209,39 @@ export type MpPayment = {
   external_reference?: string;
   date_approved?: string;
   metadata?: Record<string, unknown>;
+  point_of_interaction?: {
+    transaction_data?: {
+      qr_code?: string;
+      qr_code_base64?: string;
+      ticket_url?: string;
+    };
+  };
 };
 
 export async function getPayment(id: string): Promise<MpPayment> {
   return mpFetch<MpPayment>(`/v1/payments/${encodeURIComponent(id)}`);
+}
+
+/** Cria uma cobrança Pix avulsa com QR Code dinâmico no Mercado Pago. */
+export async function createPixPayment(input: {
+  amount: number;
+  description: string;
+  externalReference: string;
+  payerEmail: string;
+  idempotencyKey: string;
+}): Promise<MpPayment> {
+  return mpFetch<MpPayment>("/v1/payments", {
+    method: "POST",
+    idempotencyKey: input.idempotencyKey,
+    body: {
+      transaction_amount: input.amount,
+      description: input.description,
+      payment_method_id: "pix",
+      external_reference: input.externalReference,
+      notification_url: webhookUrl(),
+      payer: { email: input.payerEmail },
+    },
+  });
 }
 
 // ------------------------------------------------------------ Mapeamentos
@@ -267,7 +296,7 @@ export function webhookUrl(): string {
   // endpoint não consegue validar: bloqueamos a criação da assinatura.
   if (!process.env["MERCADOPAGO_WEBHOOK_SECRET"]) {
     throw new Error(
-      "Assinaturas indisponíveis: configure a chave secreta do webhook do Mercado Pago.",
+      "Pagamentos indisponíveis: configure a chave secreta do webhook do Mercado Pago.",
     );
   }
   return `${resolveBaseUrl(null)}${MP_WEBHOOK_PATH}`;

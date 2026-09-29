@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Copy, MessageCircle, QrCode as QrCodeIcon } from "lucide-react";
+import { CheckCircle2, Copy, ExternalLink, QrCode as QrCodeIcon } from "lucide-react";
 import { toast } from "sonner";
 import {
-  createProPixRequest,
-  getMyProPixRequests,
-  getProPixCheckout,
-} from "@/lib/pro-pix.functions";
-import { brl, formatDate, formatDay } from "@/lib/format";
+  createMercadoPagoPixPayment,
+  getMyMercadoPagoPixPayments,
+  type MercadoPagoPixPaymentView,
+} from "@/lib/mercadopago-pix.functions";
+import { brl, formatDay } from "@/lib/format";
 import { usePlansPricing } from "@/hooks/usePricing";
 import { QrImage } from "@/components/QrCode";
 import { Button } from "@/components/ui/button";
@@ -22,91 +22,80 @@ import {
 } from "@/components/ui/dialog";
 
 export const PIX_STATUS_LABEL: Record<string, string> = {
-  pending: "🟡 Aguardando confirmação",
-  approved: "🟢 Aprovado",
-  rejected: "🔴 Recusado",
-  canceled: "⚪ Cancelado",
+  pending: "Aguardando pagamento",
+  in_process: "Em processamento",
+  approved: "Pago e aprovado",
+  rejected: "Recusado",
+  cancelled: "Cancelado",
+  canceled: "Cancelado",
+  expired: "Expirado",
 };
 
 type PlanKey = "basica" | "pro";
 
-/** WhatsApp do administrador master do Vitrini. */
-const ADMIN_WHATSAPP = "5531975414498";
-
-function adminWhatsAppUrl(amount: number, requestId?: string | null) {
-  const text = [
-    "Olá! Acabei de pagar o Vitrini PRO via Pix.",
-    `Valor: ${brl(amount)}`,
-    requestId ? `Solicitação: ${requestId}` : null,
-    "Pode liberar meu PRO, por favor?",
-  ]
-    .filter(Boolean)
-    .join("\n");
-  return `https://wa.me/${ADMIN_WHATSAPP}?text=${encodeURIComponent(text)}`;
+function isPending(payment: MercadoPagoPixPaymentView | null) {
+  return Boolean(payment && ["pending", "in_process"].includes(payment.status));
 }
 
 export function ProPixCard({ hasPro, plan = "pro" }: { hasPro: boolean; plan?: PlanKey }) {
   const [open, setOpen] = useState(false);
+  const [selectedPayment, setSelectedPayment] = useState<MercadoPagoPixPaymentView | null>(null);
   const plans = usePlansPricing();
-  const planPrice = plan === "basica" ? plans.basicPrice : plans.proPrice;
   const queryClient = useQueryClient();
-
-  const fetchCheckout = useServerFn(getProPixCheckout);
-  const fetchRequests = useServerFn(getMyProPixRequests);
-  const createRequest = useServerFn(createProPixRequest);
+  const planPrice = plan === "basica" ? plans.basicPrice : plans.proPrice;
   const planLabel = plan === "basica" ? "Básica" : "PRO";
+  const fetchPayments = useServerFn(getMyMercadoPagoPixPayments);
+  const createPayment = useServerFn(createMercadoPagoPixPayment);
 
-  const { data: mine } = useQuery({
-    queryKey: ["pro-pix-requests"],
-    queryFn: () => fetchRequests(),
+  const { data } = useQuery({
+    queryKey: ["mercadopago-pix-payments"],
+    queryFn: () => fetchPayments(),
+    refetchInterval: open ? 8_000 : false,
   });
 
-  const { data: checkout, isLoading: checkoutLoading } = useQuery({
-    queryKey: ["pro-pix-checkout"],
-    enabled: open,
-    queryFn: () => fetchCheckout({ data: { plan } }),
-  });
-
-  const requestMutation = useMutation({
-    mutationFn: () => createRequest({ data: { plan } }),
+  const createMutation = useMutation({
+    mutationFn: () => createPayment({ data: { plan } }),
     onSuccess: (result) => {
-      if (result.created) {
-        toast.success("Pagamento enviado para análise.");
-        setOpen(false);
-        window.open(adminWhatsAppUrl(planPrice, result.requestId ?? null), "_blank", "noopener");
-      } else {
-        toast.info(result.message);
-      }
-      queryClient.invalidateQueries({ queryKey: ["pro-pix-requests"] });
+      setSelectedPayment(result.payment);
+      queryClient.invalidateQueries({ queryKey: ["mercadopago-pix-payments"] });
+      toast.success(result.reused ? "Abrimos seu Pix pendente." : "Pix gerado pelo Mercado Pago.");
     },
     onError: (error: unknown) => {
       const message = error instanceof Error ? error.message : "";
-      toast.error(message || "Não foi possível registrar sua solicitação agora.");
+      toast.error(message || "Não foi possível gerar o Pix agora.");
     },
   });
 
-  const latest = mine?.requests[0] ?? null;
-  const pending = latest?.status === "pending";
-  const activeUntil = mine?.activeUntil ?? null;
+  const payments = data?.payments ?? [];
+  const latestForPlan = payments.find((payment) => payment.plan === plan) ?? null;
+  const payment =
+    (selectedPayment && payments.find((item) => item.id === selectedPayment.id)) ??
+    selectedPayment ??
+    latestForPlan;
+  const pending = isPending(payment);
+  const activeUntil = payments.find(
+    (item) => item.plan === "pro" && item.status === "approved" && item.expiresAt,
+  )?.expiresAt;
 
-  const daysLeft = activeUntil
-    ? Math.ceil((new Date(activeUntil).getTime() - Date.now()) / (24 * 60 * 60 * 1000))
-    : null;
+  function copyPixCode() {
+    if (!payment?.qrCode) return;
+    void navigator.clipboard
+      .writeText(payment.qrCode)
+      .then(() => toast.success("Pix Copia e Cola copiado."));
+  }
 
-  function copyPayload() {
-    if (!checkout?.payload) return;
-    void navigator.clipboard.writeText(checkout.payload).then(() => {
-      toast.success("Código Pix copiado!");
-    });
+  function openCheckout() {
+    setSelectedPayment(null);
+    setOpen(true);
   }
 
   return (
     <section className="surface mt-5 space-y-3 p-5">
       <div className="flex items-center justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold">🟢 Pix — plano {planLabel}</p>
+          <p className="text-sm font-semibold">Pix via Mercado Pago — plano {planLabel}</p>
           <p className="text-xs text-muted-foreground">
-            {brl(planPrice)} · validade de 30 dias · ativação após aprovação administrativa
+            {brl(planPrice)} · QR Code dinâmico · confirmação automática
           </p>
         </div>
         {activeUntil ? <Badge>PRO até {formatDay(activeUntil)}</Badge> : null}
@@ -114,78 +103,49 @@ export function ProPixCard({ hasPro, plan = "pro" }: { hasPro: boolean; plan?: P
 
       {pending ? (
         <div className="rounded-lg border border-dashed p-3 text-sm">
-          <p className="font-semibold">Pagamento do plano {planLabel} enviado para análise</p>
-          <dl className="mt-1 space-y-0.5 text-xs text-muted-foreground">
-            <div>Plano: Vitrini {planLabel}</div>
-            <div>Valor: {brl(latest!.amount)}</div>
-            <div>Forma: Pix</div>
-            <div>Status: {PIX_STATUS_LABEL[latest!.status]}</div>
-            <div>Solicitado em: {formatDate(latest!.requestedAt)}</div>
-          </dl>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Seu pedido foi enviado para análise. O PRO será liberado após o administrador confirmar
-            o recebimento do Pix.
+          <p className="font-semibold">Pix aguardando pagamento</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Pague pelo QR Code ou Pix Copia e Cola. A confirmação será recebida automaticamente pelo
+            Mercado Pago.
           </p>
-          <Button asChild variant="outline" className="mt-2 h-10 w-full">
-            <a
-              href={adminWhatsAppUrl(latest!.amount, latest!.id)}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <MessageCircle className="mr-2 size-4" /> Avisar o administrador no WhatsApp
-            </a>
-          </Button>
         </div>
       ) : null}
 
-      {!pending && latest?.status === "rejected" ? (
-        <div className="rounded-lg border border-destructive/40 p-3 text-sm">
-          <p className="font-semibold text-destructive">
-            Sua solicitação de pagamento via Pix foi recusada.
-          </p>
-          {latest.rejectionReason ? (
-            <p className="mt-1 text-xs text-muted-foreground">Motivo: {latest.rejectionReason}</p>
-          ) : null}
+      {payment?.status === "approved" ? (
+        <div className="flex items-start gap-2 rounded-lg border border-primary/40 bg-primary/5 p-3 text-sm">
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" />
+          <div>
+            <p className="font-semibold">Pagamento aprovado</p>
+            <p className="text-xs text-muted-foreground">
+              Seu plano foi atualizado automaticamente após a confirmação do Mercado Pago.
+            </p>
+          </div>
         </div>
       ) : null}
 
-      {activeUntil && daysLeft !== null && daysLeft <= 7 ? (
-        <p className="text-xs text-muted-foreground">
-          Seu Vitrini PRO vence em {daysLeft} dia{daysLeft === 1 ? "" : "s"}.
-        </p>
-      ) : null}
+      <Button
+        className="h-11 w-full"
+        variant={hasPro ? "outline" : "default"}
+        onClick={openCheckout}
+      >
+        <QrCodeIcon className="mr-2 size-4" />
+        {activeUntil ? "Gerar Pix para renovar" : `Pagar ${planLabel} com Pix`}
+      </Button>
 
-      {!pending ? (
-        <Button
-          className="h-11 w-full"
-          variant={hasPro ? "outline" : "default"}
-          onClick={() => setOpen(true)}
-        >
-          <QrCodeIcon className="mr-2 size-4" />
-          {activeUntil
-            ? "Renovar via Pix"
-            : latest?.status === "rejected"
-              ? "Tentar novamente"
-              : "Assinar via Pix"}
-        </Button>
-      ) : null}
-
-      {(mine?.requests.length ?? 0) > 0 ? (
+      {payments.filter((item) => item.plan === plan).length > 0 ? (
         <div>
-          <p className="pt-2 text-sm font-semibold">Histórico Pix</p>
+          <p className="pt-2 text-sm font-semibold">Histórico Pix Mercado Pago</p>
           <ul className="mt-2 space-y-2 text-xs">
-            {mine!.requests.map((request) => (
-              <li key={request.id} className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-muted-foreground">{formatDay(request.requestedAt)}</span>
-                <span>{brl(request.amount)} · Pix</span>
-                <span className="text-muted-foreground">
-                  {request.periodStart && request.periodEnd
-                    ? `${formatDay(request.periodStart)} → ${formatDay(request.periodEnd)}`
-                    : "—"}
-                </span>
-                <span>{PIX_STATUS_LABEL[request.status] ?? request.status}</span>
-              </li>
-            ))}
+            {payments
+              .filter((item) => item.plan === plan)
+              .slice(0, 5)
+              .map((item) => (
+                <li key={item.id} className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-muted-foreground">{formatDay(item.createdAt)}</span>
+                  <span>{brl(item.amount)}</span>
+                  <span>{PIX_STATUS_LABEL[item.status] ?? item.status}</span>
+                </li>
+              ))}
           </ul>
         </div>
       ) : null}
@@ -193,49 +153,83 @@ export function ProPixCard({ hasPro, plan = "pro" }: { hasPro: boolean; plan?: P
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Vitrini {planLabel} via Pix</DialogTitle>
+            <DialogTitle>Pagamento {planLabel} via Pix</DialogTitle>
             <DialogDescription>
-              Valor {brl(planPrice)} · validade de 30 dias após aprovação
+              {brl(payment?.amount ?? planPrice)} · processado com segurança pelo Mercado Pago
             </DialogDescription>
           </DialogHeader>
 
-          {checkoutLoading ? (
-            <p className="text-sm text-muted-foreground">Gerando código Pix...</p>
-          ) : checkout?.configured && checkout.payload ? (
+          {!payment ? (
             <div className="space-y-3">
-              <div className="flex justify-center">
-                <QrImage value={checkout.payload} size={200} alt="QR Code Pix do Vitrini PRO" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">Pix Copia e Cola</p>
-                <p className="mt-1 break-all rounded-lg bg-muted p-2 text-[11px]">
-                  {checkout.payload}
-                </p>
-                <Button variant="outline" className="mt-2 h-10 w-full" onClick={copyPayload}>
-                  <Copy className="mr-2 size-4" /> Copiar código Pix
-                </Button>
-              </div>
-              {checkout.receiverName ? (
-                <p className="text-xs text-muted-foreground">Recebedor: {checkout.receiverName}</p>
-              ) : null}
-              <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
-                <strong>Importante:</strong> o pagamento via Pix não é confirmado automaticamente
-                pelo Vitrini. Após realizar o pagamento, clique em “Já fiz o pagamento”. A liberação
-                do PRO ocorrerá somente após a confirmação do administrador.
+              <p className="text-sm text-muted-foreground">
+                Gere um QR Code Pix exclusivo para esta cobrança. O pagamento será confirmado
+                automaticamente pelo Mercado Pago.
               </p>
               <Button
                 className="h-11 w-full"
-                onClick={() => requestMutation.mutate()}
-                disabled={requestMutation.isPending}
+                onClick={() => createMutation.mutate()}
+                disabled={createMutation.isPending}
               >
-                {requestMutation.isPending ? "Enviando..." : "Já fiz o pagamento"}
+                {createMutation.isPending ? "Gerando Pix..." : "Gerar QR Code Pix"}
               </Button>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              O pagamento via Pix ainda não foi configurado pelo administrador. Tente novamente mais
-              tarde ou use o Mercado Pago.
-            </p>
+            <div className="space-y-3">
+              {payment.qrCodeBase64 ? (
+                <div className="flex justify-center">
+                  <img
+                    src={`data:image/png;base64,${payment.qrCodeBase64}`}
+                    alt={`QR Code Pix do plano ${planLabel}`}
+                    className="size-52 rounded-lg border p-2"
+                  />
+                </div>
+              ) : payment.qrCode ? (
+                <div className="flex justify-center">
+                  <QrImage
+                    value={payment.qrCode}
+                    size={208}
+                    alt={`QR Code Pix do plano ${planLabel}`}
+                  />
+                </div>
+              ) : null}
+
+              {payment.qrCode ? (
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground">Pix Copia e Cola</p>
+                  <p className="mt-1 max-h-28 overflow-y-auto break-all rounded-lg bg-muted p-2 text-[11px]">
+                    {payment.qrCode}
+                  </p>
+                  <Button variant="outline" className="mt-2 h-10 w-full" onClick={copyPixCode}>
+                    <Copy className="mr-2 size-4" /> Copiar Pix Copia e Cola
+                  </Button>
+                </div>
+              ) : null}
+
+              {payment.ticketUrl ? (
+                <Button asChild variant="outline" className="h-10 w-full">
+                  <a href={payment.ticketUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-2 size-4" /> Abrir instruções de pagamento
+                  </a>
+                </Button>
+              ) : null}
+
+              <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
+                <strong>Status:</strong> {PIX_STATUS_LABEL[payment.status] ?? payment.status}.
+                {pending
+                  ? " Após o pagamento, aguarde a confirmação automática nesta tela."
+                  : " O status é atualizado pelo webhook do Mercado Pago."}
+              </div>
+
+              {payment.status !== "approved" && !pending ? (
+                <Button
+                  className="h-10 w-full"
+                  onClick={() => createMutation.mutate()}
+                  disabled={createMutation.isPending}
+                >
+                  {createMutation.isPending ? "Gerando..." : "Gerar novo Pix"}
+                </Button>
+              ) : null}
+            </div>
           )}
         </DialogContent>
       </Dialog>

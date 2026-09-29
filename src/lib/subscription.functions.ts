@@ -5,7 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export type SubscriptionView = {
   plan: "basica" | "pro";
   hasProAccess: boolean;
-  proSource: "mercadopago" | "pix_manual" | "trial" | null;
+  proSource: "mercadopago" | "mercadopago_pix" | "pix_manual" | "trial" | null;
   pixActiveUntil: string | null;
   trialEndsAt: string | null;
   environment: "test" | "live";
@@ -108,7 +108,7 @@ export const getMySubscription = createServerFn({ method: "GET" })
     return {
       plan: hasProAccess ? "pro" : "basica",
       hasProAccess,
-      proSource: mpPro ? "mercadopago" : pixGrant ? "pix_manual" : trialEndsAt ? "trial" : null,
+      proSource: mpPro ? "mercadopago" : pixGrant ? pixGrant.source : trialEndsAt ? "trial" : null,
       pixActiveUntil: pixGrant?.periodEnd ?? null,
       trialEndsAt,
       environment: mpEnvironment(),

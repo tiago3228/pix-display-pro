@@ -24,7 +24,7 @@ export const getAdminRevenue = createServerFn({ method: "POST" })
     await assertAdmin(context.supabase as never, context.userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [payments, pixRequests, manual, stores] = await Promise.all([
+    const [payments, pixRequests, automaticPix, manual, stores] = await Promise.all([
       supabaseAdmin
         .from("subscription_payments")
         .select("id, amount, paid_at, status, store_id")
@@ -37,6 +37,12 @@ export const getAdminRevenue = createServerFn({ method: "POST" })
         .eq("status", "approved")
         .gte("approved_at", data.from)
         .lte("approved_at", data.to),
+      supabaseAdmin
+        .from("mercadopago_pix_payments")
+        .select("id, amount, paid_at, status, store_id, plan")
+        .eq("status", "approved")
+        .gte("paid_at", data.from)
+        .lte("paid_at", data.to),
       supabaseAdmin
         .from("platform_sales")
         .select("id, amount, sold_at, method, description, note, store_id")
@@ -62,6 +68,17 @@ export const getAdminRevenue = createServerFn({ method: "POST" })
         label: storeName.get(row.store_id ?? "") ?? "Assinatura Pix",
         amount: Number(row.amount ?? 0),
         date: (row.approved_at ?? data.from) as string,
+        method: "pix",
+        manual: false,
+      })),
+      ...(automaticPix.data ?? []).map((row) => ({
+        id: `mp-pix-${row.id}`,
+        source: "Pix via Mercado Pago",
+        label:
+          storeName.get(row.store_id ?? "") ??
+          `Assinatura Pix ${row.plan === "pro" ? "PRO" : "Básica"}`,
+        amount: Number(row.amount ?? 0),
+        date: (row.paid_at ?? data.from) as string,
         method: "pix",
         manual: false,
       })),
@@ -120,7 +137,11 @@ async function ownStore(context: { supabase: never; userId: string }) {
         eq: (
           col: string,
           v: string,
-        ) => { maybeSingle: () => Promise<{ data: { id: string; plan: string; pro_trial_ends_at: string | null } | null }> };
+        ) => {
+          maybeSingle: () => Promise<{
+            data: { id: string; plan: string; pro_trial_ends_at: string | null } | null;
+          }>;
+        };
       };
     };
   };
@@ -128,7 +149,7 @@ async function ownStore(context: { supabase: never; userId: string }) {
     .from("stores")
     .select("id, plan, pro_trial_ends_at")
     .eq("owner_id", context.userId)
-      .maybeSingle();
+    .maybeSingle();
   if (!data) throw new Error("Crie sua loja antes de acessar o faturamento.");
   return data;
 }

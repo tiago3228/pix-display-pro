@@ -151,9 +151,9 @@ function Subscription() {
         <div className="mb-4 rounded-lg border border-primary/40 bg-primary/5 p-4 text-sm">
           <p className="font-semibold">Você está nos {PRO_TRIAL_DAYS} dias grátis do PRO</p>
           <p className="mt-1 text-muted-foreground">
-            O teste termina em {formatDay(trialEndsAt)}. Depois dessa data, será necessário
-            assinar a Básica por {brl(plans.basicPrice)}/mês ou a PRO por {brl(pricing.price)}/mês
-            para continuar usando os recursos pagos.
+            O teste termina em {formatDay(trialEndsAt)}. Depois dessa data, será necessário assinar
+            a Básica por {brl(plans.basicPrice)}/mês ou a PRO por {brl(pricing.price)}/mês para
+            continuar usando os recursos pagos.
           </p>
         </div>
       ) : null}
@@ -267,8 +267,8 @@ function Subscription() {
 
       <p className="mt-4 text-center text-xs text-muted-foreground">
         A Básica custa {brl(plans.basicPrice)}/mês e a PRO custa {brl(pricing.price)}/mês. O cartão
-        é processado pelo Mercado Pago; no Pix, a ativação depende da confirmação manual do
-        administrador. Você pode cancelar quando quiser.
+        e o Pix são processados pelo Mercado Pago. No Pix, a confirmação e a ativação são
+        automáticas após a aprovação do pagamento. Você pode cancelar quando quiser.
       </p>
 
       {isError ? (

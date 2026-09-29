@@ -1,6 +1,6 @@
 /** Regras do PRO via Pix com aprovação manual — server-only. */
 
-export const PRO_PIX_AMOUNT = 9.9;
+export const PRO_PIX_AMOUNT = 19.9;
 export const PRO_PIX_PERIOD_DAYS = 30;
 
 async function admin() {
@@ -12,6 +12,7 @@ export type PixGrant = {
   id: string;
   periodStart: string;
   periodEnd: string;
+  source: "pix_manual" | "mercadopago_pix";
 };
 
 /** Última aprovação Pix ainda dentro do período de 30 dias. */
@@ -28,11 +29,31 @@ export async function activePixGrant(storeId: string): Promise<PixGrant | null> 
     .limit(1);
 
   const row = data?.[0];
-  if (!row?.period_end) return null;
+  if (row?.period_end) {
+    return {
+      id: row.id,
+      periodStart: row.period_start ?? row.period_end,
+      periodEnd: row.period_end,
+      source: "pix_manual",
+    };
+  }
+
+  const { data: automaticRows } = await db
+    .from("mercadopago_pix_payments")
+    .select("id, period_start, period_end")
+    .eq("store_id", storeId)
+    .eq("plan", "pro")
+    .eq("status", "approved")
+    .gt("period_end", nowIso)
+    .order("period_end", { ascending: false })
+    .limit(1);
+  const automatic = automaticRows?.[0];
+  if (!automatic?.period_end) return null;
   return {
-    id: row.id,
-    periodStart: row.period_start ?? row.period_end,
-    periodEnd: row.period_end,
+    id: automatic.id,
+    periodStart: automatic.period_start ?? automatic.period_end,
+    periodEnd: automatic.period_end,
+    source: "mercadopago_pix",
   };
 }
 

@@ -195,6 +195,75 @@ export const Route = createFileRoute("/api/public/webhooks/mercadopago")({
             storeId = synced?.storeId ?? null;
           } else if (eventType === "payment") {
             const payment = await mp.getPayment(resourceId);
+            const { data: pixPayment, error: pixLookupError } = await supabaseAdmin
+              .from("mercadopago_pix_payments")
+              .select("id, store_id, plan, amount, status")
+              .eq("provider", "mercadopago")
+              .eq("provider_payment_id", String(payment.id))
+              .maybeSingle();
+            assertDatabaseOperation("PIX_PAYMENT_LOOKUP", { error: pixLookupError });
+
+            if (pixPayment) {
+              storeId = pixPayment.store_id;
+              const paymentStatus = (payment.status ?? "pending").toLowerCase();
+              const approved = paymentStatus === "approved";
+              const now = new Date();
+              const periodStart = approved ? now.toISOString() : null;
+              const periodEnd = approved
+                ? new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                : null;
+              const { error: pixUpdateError } = await supabaseAdmin
+                .from("mercadopago_pix_payments")
+                .update({
+                  status: paymentStatus,
+                  status_detail: payment.status_detail ?? null,
+                  paid_at: approved ? (payment.date_approved ?? now.toISOString()) : null,
+                  period_start: periodStart,
+                  period_end: periodEnd,
+                })
+                .eq("id", pixPayment.id);
+              assertDatabaseOperation("PIX_PAYMENT_UPDATE", { error: pixUpdateError });
+
+              if (approved) {
+                const { error: paymentInsertError } = await supabaseAdmin
+                  .from("subscription_payments")
+                  .upsert(
+                    {
+                      store_id: pixPayment.store_id,
+                      subscription_id: null,
+                      provider: "mercadopago_pix",
+                      provider_payment_id: String(payment.id),
+                      amount: Number(payment.transaction_amount ?? pixPayment.amount ?? 0),
+                      currency: payment.currency_id ?? "BRL",
+                      status: "approved",
+                      external_status: payment.status_detail ?? paymentStatus,
+                      paid_at: payment.date_approved ?? now.toISOString(),
+                    },
+                    { onConflict: "provider,provider_payment_id" },
+                  );
+                assertDatabaseOperation("PIX_SUBSCRIPTION_PAYMENT_UPSERT", {
+                  error: paymentInsertError,
+                });
+                const { error: storeError } = await supabaseAdmin
+                  .from("stores")
+                  .update({ plan: pixPayment.plan })
+                  .eq("id", pixPayment.store_id);
+                assertDatabaseOperation("PIX_STORE_PLAN_UPDATE", { error: storeError });
+              }
+
+              await svc.logAudit({
+                storeId: pixPayment.store_id,
+                action: approved ? "mercadopago_pix_approved" : `mercadopago_pix_${paymentStatus}`,
+                resourceType: "mercadopago_pix_payment",
+                resourceId: String(payment.id),
+                metadata: {
+                  plan: pixPayment.plan,
+                  amount: payment.transaction_amount ?? pixPayment.amount,
+                  status: paymentStatus,
+                  period_end: periodEnd,
+                },
+              });
+            }
             const meta = (payment.metadata ?? {}) as Record<string, unknown>;
             // O Mercado Pago nem sempre propaga external_reference nos pagamentos
             // de assinatura: quando existir, o preapproval_id é a referência confiável.
