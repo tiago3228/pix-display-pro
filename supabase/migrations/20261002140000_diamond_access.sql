@@ -31,7 +31,8 @@ AS $$
           FROM public.pro_pix_requests p
           WHERE p.store_id = s.id
             AND p.status = 'approved'
-            AND (p.expires_at IS NULL OR p.expires_at > now())
+            AND p.period_end IS NOT NULL
+            AND p.period_end > now()
         )
       )
   );
