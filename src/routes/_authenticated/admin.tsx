@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Store as StoreIcon } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Gem, Store as StoreIcon } from "lucide-react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsAdmin } from "@/hooks/useAuth";
 import { AppShell, StatCard } from "@/components/AppShell";
@@ -9,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useServerFn } from "@tanstack/react-start";
 import { countPendingProPixRequests } from "@/lib/pro-pix.functions";
+import { setAdminDiamondAccess } from "@/lib/admin-stores.functions";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: Admin,
@@ -24,7 +26,7 @@ function Admin() {
       const [stores, orders] = await Promise.all([
         supabase
           .from("stores")
-          .select("id, name, slug, plan, is_active, created_at")
+          .select("id, name, slug, plan, is_active, created_at, diamond_access")
           .order("created_at", { ascending: false }),
         supabase.from("orders").select("id", { count: "exact", head: true }),
       ]);
@@ -33,6 +35,9 @@ function Admin() {
   });
 
   const fetchPending = useServerFn(countPendingProPixRequests);
+  const setDiamond = useServerFn(setAdminDiamondAccess);
+  const queryClient = useQueryClient();
+  const [diamondBusy, setDiamondBusy] = useState<string | null>(null);
   const { data: pixPending } = useQuery({
     queryKey: ["admin-pro-pix-pending"],
     enabled: isAdmin === true,
@@ -58,6 +63,17 @@ function Admin() {
   }
 
   const pendingPix = pixPending?.pending ?? 0;
+
+  async function toggleDiamond(store: { id: string; diamond_access: boolean }) {
+    setDiamondBusy(store.id);
+    try {
+      await setDiamond({ data: { storeId: store.id, enabled: !store.diamond_access } });
+      await queryClient.invalidateQueries({ queryKey: ["admin-overview"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-stores-overview"] });
+    } finally {
+      setDiamondBusy(null);
+    }
+  }
 
   const pro = (data?.stores ?? []).filter((s) => s.plan === "pro").length;
 
@@ -114,10 +130,26 @@ function Admin() {
               </p>
             </div>
             <div className="flex shrink-0 gap-2">
-              <Badge variant={store.plan === "pro" ? "default" : "secondary"}>{store.plan}</Badge>
+              <Badge variant={store.plan === "pro" ? "default" : "secondary"}>
+                {store.diamond_access ? (
+                  <>
+                    <Gem className="mr-1 inline size-3" /> Diamante
+                  </>
+                ) : (
+                  store.plan
+                )}
+              </Badge>
               <Badge variant={store.is_active ? "secondary" : "destructive"}>
                 {store.is_active ? "ativa" : "inativa"}
               </Badge>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={diamondBusy === store.id}
+                onClick={() => void toggleDiamond(store)}
+              >
+                {store.diamond_access ? "Desabilitar Diamante" : "Habilitar Diamante"}
+              </Button>
             </div>
           </div>
         ))}
