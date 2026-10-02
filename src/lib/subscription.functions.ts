@@ -155,12 +155,15 @@ export const startProSubscription = createServerFn({ method: "POST" })
 
     const { data: stores } = await context.supabase
       .from("stores")
-      .select("id, name")
+      .select("id, name, diamond_access")
       .eq("owner_id", context.userId)
       .order("created_at", { ascending: true })
       .limit(1);
     const store = stores?.[0] ?? null;
     if (!store) throw new Error("Crie sua loja em “Minha Loja” antes de assinar um plano.");
+    if (store.diamond_access) {
+      throw new Error("Sua conta possui acesso Diamante permanente e não precisa de assinatura.");
+    }
 
     // Idempotência: nunca criar duas assinaturas vivas para a mesma loja.
     const { data: liveRows } = await context.supabase
@@ -216,10 +219,11 @@ export const cancelProSubscription = createServerFn({ method: "POST" })
 
     const { data: store } = await context.supabase
       .from("stores")
-      .select("id")
+      .select("id, diamond_access")
       .eq("owner_id", context.userId)
       .maybeSingle();
     if (!store) throw new Error("Loja não encontrada.");
+    if (store.diamond_access) return { ok: true, alreadyCanceled: true };
 
     const { data: sub } = await context.supabase
       .from("subscriptions")

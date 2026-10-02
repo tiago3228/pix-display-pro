@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { CalendarClock, CreditCard, Search, Store as StoreIcon, Users } from "lucide-react";
+import { CalendarClock, CreditCard, Gem, Search, Store as StoreIcon, Users } from "lucide-react";
 import { AppShell, StatCard } from "@/components/AppShell";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,11 @@ import {
 } from "@/components/ui/select";
 import { useIsAdmin } from "@/hooks/useAuth";
 import { brl, formatDate } from "@/lib/format";
-import { listAdminStoresOverview, type AdminStoreOverview } from "@/lib/admin-stores.functions";
+import {
+  listAdminStoresOverview,
+  setAdminDiamondAccess,
+  type AdminStoreOverview,
+} from "@/lib/admin-stores.functions";
 
 export const Route = createFileRoute("/_authenticated/admin_/assinaturas")({
   head: () => ({
@@ -66,6 +70,9 @@ function statusInfo(store: AdminStoreOverview) {
 function AdminSubscriptions() {
   const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
   const fetchOverview = useServerFn(listAdminStoresOverview);
+  const setDiamond = useServerFn(setAdminDiamondAccess);
+  const queryClient = useQueryClient();
+  const [diamondBusy, setDiamondBusy] = useState<string | null>(null);
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-stores-overview"],
     enabled: isAdmin === true,
@@ -77,6 +84,15 @@ function AdminSubscriptions() {
   const [situation, setSituation] = useState("all");
 
   const stores = data?.stores ?? [];
+  async function toggleDiamond(store: AdminStoreOverview) {
+    setDiamondBusy(store.id);
+    try {
+      await setDiamond({ data: { storeId: store.id, enabled: !store.diamondAccess } });
+      await queryClient.invalidateQueries({ queryKey: ["admin-stores-overview"] });
+    } finally {
+      setDiamondBusy(null);
+    }
+  }
   const visible = useMemo(() => {
     const term = search.trim().toLowerCase();
     return stores.filter((store) => {
@@ -200,12 +216,28 @@ function AdminSubscriptions() {
                     </p>
                   </div>
                   <Badge variant={store.plan === "pro" ? "default" : "secondary"}>
-                    {store.plan === "pro" ? "PRO" : "Básica"}
+                    {store.diamondAccess ? (
+                      <>
+                        <Gem className="mr-1 inline size-3" /> Diamante
+                      </>
+                    ) : store.plan === "pro" ? (
+                      "PRO"
+                    ) : (
+                      "Básica"
+                    )}
                   </Badge>
                   <Badge variant={status.variant}>{status.label}</Badge>
                   <Badge variant={store.isActive ? "secondary" : "destructive"}>
                     {store.isActive ? "ativa" : "inativa"}
                   </Badge>
+                  <button
+                    type="button"
+                    className="rounded-md border border-border px-2 py-1 text-xs font-medium hover:bg-muted disabled:opacity-50"
+                    disabled={diamondBusy === store.id}
+                    onClick={() => void toggleDiamond(store)}
+                  >
+                    {store.diamondAccess ? "Desabilitar Diamante" : "Habilitar Diamante"}
+                  </button>
                 </div>
               );
             })}

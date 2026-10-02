@@ -13,6 +13,7 @@ export type AdminStoreOverview = {
   createdAt: string;
   trialEndsAt: string | null;
   trialActive: boolean;
+  diamondAccess: boolean;
   subscription: {
     status: string;
     plan: string;
@@ -50,7 +51,7 @@ export const listAdminStoresOverview = createServerFn({ method: "GET" })
       supabaseAdmin
         .from("stores")
         .select(
-          "id, name, slug, seller_name, whatsapp, plan, is_active, created_at, pro_trial_ends_at",
+          "id, name, slug, seller_name, whatsapp, plan, is_active, created_at, pro_trial_ends_at, diamond_access",
         )
         .order("created_at", { ascending: false })
         .limit(2000),
@@ -86,6 +87,7 @@ export const listAdminStoresOverview = createServerFn({ method: "GET" })
         createdAt: store.created_at,
         trialEndsAt,
         trialActive: Boolean(trialEndsAt && new Date(trialEndsAt).getTime() > now),
+        diamondAccess: store.diamond_access === true,
         subscription: sub
           ? {
               status: sub.status,
@@ -110,4 +112,24 @@ export const listAdminStoresOverview = createServerFn({ method: "GET" })
         inactive: stores.filter((s) => !s.isActive).length,
       },
     };
+  });
+
+export const setAdminDiamondAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .validator((data: unknown) => {
+    if (!data || typeof data !== "object") throw new Error("Dados inválidos.");
+    const value = data as Record<string, unknown>;
+    if (typeof value["storeId"] !== "string" || typeof value["enabled"] !== "boolean") {
+      throw new Error("Loja ou status Diamante inválido.");
+    }
+    return { storeId: value["storeId"], enabled: value["enabled"] };
+  })
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.supabase as never, context.userId);
+    const { data: result, error } = await context.supabase.rpc("master_set_diamond_access", {
+      _store_id: data.storeId,
+      _enabled: data.enabled,
+    });
+    if (error) throw new Error(error.message);
+    return result;
   });

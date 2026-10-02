@@ -2384,6 +2384,7 @@ export type Database = {
           created_at: string
           default_ddd: string
           description: string
+          diamond_access: boolean
           id: string
           instagram: string | null
           is_active: boolean
@@ -2420,6 +2421,7 @@ export type Database = {
           created_at?: string
           default_ddd?: string
           description?: string
+          diamond_access?: boolean
           id?: string
           instagram?: string | null
           is_active?: boolean
@@ -2456,6 +2458,7 @@ export type Database = {
           created_at?: string
           default_ddd?: string
           description?: string
+          diamond_access?: boolean
           id?: string
           instagram?: string | null
           is_active?: boolean
@@ -2792,6 +2795,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      master_set_diamond_access: {
+        Args: { _enabled: boolean; _store_id: string }
+        Returns: Json
       }
       mark_overdue_installments: { Args: never; Returns: number }
       repair_champions_2026_27: {

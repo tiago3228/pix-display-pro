@@ -26,6 +26,7 @@ export type MyStore = {
   name: string;
   seller_name: string;
   description: string;
+  diamond_access: boolean;
   category: string;
   whatsapp: string;
   instagram: string | null;

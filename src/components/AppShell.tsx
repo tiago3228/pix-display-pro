@@ -10,6 +10,7 @@ import {
   ChevronDown,
   ChevronUp,
   CreditCard,
+  Gem,
   Download,
   HelpCircle,
   LayoutDashboard,
@@ -506,6 +507,11 @@ export function AppShell({
                 <h1 className="truncate text-lg font-bold">{title}</h1>
                 {description ? (
                   <p className="truncate text-xs text-muted-foreground">{description}</p>
+                ) : null}
+                {store?.diamond_access ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                    <Gem className="size-3" /> Diamante
+                  </span>
                 ) : null}
               </div>
             </div>
