@@ -51,7 +51,14 @@ export const Route = createFileRoute("/_authenticated/produtos")({
   component: Products,
 });
 
-type VariantDraft = { id?: string; label: string; price: string; stock: string; sku: string; image_url: string | null };
+type VariantDraft = {
+  id?: string;
+  label: string;
+  price: string;
+  stock: string;
+  sku: string;
+  image_url: string | null;
+};
 type OrderTierDraft = { minQuantity: string; unitPrice: string };
 type SmartSuggestion = {
   module:
@@ -86,15 +93,15 @@ function interpretProductText(
         ? "marmitaria"
         : /anel|aliança|alianca|brinco|colar|corrente|pulseira|pingente|semijoia|joia/.test(lower)
           ? "joias"
-        : /café|cafe|bolo|doce|brigadeiro|brownie|empada|pastel|cappuccino|bebida|salgado/.test(
-              lower,
-            )
-          ? "cafeteria"
-          : /fitness|academia|legging|top|treino|dry fit/.test(lower)
-            ? "roupas_treino"
-            : /flamengo|vasco|corinthians|seleção|selecao|camisa de futebol|futebol/.test(lower)
-              ? "roupas_esportivas"
-              : defaultModule;
+          : /café|cafe|bolo|doce|brigadeiro|brownie|empada|pastel|cappuccino|bebida|salgado/.test(
+                lower,
+              )
+            ? "cafeteria"
+            : /fitness|academia|legging|top|treino|dry fit/.test(lower)
+              ? "roupas_treino"
+              : /flamengo|vasco|corinthians|seleção|selecao|camisa de futebol|futebol/.test(lower)
+                ? "roupas_esportivas"
+                : defaultModule;
   const brands = [
     "Nike",
     "adidas",
@@ -146,16 +153,30 @@ function interpretProductText(
       : module === "marmitaria"
         ? "🍱 Marmitas"
         : module === "joias"
-          ? lower.includes("alian") ? "💎 Alianças" : lower.includes("brinc") ? "✨ Brincos" : lower.includes("colar") ? "📿 Colares" : lower.includes("corren") ? "⛓️ Correntes" : lower.includes("pulseir") ? "🔗 Pulseiras" : lower.includes("pingent") ? "💎 Pingentes" : lower.includes("conjunt") ? "👑 Conjuntos" : "💍 Anéis"
-        : module === "cafeteria"
-          ? /café|cafe|cappuccino/.test(lower)
-            ? "☕ Cafés"
-            : "🍰 Bolos e Doces"
-      : module === "roupas_treino"
-        ? "Conjuntos / Performance"
-        : module === "roupas_esportivas"
-          ? "Camisas"
-          : "A definir";
+          ? lower.includes("alian")
+            ? "💎 Alianças"
+            : lower.includes("brinc")
+              ? "✨ Brincos"
+              : lower.includes("colar")
+                ? "📿 Colares"
+                : lower.includes("corren")
+                  ? "⛓️ Correntes"
+                  : lower.includes("pulseir")
+                    ? "🔗 Pulseiras"
+                    : lower.includes("pingent")
+                      ? "💎 Pingentes"
+                      : lower.includes("conjunt")
+                        ? "👑 Conjuntos"
+                        : "💍 Anéis"
+          : module === "cafeteria"
+            ? /café|cafe|cappuccino/.test(lower)
+              ? "☕ Cafés"
+              : "🍰 Bolos e Doces"
+            : module === "roupas_treino"
+              ? "Conjuntos / Performance"
+              : module === "roupas_esportivas"
+                ? "Camisas"
+                : "A definir";
   const name =
     [brand, model, color ? color.charAt(0).toUpperCase() + color.slice(1) : null]
       .filter(Boolean)
@@ -192,7 +213,14 @@ type ProductRow = {
   is_featured: boolean;
   image_url: string | null;
   category_id: string | null;
-  product_variants: { id: string; label: string; price: number | null; stock: number; sku?: string | null; image_url?: string | null }[];
+  product_variants: {
+    id: string;
+    label: string;
+    price: number | null;
+    stock: number;
+    sku?: string | null;
+    image_url?: string | null;
+  }[];
   order_enabled: boolean;
   order_unit_price: number | null;
   order_min_quantity: number;
@@ -279,11 +307,20 @@ function CategoryImagePreview({ path }: { path: string | null | undefined }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     let active = true;
-    void resolveAsset(path).then((resolved) => { if (active) setUrl(resolved); });
-    return () => { active = false; };
+    void resolveAsset(path).then((resolved) => {
+      if (active) setUrl(resolved);
+    });
+    return () => {
+      active = false;
+    };
   }, [path]);
-  return url ? <img src={url} alt="" className="size-10 rounded-lg object-cover" /> :
-    <span className="flex size-10 items-center justify-center rounded-lg bg-muted"><ImageIcon className="size-4" /></span>;
+  return url ? (
+    <img src={url} alt="" className="size-10 rounded-lg object-cover" />
+  ) : (
+    <span className="flex size-10 items-center justify-center rounded-lg bg-muted">
+      <ImageIcon className="size-4" />
+    </span>
+  );
 }
 
 function Products() {
@@ -312,7 +349,9 @@ function Products() {
   const [marmitariaOnly, setMarmitariaOnly] = useState(false);
   const [jewelryOnly, setJewelryOnly] = useState(false);
   const [sportsOnly, setSportsOnly] = useState(false);
-  const sportsCatalogEnabled = ["roupas", "roupas_esportivas", "roupas_treino"].includes(form.module);
+  const sportsCatalogEnabled = ["roupas", "roupas_esportivas", "roupas_treino"].includes(
+    form.module,
+  );
 
   function currentCategoryModule() {
     if (jewelryOnly) return "joias";
@@ -366,7 +405,8 @@ function Products() {
       store?.category,
       trainingOnly,
       shoesOnly,
-      cafeteriaOnly, marmitariaOnly,
+      cafeteriaOnly,
+      marmitariaOnly,
       jewelryOnly,
       sportsOnly,
       open,
@@ -383,8 +423,12 @@ function Products() {
       const module = open ? form.module : currentCategoryModule();
       const moduleCategories = (data ?? []).filter((category) => category.module === module);
       const neutralCategory =
-        moduleCategories.find((category) => category.is_active !== false && isNeutralCategoryName(category.name)) ??
-        (data ?? []).find((category) => category.is_active !== false && isNeutralCategoryName(category.name));
+        moduleCategories.find(
+          (category) => category.is_active !== false && isNeutralCategoryName(category.name),
+        ) ??
+        (data ?? []).find(
+          (category) => category.is_active !== false && isNeutralCategoryName(category.name),
+        );
       const visible = [
         ...moduleCategories.filter((category) => !isNeutralCategoryName(category.name)),
         ...(neutralCategory ? [neutralCategory] : []),
@@ -422,17 +466,22 @@ function Products() {
         .select("id, name, brand_id")
         .eq("store_id", store!.id);
       if (form.shoe_brand_id !== "none") query = query.eq("brand_id", form.shoe_brand_id);
-      const { data, error } = await query
-        .eq("is_active", true)
-        .order("position")
-        .order("name");
+      const { data, error } = await query.eq("is_active", true).order("position").order("name");
       if (error) throw error;
       return data ?? [];
     },
   });
 
   const { data: products } = useQuery({
-    queryKey: ["products", store?.id, trainingOnly, shoesOnly, cafeteriaOnly, marmitariaOnly, jewelryOnly],
+    queryKey: [
+      "products",
+      store?.id,
+      trainingOnly,
+      shoesOnly,
+      cafeteriaOnly,
+      marmitariaOnly,
+      jewelryOnly,
+    ],
     enabled: Boolean(store?.id),
     queryFn: async () => {
       let query = supabase
@@ -493,14 +542,14 @@ function Products() {
       module: jewelryOnly
         ? "joias"
         : trainingOnly
-        ? "roupas_treino"
-        : shoesOnly
-          ? "calcados"
-          : marmitariaOnly
-            ? "marmitaria"
-          : cafeteriaOnly
-            ? "cafeteria"
-            : currentCategoryModule(),
+          ? "roupas_treino"
+          : shoesOnly
+            ? "calcados"
+            : marmitariaOnly
+              ? "marmitaria"
+              : cafeteriaOnly
+                ? "cafeteria"
+                : currentCategoryModule(),
     });
     setVariants([]);
     setOrderTiers([]);
@@ -631,10 +680,14 @@ function Products() {
     if (!store?.owner_id) return;
     try {
       const path = await uploadAsset(store.owner_id, file);
-      setVariants((current) => current.map((item, i) => i === index ? { ...item, image_url: path } : item));
+      setVariants((current) =>
+        current.map((item, i) => (i === index ? { ...item, image_url: path } : item)),
+      );
       toast.success("Imagem da variação adicionada.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível enviar a imagem da variação.");
+      toast.error(
+        error instanceof Error ? error.message : "Não foi possível enviar a imagem da variação.",
+      );
     }
   }
 
@@ -654,7 +707,13 @@ function Products() {
     if (form.module === "joias" && form.jewelry_offer_active) {
       const original = Number(String(form.jewelry_original_price).replace(",", "."));
       const offer = Number(String(form.jewelry_offer_price).replace(",", "."));
-      if (!Number.isFinite(original) || !Number.isFinite(offer) || original <= 0 || offer < 0 || offer >= original) {
+      if (
+        !Number.isFinite(original) ||
+        !Number.isFinite(offer) ||
+        original <= 0 ||
+        offer < 0 ||
+        offer >= original
+      ) {
         toast.error("Informe um preço promocional menor que o preço original.");
         return;
       }
@@ -723,7 +782,9 @@ function Products() {
             .single();
           if (brandError || !data) {
             setSaving(false);
-            toast.error(`Não foi possível salvar a marca: ${brandError?.message ?? "erro desconhecido"}`);
+            toast.error(
+              `Não foi possível salvar a marca: ${brandError?.message ?? "erro desconhecido"}`,
+            );
             return;
           }
           shoeBrandId = data.id;
@@ -746,7 +807,9 @@ function Products() {
               .single();
             if (brandError || !data) {
               setSaving(false);
-              toast.error(`Não foi possível salvar o modelo: ${brandError?.message ?? "erro desconhecido"}`);
+              toast.error(
+                `Não foi possível salvar o modelo: ${brandError?.message ?? "erro desconhecido"}`,
+              );
               return;
             }
             shoeBrandId = data.id;
@@ -778,7 +841,9 @@ function Products() {
             .single();
           if (modelError || !data) {
             setSaving(false);
-            toast.error(`Não foi possível salvar o modelo: ${modelError?.message ?? "erro desconhecido"}`);
+            toast.error(
+              `Não foi possível salvar o modelo: ${modelError?.message ?? "erro desconhecido"}`,
+            );
             return;
           }
           shoeModelId = data.id;
@@ -792,17 +857,18 @@ function Products() {
       module: jewelryOnly
         ? "joias"
         : trainingOnly
-        ? "roupas_treino"
-        : shoesOnly
-          ? "calcados"
-          : marmitariaOnly
-            ? "marmitaria"
-          : cafeteriaOnly
-            ? "cafeteria"
-            : form.module,
+          ? "roupas_treino"
+          : shoesOnly
+            ? "calcados"
+            : marmitariaOnly
+              ? "marmitaria"
+              : cafeteriaOnly
+                ? "cafeteria"
+                : form.module,
       name: form.name.trim(),
       meal_period: form.module === "marmitaria" || marmitariaOnly ? form.meal_period : "both",
-      delivery_enabled: form.module === "marmitaria" || marmitariaOnly ? Boolean(form.delivery_enabled) : false,
+      delivery_enabled:
+        form.module === "marmitaria" || marmitariaOnly ? Boolean(form.delivery_enabled) : false,
       jewelry_material: form.module === "joias" ? form.jewelry_material.trim() || null : null,
       jewelry_plating: form.module === "joias" ? form.jewelry_plating.trim() || null : null,
       jewelry_color: form.module === "joias" ? form.jewelry_color.trim() || null : null,
@@ -818,8 +884,22 @@ function Products() {
           ? Number(String(form.jewelry_offer_price).replace(",", "."))
           : null,
       jewelry_offer_percent:
-        form.module === "joias" && form.jewelry_offer_active && form.jewelry_original_price && form.jewelry_offer_price
-          ? Math.max(0, Math.min(100, Math.round((1 - Number(String(form.jewelry_offer_price).replace(",", ".")) / Number(String(form.jewelry_original_price).replace(",", "."))) * 100)))
+        form.module === "joias" &&
+        form.jewelry_offer_active &&
+        form.jewelry_original_price &&
+        form.jewelry_offer_price
+          ? Math.max(
+              0,
+              Math.min(
+                100,
+                Math.round(
+                  (1 -
+                    Number(String(form.jewelry_offer_price).replace(",", ".")) /
+                      Number(String(form.jewelry_original_price).replace(",", "."))) *
+                    100,
+                ),
+              ),
+            )
           : null,
       jewelry_offer_expires_at:
         form.module === "joias" && form.jewelry_offer_active && form.jewelry_offer_expires_at
@@ -859,10 +939,8 @@ function Products() {
         form.sports_offer_active && form.sports_offer_price
           ? Number(String(form.sports_offer_price).replace(",", "."))
           : null,
-      shoe_brand_id:
-        form.module === "calcados" ? shoeBrandId : null,
-      shoe_model_id:
-        form.module === "calcados" ? shoeModelId : null,
+      shoe_brand_id: form.module === "calcados" ? shoeBrandId : null,
+      shoe_model_id: form.module === "calcados" ? shoeModelId : null,
       shoe_authenticity: form.module === "calcados" ? form.shoe_authenticity : "original",
       shoe_gender: form.module === "calcados" ? form.shoe_gender : null,
       shoe_size: form.module === "calcados" ? form.shoe_size.trim() || null : null,
@@ -1059,31 +1137,71 @@ function Products() {
 
   async function saveCategoryName(categoryId: string) {
     if (!store || !editingCategoryName.trim()) return;
-    const { error } = await supabase.from("categories").update({ name: editingCategoryName.trim() }).eq("id", categoryId).eq("store_id", store.id);
-    if (error) { toast.error("Não foi possível renomear a categoria. Verifique se já existe outra com esse nome."); return; }
+    const { error } = await supabase
+      .from("categories")
+      .update({ name: editingCategoryName.trim() })
+      .eq("id", categoryId)
+      .eq("store_id", store.id);
+    if (error) {
+      toast.error(
+        "Não foi possível renomear a categoria. Verifique se já existe outra com esse nome.",
+      );
+      return;
+    }
     setEditingCategoryId(null);
     await queryClient.invalidateQueries({ queryKey: ["categories", store.id] });
   }
 
   async function removeCategory(category: { id: string; name: string }) {
-    if (!store || !window.confirm(`Excluir a categoria “${category.name}”? Os produtos serão mantidos sem categoria.`)) return;
-    const { error } = await supabase.from("categories").delete().eq("id", category.id).eq("store_id", store.id);
-    if (error) { toast.error("Não foi possível excluir esta categoria."); return; }
+    if (
+      !store ||
+      !window.confirm(
+        `Excluir a categoria “${category.name}”? Os produtos serão mantidos sem categoria.`,
+      )
+    )
+      return;
+    const { error } = await supabase
+      .from("categories")
+      .delete()
+      .eq("id", category.id)
+      .eq("store_id", store.id);
+    if (error) {
+      toast.error("Não foi possível excluir esta categoria.");
+      return;
+    }
     await queryClient.invalidateQueries({ queryKey: ["categories", store.id] });
     await queryClient.invalidateQueries({ queryKey: ["products", store.id] });
   }
 
-  async function moveCategory(category: { id: string; module: string; position: number }, direction: -1 | 1) {
+  async function moveCategory(
+    category: { id: string; module: string; position: number },
+    direction: -1 | 1,
+  ) {
     if (!store) return;
-    const siblings = (categories ?? []).filter((item) => item.module === category.module && item.is_active !== false)
+    const siblings = (categories ?? [])
+      .filter((item) => item.module === category.module && item.is_active !== false)
       .sort((a, b) => a.position - b.position);
     const index = siblings.findIndex((item) => item.id === category.id);
     const other = siblings[index + direction];
     if (!other) return;
-    const { error } = await supabase.from("categories").update({ position: other.position }).eq("id", category.id).eq("store_id", store.id);
-    if (error) { toast.error("Não foi possível reordenar as categorias."); return; }
-    const { error: otherError } = await supabase.from("categories").update({ position: category.position }).eq("id", other.id).eq("store_id", store.id);
-    if (otherError) { toast.error("Não foi possível concluir a reordenação."); return; }
+    const { error } = await supabase
+      .from("categories")
+      .update({ position: other.position })
+      .eq("id", category.id)
+      .eq("store_id", store.id);
+    if (error) {
+      toast.error("Não foi possível reordenar as categorias.");
+      return;
+    }
+    const { error: otherError } = await supabase
+      .from("categories")
+      .update({ position: category.position })
+      .eq("id", other.id)
+      .eq("store_id", store.id);
+    if (otherError) {
+      toast.error("Não foi possível concluir a reordenação.");
+      return;
+    }
     await queryClient.invalidateQueries({ queryKey: ["categories", store.id] });
   }
 
@@ -1092,13 +1210,19 @@ function Products() {
     setCategoryImageUploading(categoryId);
     try {
       const path = await uploadAsset(store.owner_id, file);
-      const { error } = await supabase.from("categories").update({ image_url: path }).eq("id", categoryId).eq("store_id", store.id);
+      const { error } = await supabase
+        .from("categories")
+        .update({ image_url: path })
+        .eq("id", categoryId)
+        .eq("store_id", store.id);
       if (error) throw error;
       await queryClient.invalidateQueries({ queryKey: ["categories", store.id] });
       toast.success("Imagem da categoria atualizada.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível enviar a imagem.");
-    } finally { setCategoryImageUploading(null); }
+    } finally {
+      setCategoryImageUploading(null);
+    }
   }
 
   async function toggleCategory(category: { id: string; name: string; is_active: boolean | null }) {
@@ -1125,7 +1249,8 @@ function Products() {
           </div>
           <h2 className="mt-4 text-2xl font-bold">Recurso exclusivo PRO</h2>
           <p className="mx-auto mt-2 max-w-md text-muted-foreground">
-            Crie uma loja especializada em joias e semijoias com categorias prontas, personalização completa e uma vitrine profissional.
+            Crie uma loja especializada em joias e semijoias com categorias prontas, personalização
+            completa e uma vitrine profissional.
           </p>
           <Button className="mt-5" asChild>
             <Link to="/assinatura">Conhecer o Vitrini PRO</Link>
@@ -1186,27 +1311,113 @@ function Products() {
         <div className="space-y-2">
           {(categories ?? []).map((category, index) => {
             const active = category.is_active !== false;
-            const siblings = (categories ?? []).filter((item) => item.module === category.module && item.is_active !== false);
+            const siblings = (categories ?? []).filter(
+              (item) => item.module === category.module && item.is_active !== false,
+            );
             return (
-              <div key={category.id} className={`flex flex-wrap items-center gap-2 rounded-xl border p-2 ${active ? "" : "opacity-60"}`}>
+              <div
+                key={category.id}
+                className={`flex flex-wrap items-center gap-2 rounded-xl border p-2 ${active ? "" : "opacity-60"}`}
+              >
                 <CategoryImagePreview path={category.image_url} />
                 {editingCategoryId === category.id ? (
-                  <Input className="min-w-36 flex-1" autoFocus value={editingCategoryName} onChange={(event) => setEditingCategoryName(event.target.value)} />
-                ) : <button type="button" className={`min-w-36 flex-1 text-left text-sm font-medium ${active ? "" : "line-through"}`} onClick={() => void toggleCategory(category)}>{category.name}{active ? " ✓" : " · desativada"}</button>}
+                  <Input
+                    className="min-w-36 flex-1"
+                    autoFocus
+                    value={editingCategoryName}
+                    onChange={(event) => setEditingCategoryName(event.target.value)}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    className={`min-w-36 flex-1 text-left text-sm font-medium ${active ? "" : "line-through"}`}
+                    onClick={() => void toggleCategory(category)}
+                  >
+                    {category.name}
+                    {active ? " ✓" : " · desativada"}
+                  </button>
+                )}
                 <div className="flex items-center gap-1">
-                  {editingCategoryId === category.id ? <>
-                    <Button type="button" size="sm" onClick={() => void saveCategoryName(category.id)}>Salvar</Button>
-                    <Button type="button" size="sm" variant="ghost" onClick={() => setEditingCategoryId(null)}>Cancelar</Button>
-                  </> : <>
-                    <Button type="button" size="icon" variant="ghost" title="Renomear" onClick={() => { setEditingCategoryId(category.id); setEditingCategoryName(category.name); }}><Pencil className="size-4" /></Button>
-                    <label className="inline-flex size-9 cursor-pointer items-center justify-center rounded-md hover:bg-muted" title="Alterar imagem">
-                      <ImageIcon className="size-4" />
-                      <input type="file" accept="image/*" className="sr-only" disabled={categoryImageUploading === category.id} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadCategoryImage(category.id, file); event.currentTarget.value = ""; }} />
-                    </label>
-                    <Button type="button" size="icon" variant="ghost" title="Mover para cima" disabled={!active || index === 0} onClick={() => void moveCategory(category, -1)}>↑</Button>
-                    <Button type="button" size="icon" variant="ghost" title="Mover para baixo" disabled={!active || index >= siblings.length - 1} onClick={() => void moveCategory(category, 1)}>↓</Button>
-                    <Button type="button" size="icon" variant="ghost" title="Excluir categoria" onClick={() => void removeCategory(category)}><Trash2 className="size-4" /></Button>
-                  </>}
+                  {editingCategoryId === category.id ? (
+                    <>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => void saveCategoryName(category.id)}
+                      >
+                        Salvar
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setEditingCategoryId(null)}
+                      >
+                        Cancelar
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        title="Renomear"
+                        onClick={() => {
+                          setEditingCategoryId(category.id);
+                          setEditingCategoryName(category.name);
+                        }}
+                      >
+                        <Pencil className="size-4" />
+                      </Button>
+                      <label
+                        className="inline-flex size-9 cursor-pointer items-center justify-center rounded-md hover:bg-muted"
+                        title="Alterar imagem"
+                      >
+                        <ImageIcon className="size-4" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="sr-only"
+                          disabled={categoryImageUploading === category.id}
+                          onChange={(event) => {
+                            const file = event.target.files?.[0];
+                            if (file) void uploadCategoryImage(category.id, file);
+                            event.currentTarget.value = "";
+                          }}
+                        />
+                      </label>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        title="Mover para cima"
+                        disabled={!active || index === 0}
+                        onClick={() => void moveCategory(category, -1)}
+                      >
+                        ↑
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        title="Mover para baixo"
+                        disabled={!active || index >= siblings.length - 1}
+                        onClick={() => void moveCategory(category, 1)}
+                      >
+                        ↓
+                      </Button>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        title="Excluir categoria"
+                        onClick={() => void removeCategory(category)}
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             );
@@ -1266,49 +1477,49 @@ function Products() {
                   ["🎁", "Outro"],
                 ]
               : shoesOnly
-              ? [
-                  ["👟", "Tênis"],
-                  ["👢", "Botas"],
-                  ["👞", "Sapatos"],
-                  ["🩴", "Sandálias"],
-                  ["🥿", "Sapatilhas"],
-                  ["🧒", "Infantil"],
-                  ["⚽", "Esportivos"],
-                  ["🎯", "Personalizados"],
-                ]
-              : cafeteriaOnly
                 ? [
-                    ["☕", "Café"],
-                    ["🥛", "Cappuccino"],
-                    ["🥟", "Empada"],
-                    ["🥐", "Pastel Assado"],
-                    ["🥧", "Tortinha"],
-                    ["🍰", "Bolo"],
-                    ["🍪", "Doce"],
-                    ["🥤", "Bebida"],
-                    ["⭐", "Combo"],
+                    ["👟", "Tênis"],
+                    ["👢", "Botas"],
+                    ["👞", "Sapatos"],
+                    ["🩴", "Sandálias"],
+                    ["🥿", "Sapatilhas"],
+                    ["🧒", "Infantil"],
+                    ["⚽", "Esportivos"],
+                    ["🎯", "Personalizados"],
                   ]
-                : trainingOnly
+                : cafeteriaOnly
                   ? [
-                      ["👕", "Camiseta de treino"],
-                      ["💨", "Camiseta Dry Fit"],
-                      ["🏃", "Regata"],
-                      ["👚", "Top"],
-                      ["🩳", "Shorts"],
-                      ["🦵", "Legging"],
-                      ["🏋️", "Conjunto Fitness"],
-                      ["🎯", "Personalizado"],
+                      ["☕", "Café"],
+                      ["🥛", "Cappuccino"],
+                      ["🥟", "Empada"],
+                      ["🥐", "Pastel Assado"],
+                      ["🥧", "Tortinha"],
+                      ["🍰", "Bolo"],
+                      ["🍪", "Doce"],
+                      ["🥤", "Bebida"],
+                      ["⭐", "Combo"],
                     ]
-                  : [
-                      ["👕", "Camisa"],
-                      ["👚", "Blusa"],
-                      ["👗", "Vestido"],
-                      ["👖", "Calça"],
-                      ["🩳", "Shorts"],
-                      ["🧥", "Jaqueta"],
-                      ["🧶", "Moletom"],
-                      ["✨", "Personalizado"],
-                    ]
+                  : trainingOnly
+                    ? [
+                        ["👕", "Camiseta de treino"],
+                        ["💨", "Camiseta Dry Fit"],
+                        ["🏃", "Regata"],
+                        ["👚", "Top"],
+                        ["🩳", "Shorts"],
+                        ["🦵", "Legging"],
+                        ["🏋️", "Conjunto Fitness"],
+                        ["🎯", "Personalizado"],
+                      ]
+                    : [
+                        ["👕", "Camisa"],
+                        ["👚", "Blusa"],
+                        ["👗", "Vestido"],
+                        ["👖", "Calça"],
+                        ["🩳", "Shorts"],
+                        ["🧥", "Jaqueta"],
+                        ["🧶", "Moletom"],
+                        ["✨", "Personalizado"],
+                      ]
             )
               .map(([icon, label]) => [icon ?? "", label ?? ""] as const)
               .map(([icon, label]) => (
@@ -1318,19 +1529,20 @@ function Products() {
                   className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-xl border p-2 text-center text-sm transition hover:border-primary hover:bg-primary/5"
                   onClick={() => {
                     setGuidedType(label);
-                    const module = jewelryOnly || getStoreNicheModule(store?.category) === "joias"
-                      ? "joias"
-                      : cafeteriaOnly
-                      ? "cafeteria"
-                      : marmitariaOnly
-                        ? "marmitaria"
-                      : shoesOnly
-                        ? "calcados"
-                        : sportsOnly
-                          ? "roupas_esportivas"
-                            : trainingOnly
-                              ? "roupas_treino"
-                              : currentCategoryModule();
+                    const module =
+                      jewelryOnly || getStoreNicheModule(store?.category) === "joias"
+                        ? "joias"
+                        : cafeteriaOnly
+                          ? "cafeteria"
+                          : marmitariaOnly
+                            ? "marmitaria"
+                            : shoesOnly
+                              ? "calcados"
+                              : sportsOnly
+                                ? "roupas_esportivas"
+                                : trainingOnly
+                                  ? "roupas_treino"
+                                  : currentCategoryModule();
                     const jewelryCategoryByType: Record<string, string> = {
                       Anel: "aneis",
                       Aliança: "aliancas",
@@ -1349,7 +1561,8 @@ function Products() {
                     const matchingCategory = categories?.find((category) => {
                       const target = module === "joias" ? jewelryCategoryByType[label] : label;
                       return Boolean(
-                        target && normalizeCategory(category.name).includes(normalizeCategory(target)),
+                        target &&
+                        normalizeCategory(category.name).includes(normalizeCategory(target)),
                       );
                     });
                     setForm({
@@ -1459,7 +1672,10 @@ function Products() {
                         <Button
                           size="sm"
                           onClick={() => {
-                            const suggestion = interpretProductText(result.name, currentCategoryModule());
+                            const suggestion = interpretProductText(
+                              result.name,
+                              currentCategoryModule(),
+                            );
                             if (suggestion.module === "joias" && store?.plan !== "pro") {
                               toast.error("Joias e Semijoias é exclusivo do Vitrini PRO.");
                               return;
@@ -1552,15 +1768,15 @@ function Products() {
                         ? "👟 Calçados"
                         : smartSuggestion.module === "roupas_treino"
                           ? "🏋️ Treino"
-                        : smartSuggestion.module === "roupas_esportivas"
-                          ? "⚽ Esportivas"
-                          : smartSuggestion.module === "cafeteria"
-                            ? "☕ Cafeteria"
-                      : smartSuggestion.module === "marmitaria"
-                              ? "🍱 Marmitaria"
-                            : smartSuggestion.module === "joias"
-                              ? "💎 Joias e Semijoias"
-                              : "👕 Roupas",
+                          : smartSuggestion.module === "roupas_esportivas"
+                            ? "⚽ Esportivas"
+                            : smartSuggestion.module === "cafeteria"
+                              ? "☕ Cafeteria"
+                              : smartSuggestion.module === "marmitaria"
+                                ? "🍱 Marmitaria"
+                                : smartSuggestion.module === "joias"
+                                  ? "💎 Joias e Semijoias"
+                                  : "👕 Roupas",
                     ],
                     ["Marca", smartSuggestion.brand],
                     ["Modelo", smartSuggestion.model],
@@ -1646,12 +1862,12 @@ function Products() {
                     {jewelryOnly
                       ? "💎 Joias e Semijoias"
                       : marmitariaOnly
-                      ? "🍱 Marmitaria"
-                      : cafeteriaOnly
-                      ? "☕ Cafeteria"
-                      : trainingOnly
-                        ? "🏋️ Roupas de Treino / Academia"
-                        : "👟 Calçados"}
+                        ? "🍱 Marmitaria"
+                        : cafeteriaOnly
+                          ? "☕ Cafeteria"
+                          : trainingOnly
+                            ? "🏋️ Roupas de Treino / Academia"
+                            : "👟 Calçados"}
                   </div>
                 ) : (
                   <Select
@@ -1677,7 +1893,9 @@ function Products() {
                       <SelectItem value="calcados">👟 Calçados</SelectItem>
                       <SelectItem value="cafeteria">☕ Cafeteria</SelectItem>
                       <SelectItem value="marmitaria">🍱 Marmitaria</SelectItem>
-                      {store?.plan === "pro" ? <SelectItem value="joias">💎 Joias e Semijoias</SelectItem> : null}
+                      {store?.plan === "pro" ? (
+                        <SelectItem value="joias">💎 Joias e Semijoias</SelectItem>
+                      ) : null}
                     </SelectContent>
                   </Select>
                 )}
@@ -1689,11 +1907,13 @@ function Products() {
                 <div className="space-y-2 rounded-lg border border-primary/20 bg-primary/5 p-3">
                   <Label>🕐 Período da refeição</Label>
                   <div className="grid grid-cols-3 gap-2">
-                    {([
-                      ["lunch", "☀️ Almoço"],
-                      ["dinner", "🌙 Janta"],
-                      ["both", "☀️🌙 Almoço e Janta"],
-                    ] as const).map(([value, label]) => (
+                    {(
+                      [
+                        ["lunch", "☀️ Almoço"],
+                        ["dinner", "🌙 Janta"],
+                        ["both", "☀️🌙 Almoço e Janta"],
+                      ] as const
+                    ).map(([value, label]) => (
                       <button
                         key={value}
                         type="button"
@@ -1767,17 +1987,75 @@ function Products() {
               </div>
               {form.module === "joias" || jewelryOnly ? (
                 <div className="space-y-3 rounded-xl border border-amber-300/60 bg-gradient-to-br from-amber-50/70 to-background p-4 dark:border-amber-900/60 dark:from-amber-950/20">
-                  <div><p className="font-semibold">💎 Detalhes da joia</p><p className="text-xs text-muted-foreground">Material, banho, cor e pedra são opcionais.</p></div>
-                  <div className="grid grid-cols-2 gap-3">
-                    {([["jewelry_material", "Material", "Ouro, prata, aço"], ["jewelry_plating", "Banho", "Ouro 18K, ródio"], ["jewelry_color", "Cor", "Dourado, rosé"], ["jewelry_stone", "Pedra", "Zircônia, pérola"]] as const).map(([field, label, placeholder]) => <div key={field} className="space-y-1.5"><Label>{label}</Label><Input placeholder={placeholder} value={form[field]} onChange={(event) => setForm({ ...form, [field]: event.target.value })} /></div>)}
+                  <div>
+                    <p className="font-semibold">💎 Detalhes da joia</p>
+                    <p className="text-xs text-muted-foreground">
+                      Material, banho, cor e pedra são opcionais.
+                    </p>
                   </div>
-                  <ToggleRow label="⭐ Exibir nos Lançamentos" checked={form.jewelry_is_new_release} onChange={(value) => setForm({ ...form, jewelry_is_new_release: value })} />
-                  <ToggleRow label="🔥 Ativar oferta" checked={form.jewelry_offer_active} onChange={(value) => setForm({ ...form, jewelry_offer_active: value })} />
-                  {form.jewelry_offer_active ? <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5"><Label>Preço original</Label><Input inputMode="decimal" value={form.jewelry_original_price} onChange={(event) => setForm({ ...form, jewelry_original_price: event.target.value })} /></div>
-                    <div className="space-y-1.5"><Label>Preço promocional</Label><Input inputMode="decimal" value={form.jewelry_offer_price} onChange={(event) => setForm({ ...form, jewelry_offer_price: event.target.value })} /></div>
-                    <div className="col-span-2 space-y-1.5"><Label>Validade (opcional)</Label><Input type="date" value={form.jewelry_offer_expires_at} onChange={(event) => setForm({ ...form, jewelry_offer_expires_at: event.target.value })} /></div>
-                  </div> : null}
+                  <div className="grid grid-cols-2 gap-3">
+                    {(
+                      [
+                        ["jewelry_material", "Material", "Ouro, prata, aço"],
+                        ["jewelry_plating", "Banho", "Ouro 18K, ródio"],
+                        ["jewelry_color", "Cor", "Dourado, rosé"],
+                        ["jewelry_stone", "Pedra", "Zircônia, pérola"],
+                      ] as const
+                    ).map(([field, label, placeholder]) => (
+                      <div key={field} className="space-y-1.5">
+                        <Label>{label}</Label>
+                        <Input
+                          placeholder={placeholder}
+                          value={form[field]}
+                          onChange={(event) => setForm({ ...form, [field]: event.target.value })}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <ToggleRow
+                    label="⭐ Exibir nos Lançamentos"
+                    checked={form.jewelry_is_new_release}
+                    onChange={(value) => setForm({ ...form, jewelry_is_new_release: value })}
+                  />
+                  <ToggleRow
+                    label="🔥 Ativar oferta"
+                    checked={form.jewelry_offer_active}
+                    onChange={(value) => setForm({ ...form, jewelry_offer_active: value })}
+                  />
+                  {form.jewelry_offer_active ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label>Preço original</Label>
+                        <Input
+                          inputMode="decimal"
+                          value={form.jewelry_original_price}
+                          onChange={(event) =>
+                            setForm({ ...form, jewelry_original_price: event.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>Preço promocional</Label>
+                        <Input
+                          inputMode="decimal"
+                          value={form.jewelry_offer_price}
+                          onChange={(event) =>
+                            setForm({ ...form, jewelry_offer_price: event.target.value })
+                          }
+                        />
+                      </div>
+                      <div className="col-span-2 space-y-1.5">
+                        <Label>Validade (opcional)</Label>
+                        <Input
+                          type="date"
+                          value={form.jewelry_offer_expires_at}
+                          onChange={(event) =>
+                            setForm({ ...form, jewelry_offer_expires_at: event.target.value })
+                          }
+                        />
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </CollapsibleSection>
@@ -1848,7 +2126,8 @@ function Products() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Novas marcas e modelos digitados ficam salvos como sugestões para os próximos cadastros.
+                  Novas marcas e modelos digitados ficam salvos como sugestões para os próximos
+                  cadastros.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
@@ -2084,7 +2363,12 @@ function Products() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => setVariants([...variants, { label: "", price: "", stock: "", sku: "", image_url: null }])}
+                  onClick={() =>
+                    setVariants([
+                      ...variants,
+                      { label: "", price: "", stock: "", sku: "", image_url: null },
+                    ])
+                  }
                 >
                   <Plus className="size-4" />
                 </Button>
@@ -2100,18 +2384,29 @@ function Products() {
                 </div>
               ) : null}
               {variants.map((variant, index) => (
-                <div key={index} className="grid grid-cols-[1fr_84px_72px_auto] items-end gap-2 rounded-lg border p-2">
+                <div
+                  key={index}
+                  className="grid grid-cols-[1fr_84px_72px_auto] items-end gap-2 rounded-lg border p-2"
+                >
                   <div className="space-y-2">
-                  <Input
-                    placeholder="Opção"
-                    value={variant.label}
-                    onChange={(e) => {
-                      const next = [...variants];
-                      next[index] = { ...variant, label: e.target.value };
-                      setVariants(next);
-                    }}
-                  />
-                  <Input placeholder="SKU (opcional)" value={variant.sku} onChange={(e) => { const next = [...variants]; next[index] = { ...variant, sku: e.target.value }; setVariants(next); }} />
+                    <Input
+                      placeholder="Opção"
+                      value={variant.label}
+                      onChange={(e) => {
+                        const next = [...variants];
+                        next[index] = { ...variant, label: e.target.value };
+                        setVariants(next);
+                      }}
+                    />
+                    <Input
+                      placeholder="SKU (opcional)"
+                      value={variant.sku}
+                      onChange={(e) => {
+                        const next = [...variants];
+                        next[index] = { ...variant, sku: e.target.value };
+                        setVariants(next);
+                      }}
+                    />
                   </div>
                   <Input
                     placeholder="Preço"
@@ -2133,13 +2428,37 @@ function Products() {
                       setVariants(next);
                     }}
                   />
-                  <label className="inline-flex items-center gap-1 text-xs text-muted-foreground" title="Imagem própria da variação">
+                  <label
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                    title="Imagem própria da variação"
+                  >
                     <CategoryImagePreview path={variant.image_url} />
-                    <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const file = e.target.files?.[0]; if (file) void uploadVariantImage(index, file); e.currentTarget.value = ""; }} />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) void uploadVariantImage(index, file);
+                        e.currentTarget.value = "";
+                      }}
+                    />
                   </label>
-                  <label className="inline-flex items-center gap-1 text-xs text-muted-foreground" title="Imagem própria da variação">
+                  <label
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground"
+                    title="Imagem própria da variação"
+                  >
                     <CategoryImagePreview path={variant.image_url} />
-                    <input type="file" accept="image/*" className="sr-only" onChange={(e) => { const file = e.target.files?.[0]; if (file) void uploadVariantImage(index, file); e.currentTarget.value = ""; }} />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) void uploadVariantImage(index, file);
+                        e.currentTarget.value = "";
+                      }}
+                    />
                   </label>
                   <Button
                     size="icon"

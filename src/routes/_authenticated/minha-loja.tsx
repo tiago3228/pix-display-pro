@@ -453,16 +453,14 @@ function MyStore() {
         toast.error(text);
         return;
       }
-      const res = await supabase
-        .from("stores")
-        .insert({
-          ...payload,
-          owner_id: userData.user.id,
-          onboarding_done: true,
-          plan: "basica",
-          pro_trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          pro_trial_used: true,
-        } as never);
+      const res = await supabase.from("stores").insert({
+        ...payload,
+        owner_id: userData.user.id,
+        onboarding_done: true,
+        plan: "basica",
+        pro_trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        pro_trial_used: true,
+      } as never);
       error = res.error;
     }
     setSaving(false);
@@ -545,7 +543,10 @@ function MyStore() {
         is_active: bannerDraft.is_active,
       } as never)
       .eq("id", bannerDraft.id);
-    if (error) { toast.error("Não foi possível salvar o banner."); return; }
+    if (error) {
+      toast.error("Não foi possível salvar o banner.");
+      return;
+    }
     await queryClient.invalidateQueries({ queryKey: ["storefront-banners", store?.id] });
     setSelectedBanner(null);
     setBannerDraft(null);
@@ -585,15 +586,26 @@ function MyStore() {
       .from("stores")
       .update({ category: label } as never)
       .eq("id", store.id);
-    if (error) { toast.error("Não foi possível alterar o nicho."); return; }
+    if (error) {
+      toast.error("Não foi possível alterar o nicho.");
+      return;
+    }
     const module = getStoreNicheModule(label);
     if (module === "joias") {
       const { error: activationError } = await supabase.from("store_modules").upsert(
-        { store_id: store.id, module: "joias", name: "Joias e Semijoias", is_active: true, sort_order: 70 },
+        {
+          store_id: store.id,
+          module: "joias",
+          name: "Joias e Semijoias",
+          is_active: true,
+          sort_order: 70,
+        },
         { onConflict: "store_id,module" },
       );
       if (activationError) {
-        toast.error("O nicho mudou, mas não foi possível ativar Joias. Confira o acesso PRO e a migration SQL.");
+        toast.error(
+          "O nicho mudou, mas não foi possível ativar Joias. Confira o acesso PRO e a migration SQL.",
+        );
         return;
       }
     }
@@ -619,9 +631,18 @@ function MyStore() {
       const known = new Set((jewelryCategories ?? []).map((item) => item.name));
       const defaults = [
         "Geral",
-        "💍 Anéis", "💎 Alianças", "📿 Colares", "⛓️ Correntes", "✨ Brincos",
-        "🔗 Pulseiras", "💎 Pingentes", "👑 Conjuntos", "⌚ Relógios e Acessórios",
-        "🎁 Presentes", "⭐ Lançamentos", "🔥 Ofertas",
+        "💍 Anéis",
+        "💎 Alianças",
+        "📿 Colares",
+        "⛓️ Correntes",
+        "✨ Brincos",
+        "🔗 Pulseiras",
+        "💎 Pingentes",
+        "👑 Conjuntos",
+        "⌚ Relógios e Acessórios",
+        "🎁 Presentes",
+        "⭐ Lançamentos",
+        "🔥 Ofertas",
       ];
       const additions = defaults
         .filter((name) => !known.has(name))
@@ -642,12 +663,14 @@ function MyStore() {
       const known = new Set((existing.data ?? []).map((item) => item.name));
       const suggested = selected === "marmitaria" ? MARMITARIA_CATEGORIES : CAFETERIA_CATEGORIES;
       await supabase.from("categories").insert(
-        suggested.filter((name) => !known.has(name)).map((name, position) => ({
-          store_id: store.id,
-          name,
-          module: selected === "marmitaria" ? "marmitaria" : "cafeteria",
-          position,
-        })) as never,
+        suggested
+          .filter((name) => !known.has(name))
+          .map((name, position) => ({
+            store_id: store.id,
+            name,
+            module: selected === "marmitaria" ? "marmitaria" : "cafeteria",
+            position,
+          })) as never,
       );
     }
     setNicheOpen(false);
@@ -781,23 +804,32 @@ function MyStore() {
                 ? "Calçados"
                 : suggestionNiche === "cafeteria"
                   ? "Cafeteria"
-                : suggestionNiche === "marmitaria"
-                  ? "Marmitaria"
-                : suggestionNiche === "joias"
-                  ? "Joias e Semijoias"
-                  : suggestionNiche === "roupas"
-                    ? "Roupas"
-                    : suggestionNiche,
+                  : suggestionNiche === "marmitaria"
+                    ? "Marmitaria"
+                    : suggestionNiche === "joias"
+                      ? "Joias e Semijoias"
+                      : suggestionNiche === "roupas"
+                        ? "Roupas"
+                        : suggestionNiche,
         ...palette,
       } as never)
       .eq("id", store.id);
     if (storeUpdate.error) {
       setGenerating(false);
-      { toast.error("Não foi possível criar a sugestão da loja."); return; }
+      {
+        toast.error("Não foi possível criar a sugestão da loja.");
+        return;
+      }
     }
     if (suggestionNiche === "joias") {
       const { error: activationError } = await supabase.from("store_modules").upsert(
-        { store_id: store.id, module: "joias", name: "Joias e Semijoias", is_active: true, sort_order: 70 },
+        {
+          store_id: store.id,
+          module: "joias",
+          name: "Joias e Semijoias",
+          is_active: true,
+          sort_order: 70,
+        },
         { onConflict: "store_id,module" },
       );
       if (activationError) {
@@ -819,10 +851,7 @@ function MyStore() {
       .filter((name) => !knownCategoryNames.has(name.trim().toLocaleLowerCase("pt-BR")))
       .map((name, position) => ({ store_id: store.id, name, module, position }));
     const { data: createdCategories } = categoriesToCreate.length
-      ? await supabase
-          .from("categories")
-          .insert(categoriesToCreate)
-          .select("id, name")
+      ? await supabase.from("categories").insert(categoriesToCreate).select("id, name")
       : { data: [] as { id: string; name: string }[] };
     if (suggestionNiche === "cafeteria" && createdCategories?.length) {
       const productsByCategory: Record<string, string[]> = {
@@ -929,11 +958,11 @@ function MyStore() {
           ? banner.key === "training-performance"
           : suggestionNiche === "calcados"
             ? banner.key === "shoes-launch"
-              : suggestionNiche === "cafeteria"
-                ? banner.niche === "☕ Cafeteria"
+            : suggestionNiche === "cafeteria"
+              ? banner.niche === "☕ Cafeteria"
               : suggestionNiche === "joias"
                 ? banner.niche === "💎 Joias e Semijoias"
-              : banner.niche === "👕 Roupas",
+                : banner.niche === "👕 Roupas",
     ).slice(0, 3);
     if (suggestions.length)
       await supabase.from("storefront_banners").insert(
@@ -1108,9 +1137,15 @@ function MyStore() {
                   <Input
                     placeholder="Ou digite outro nicho"
                     value={
-                      !["roupas", "esportes", "treino", "calcados", "cafeteria", "marmitaria", "joias"].includes(
-                        suggestionNiche,
-                      )
+                      ![
+                        "roupas",
+                        "esportes",
+                        "treino",
+                        "calcados",
+                        "cafeteria",
+                        "marmitaria",
+                        "joias",
+                      ].includes(suggestionNiche)
                         ? suggestionNiche
                         : ""
                     }

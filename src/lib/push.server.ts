@@ -19,7 +19,8 @@ export async function notifyStoreOfNewOrder(input: {
 
   const webpush = await import("web-push");
   webpush.default?.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
-  if (webpush.setVapidDetails) webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
+  if (webpush.setVapidDetails)
+    webpush.setVapidDetails(vapidSubject, vapidPublicKey, vapidPrivateKey);
   const payload = JSON.stringify({
     title: "Novo pedido recebido",
     body: `Pedido #${input.orderNumber} · R$ ${input.total.toFixed(2).replace(".", ",")}`,

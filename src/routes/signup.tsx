@@ -80,7 +80,9 @@ function SignupPage() {
       }
       navigate({ to: "/onboarding" });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível criar a conta. Tente novamente.");
+      toast.error(
+        error instanceof Error ? error.message : "Não foi possível criar a conta. Tente novamente.",
+      );
     } finally {
       setLoading(false);
     }
