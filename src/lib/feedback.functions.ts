@@ -45,7 +45,9 @@ export const getAdminFeedback = createServerFn({ method: "GET" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
       .from("owner_feedback")
-      .select("id, store_id, owner_id, category, subject, message, status, admin_note, created_at, updated_at, stores(name, slug)")
+      .select(
+        "id, store_id, owner_id, category, subject, message, status, admin_note, created_at, updated_at, stores(name, slug)",
+      )
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];
@@ -54,7 +56,13 @@ export const getAdminFeedback = createServerFn({ method: "GET" })
 export const updateAdminFeedback = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: unknown) =>
-    z.object({ id: z.string().uuid(), status: statusSchema, adminNote: z.string().max(2000).default("") }).parse(data),
+    z
+      .object({
+        id: z.string().uuid(),
+        status: statusSchema,
+        adminNote: z.string().max(2000).default(""),
+      })
+      .parse(data),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.supabase as never, context.userId);

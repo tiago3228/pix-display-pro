@@ -318,7 +318,9 @@ export const createProductsFromAi = createServerFn({ method: "POST" })
         if (item.categoryName) {
           const key = categoryKey(targetModule, item.categoryName);
           categoryId =
-            categories.get(key) ?? categories.get(categoryKey("neutral", item.categoryName)) ?? null;
+            categories.get(key) ??
+            categories.get(categoryKey("neutral", item.categoryName)) ??
+            null;
           if (!categoryId) {
             const { data: newCategory } = await ctx.supabase
               .from("categories")

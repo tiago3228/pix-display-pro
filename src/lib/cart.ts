@@ -99,7 +99,15 @@ export function buildOrderMessage(opts: {
   note?: string;
   installments?: number;
   receiptUrl?: string | null;
-  deliveryAddress?: { cep: string; address: string; number: string; complement?: string; neighborhood: string; city: string; state: string } | null;
+  deliveryAddress?: {
+    cep: string;
+    address: string;
+    number: string;
+    complement?: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+  } | null;
 }) {
   const lines: string[] = [];
   lines.push(`Olá, ${opts.sellerName || "tudo bem"}! 😊`);
@@ -132,7 +140,9 @@ export function buildOrderMessage(opts: {
   }
   if (opts.deliveryAddress) {
     const a = opts.deliveryAddress;
-    lines.push(`📍 Entrega: ${a.address}, ${a.number}${a.complement ? `, ${a.complement}` : ""} - ${a.neighborhood}, ${a.city}/${a.state} - CEP ${a.cep}`);
+    lines.push(
+      `📍 Entrega: ${a.address}, ${a.number}${a.complement ? `, ${a.complement}` : ""} - ${a.neighborhood}, ${a.city}/${a.state} - CEP ${a.cep}`,
+    );
   }
   if (opts.receiptUrl) {
     lines.push("");

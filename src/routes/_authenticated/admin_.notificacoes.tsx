@@ -71,7 +71,10 @@ const sections = [
 
 function AdminNotifications() {
   return (
-    <AppShell title="FAQ de notificações" description="Orientações para configurar alertas de novos pedidos">
+    <AppShell
+      title="FAQ de notificações"
+      description="Orientações para configurar alertas de novos pedidos"
+    >
       <div className="space-y-5">
         <section className="rounded-2xl border border-primary/20 bg-primary/5 p-5 sm:p-7">
           <div className="flex items-start gap-3">
@@ -82,17 +85,31 @@ function AdminNotifications() {
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">
                 Guia para atendimento
               </p>
-              <h2 className="mt-1 text-2xl font-bold tracking-tight">Como ativar os alertas de pedidos</h2>
+              <h2 className="mt-1 text-2xl font-bold tracking-tight">
+                Como ativar os alertas de pedidos
+              </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                Envie estas instruções ao lojista conforme o dispositivo usado. O pedido continua sendo
-                registrado mesmo quando uma notificação não é entregue.
+                Envie estas instruções ao lojista conforme o dispositivo usado. O pedido continua
+                sendo registrado mesmo quando uma notificação não é entregue.
               </p>
             </div>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            <MiniCard icon={Wifi} title="HTTPS obrigatório" text="A ativação só funciona no endereço publicado e seguro." />
-            <MiniCard icon={BellRing} title="Permissão local" text="O lojista precisa permitir alertas no navegador e no sistema." />
-            <MiniCard icon={ClipboardCheck} title="Teste real" text="Confirme enviando um pedido por outro celular ou computador." />
+            <MiniCard
+              icon={Wifi}
+              title="HTTPS obrigatório"
+              text="A ativação só funciona no endereço publicado e seguro."
+            />
+            <MiniCard
+              icon={BellRing}
+              title="Permissão local"
+              text="O lojista precisa permitir alertas no navegador e no sistema."
+            />
+            <MiniCard
+              icon={ClipboardCheck}
+              title="Teste real"
+              text="Confirme enviando um pedido por outro celular ou computador."
+            />
           </div>
         </section>
 
@@ -115,7 +132,11 @@ function AdminNotifications() {
 
         <div className="space-y-3">
           {sections.map((section) => (
-            <details key={section.title} className="surface group overflow-hidden" open={section.title === "iPhone e iPad"}>
+            <details
+              key={section.title}
+              className="surface group overflow-hidden"
+              open={section.title === "iPhone e iPad"}
+            >
               <summary className="flex cursor-pointer list-none items-center gap-3 p-4 font-semibold [&::-webkit-details-marker]:hidden">
                 <section.icon className="size-5 text-primary" />
                 <span className="flex-1">{section.title}</span>
@@ -147,10 +168,22 @@ function AdminNotifications() {
         <section className="surface p-5 sm:p-6">
           <h2 className="font-semibold">Diagnóstico dos erros mais comuns</h2>
           <div className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
-            <Diagnostic title="Permissão bloqueada" text="Abrir as configurações do site, permitir Notificações e recarregar o painel." />
-            <Diagnostic title="Registration failed" text="Testar HTTPS, limpar o Service Worker antigo e tentar novamente no Chrome/Edge." />
-            <Diagnostic title="push service error" text="No Brave, habilitar os serviços Google para Push ou testar outro navegador." />
-            <Diagnostic title="Nenhum alerta chegou" text="Confirmar VAPID, assinatura salva, internet e se o pedido foi feito depois da ativação." />
+            <Diagnostic
+              title="Permissão bloqueada"
+              text="Abrir as configurações do site, permitir Notificações e recarregar o painel."
+            />
+            <Diagnostic
+              title="Registration failed"
+              text="Testar HTTPS, limpar o Service Worker antigo e tentar novamente no Chrome/Edge."
+            />
+            <Diagnostic
+              title="push service error"
+              text="No Brave, habilitar os serviços Google para Push ou testar outro navegador."
+            />
+            <Diagnostic
+              title="Nenhum alerta chegou"
+              text="Confirmar VAPID, assinatura salva, internet e se o pedido foi feito depois da ativação."
+            />
           </div>
         </section>
       </div>

@@ -13,11 +13,17 @@ const subscriptionSchema = z.object({
 });
 
 function b64urlToBytes(value: string) {
-  const b64 = value.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+  const b64 = value
+    .replace(/-/g, "+")
+    .replace(/_/g, "/")
+    .padEnd(Math.ceil(value.length / 4) * 4, "=");
   return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 }
 function bytesToB64url(bytes: Uint8Array) {
-  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
 
 // Confere se a chave privada pertence à pública: assina com a privada e verifica com a pública.
@@ -33,7 +39,13 @@ async function checkVapidPair(publicKey: string, privateKey: string): Promise<bo
     false,
     ["sign"],
   );
-  const pubKey = await crypto.subtle.importKey("raw", pub, { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"]);
+  const pubKey = await crypto.subtle.importKey(
+    "raw",
+    pub,
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["verify"],
+  );
   const msg = new TextEncoder().encode("vitrini-vapid-check");
   const sig = await crypto.subtle.sign({ name: "ECDSA", hash: "SHA-256" }, priv, msg);
   return crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, pubKey, sig, msg);
@@ -90,7 +102,9 @@ export const savePushSubscription = createServerFn({ method: "POST" })
 
 export const removePushSubscription = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data: unknown) => z.object({ storeId: z.string().uuid(), endpoint: z.string().url() }).parse(data))
+  .validator((data: unknown) =>
+    z.object({ storeId: z.string().uuid(), endpoint: z.string().url() }).parse(data),
+  )
   .handler(async ({ data, context }) => {
     const { data: store } = await context.supabase
       .from("stores")
@@ -99,6 +113,10 @@ export const removePushSubscription = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!store) throw new Error("Loja não encontrada.");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("push_subscriptions").delete().eq("store_id", data.storeId).eq("endpoint", data.endpoint);
+    await supabaseAdmin
+      .from("push_subscriptions")
+      .delete()
+      .eq("store_id", data.storeId)
+      .eq("endpoint", data.endpoint);
     return { ok: true };
   });
