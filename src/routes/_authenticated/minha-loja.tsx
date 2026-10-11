@@ -592,18 +592,16 @@ function MyStore() {
     }
     const module = getStoreNicheModule(label);
     if (module === "joias") {
-      const { error: activationError } = await supabase
-        .from("store_modules")
-        .upsert(
-          {
-            store_id: store.id,
-            module: "joias",
-            name: "Joias e Semijoias",
-            is_active: true,
-            sort_order: 70,
-          },
-          { onConflict: "store_id,module" },
-        );
+      const { error: activationError } = await supabase.from("store_modules").upsert(
+        {
+          store_id: store.id,
+          module: "joias",
+          name: "Joias e Semijoias",
+          is_active: true,
+          sort_order: 70,
+        },
+        { onConflict: "store_id,module" },
+      );
       if (activationError) {
         toast.error(
           "O nicho mudou, mas não foi possível ativar Joias. Confira o acesso PRO e a migration SQL.",
@@ -824,18 +822,16 @@ function MyStore() {
       }
     }
     if (suggestionNiche === "joias") {
-      const { error: activationError } = await supabase
-        .from("store_modules")
-        .upsert(
-          {
-            store_id: store.id,
-            module: "joias",
-            name: "Joias e Semijoias",
-            is_active: true,
-            sort_order: 70,
-          },
-          { onConflict: "store_id,module" },
-        );
+      const { error: activationError } = await supabase.from("store_modules").upsert(
+        {
+          store_id: store.id,
+          module: "joias",
+          name: "Joias e Semijoias",
+          is_active: true,
+          sort_order: 70,
+        },
+        { onConflict: "store_id,module" },
+      );
       if (activationError) {
         setGenerating(false);
         toast.error("Não foi possível ativar Joias; confira a migration SQL e o acesso PRO.");
