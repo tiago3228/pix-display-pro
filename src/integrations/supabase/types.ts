@@ -792,6 +792,86 @@ export type Database = {
           },
         ]
       }
+      mercadopago_pix_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          expires_at: string | null
+          external_reference: string
+          id: string
+          paid_at: string | null
+          payer_email: string
+          period_end: string | null
+          period_start: string | null
+          plan: string
+          provider: string
+          provider_payment_id: string
+          qr_code: string | null
+          qr_code_base64: string | null
+          status: string
+          status_detail: string | null
+          store_id: string
+          ticket_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          external_reference: string
+          id?: string
+          paid_at?: string | null
+          payer_email: string
+          period_end?: string | null
+          period_start?: string | null
+          plan: string
+          provider?: string
+          provider_payment_id: string
+          qr_code?: string | null
+          qr_code_base64?: string | null
+          status?: string
+          status_detail?: string | null
+          store_id: string
+          ticket_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          external_reference?: string
+          id?: string
+          paid_at?: string | null
+          payer_email?: string
+          period_end?: string | null
+          period_start?: string | null
+          plan?: string
+          provider?: string
+          provider_payment_id?: string
+          qr_code?: string | null
+          qr_code_base64?: string | null
+          status?: string
+          status_detail?: string | null
+          store_id?: string
+          ticket_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mercadopago_pix_payments_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           id: string
@@ -1028,86 +1108,6 @@ export type Database = {
           },
           {
             foreignKeyName: "payment_reminders_store_id_fkey"
-            columns: ["store_id"]
-            isOneToOne: false
-            referencedRelation: "stores"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      mercadopago_pix_payments: {
-        Row: {
-          amount: number
-          created_at: string
-          currency: string
-          expires_at: string | null
-          external_reference: string
-          id: string
-          paid_at: string | null
-          payer_email: string
-          period_end: string | null
-          period_start: string | null
-          plan: string
-          provider: string
-          provider_payment_id: string
-          qr_code: string | null
-          qr_code_base64: string | null
-          status: string
-          status_detail: string | null
-          store_id: string
-          ticket_url: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          currency?: string
-          expires_at?: string | null
-          external_reference: string
-          id?: string
-          paid_at?: string | null
-          payer_email: string
-          period_end?: string | null
-          period_start?: string | null
-          plan: string
-          provider?: string
-          provider_payment_id: string
-          qr_code?: string | null
-          qr_code_base64?: string | null
-          status?: string
-          status_detail?: string | null
-          store_id: string
-          ticket_url?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          currency?: string
-          expires_at?: string | null
-          external_reference?: string
-          id?: string
-          paid_at?: string | null
-          payer_email?: string
-          period_end?: string | null
-          period_start?: string | null
-          plan?: string
-          provider?: string
-          provider_payment_id?: string
-          qr_code?: string | null
-          qr_code_base64?: string | null
-          status?: string
-          status_detail?: string | null
-          store_id?: string
-          ticket_url?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "mercadopago_pix_payments_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -2796,11 +2796,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      mark_overdue_installments: { Args: never; Returns: number }
       master_set_diamond_access: {
         Args: { _enabled: boolean; _store_id: string }
         Returns: Json
       }
-      mark_overdue_installments: { Args: never; Returns: number }
       repair_champions_2026_27: {
         Args: { target_store_id: string }
         Returns: undefined
