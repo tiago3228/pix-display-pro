@@ -2200,9 +2200,19 @@ function VariantDialog({
             <Button
               className="h-12 w-full"
               style={{ backgroundColor: color }}
-              disabled={!complete || outOfStock}
+              disabled={outOfStock}
               onClick={() => {
-                if (!variant) return;
+                if (!variant) {
+                  const missing = product.options
+                    .filter((option) => !choices[option.name])
+                    .map((option) => option.name);
+                  toast.error(
+                    missing.length > 0
+                      ? `Selecione ${missing.length === 1 ? "a opção" : "as opções"} de ${missing.join(" e ")} antes de adicionar o produto ao carrinho.`
+                      : "Selecione as opções antes de adicionar o produto ao carrinho.",
+                  );
+                  return;
+                }
                 onAdd(
                   {
                     key: `${product.id}:${variant.id}`,
