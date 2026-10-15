@@ -130,6 +130,22 @@ function AdminFeedback() {
   );
 }
 
+type FeedbackStore = { name: string | null; slug: string | null };
+
+type FeedbackRow = {
+  id: string;
+  store_id: string;
+  owner_id: string;
+  category: string;
+  subject: string;
+  message: string;
+  status: string;
+  admin_note: string | null;
+  created_at: string;
+  updated_at: string;
+  stores: FeedbackStore | FeedbackStore[] | null;
+};
+
 function FeedbackCard({
   item,
   storeName,
@@ -138,7 +154,7 @@ function FeedbackCard({
   pending,
   onSave,
 }: {
-  item: any;
+  item: FeedbackRow;
   storeName: string;
   category: string;
   Icon: typeof Bug;
