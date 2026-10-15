@@ -83,7 +83,7 @@ function AdminSubscriptions() {
   const [plan, setPlan] = useState("all");
   const [situation, setSituation] = useState("all");
 
-  const stores = data?.stores ?? [];
+  const stores = useMemo(() => data?.stores ?? [], [data]);
   async function toggleDiamond(store: AdminStoreOverview) {
     setDiamondBusy(store.id);
     try {
