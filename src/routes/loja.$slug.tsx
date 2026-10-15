@@ -1802,11 +1802,10 @@ function ProductDetail({
     : baseImages;
   const complete = product.options.every((option) => choices[option.name]);
   const simpleProduct = product.options.length === 0;
+  const variantUnavailable = complete && (!variant || variant.stock <= 0 || !variant.is_available);
   const outOfStock =
     !product.is_available ||
-    (simpleProduct
-      ? product.track_stock && product.stock <= 0
-      : complete && (!variant || variant.stock <= 0 || !variant.is_available));
+    (simpleProduct ? product.track_stock && product.stock <= 0 : variantUnavailable);
   const unitPrice =
     variant?.price ??
     (isJewelryOfferCurrent(product.jewelryOfferActive, product.jewelryOfferExpiresAt) &&
