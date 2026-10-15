@@ -531,7 +531,7 @@ export function StorePage() {
       </div>
       <header className="relative">
         <div
-          className="h-36 w-full sm:h-52"
+          className="min-h-[180px] aspect-[2.4/1] w-full sm:min-h-[260px] lg:min-h-[340px]"
           style={{
             background:
               data.sports.settings?.banner_url || store.banner
