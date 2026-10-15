@@ -76,8 +76,7 @@ export const Route = createFileRoute("/loja/$slug")({
     const title = `${store.name} | Loja Online`;
     const description =
       store.description || `Veja os produtos de ${store.name} e peça pelo WhatsApp.`;
-    const shareImage =
-      store.banner || store.logo || "https://vitrini-br.lovable.app/og-default.png";
+    const shareImage = store.logo || "https://vitrini-br.lovable.app/og-default.png";
     const shareUrl = `https://vitrini-br.lovable.app/s/${store.slug}`;
     const meta = [
       { title },
