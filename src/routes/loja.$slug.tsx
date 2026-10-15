@@ -39,6 +39,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { cn } from "@/lib/utils";
 import { getStoreModuleLabel } from "@/lib/store-niche";
 import { isJewelryOfferCurrent } from "@/lib/jewelry";
+import { missingOptionsMessage } from "@/lib/product-options";
 import { EncomendaDialog } from "@/components/EncomendaDialog";
 import { BackButton } from "@/components/BackButton";
 
@@ -1375,7 +1376,7 @@ export function StorePage() {
                         size="icon"
                         variant="outline"
                         className="size-8"
-                        aria-label="Diminuir"
+                        aria-label={`Diminuir quantidade de ${item.name}`}
                         onClick={() => cart.setQuantity(item.key, item.quantity - 1)}
                       >
                         <Minus className="size-3.5" />
@@ -1385,7 +1386,7 @@ export function StorePage() {
                         size="icon"
                         variant="outline"
                         className="size-8"
-                        aria-label="Aumentar"
+                        aria-label={`Aumentar quantidade de ${item.name}`}
                         disabled={item.maxQuantity != null && item.quantity >= item.maxQuantity}
                         onClick={() => cart.setQuantity(item.key, item.quantity + 1)}
                       >
@@ -1395,7 +1396,7 @@ export function StorePage() {
                         size="icon"
                         variant="ghost"
                         className="size-8 text-destructive"
-                        aria-label="Remover"
+                        aria-label={`Remover ${item.name} do carrinho`}
                         onClick={() => cart.remove(item.key)}
                       >
                         <Trash2 className="size-3.5" />
@@ -1425,6 +1426,7 @@ export function StorePage() {
                     <div className="mt-3 space-y-2">
                       <button
                         type="button"
+                        aria-pressed={installments === 1}
                         onClick={() => setInstallments(1)}
                         className={`w-full rounded-lg border p-3 text-left text-sm transition ${
                           installments === 1 ? "border-foreground" : "border-border"
@@ -1439,6 +1441,7 @@ export function StorePage() {
                         <button
                           key={plan.count}
                           type="button"
+                          aria-pressed={installments === plan.count}
                           onClick={() => setInstallments(plan.count)}
                           className={`w-full rounded-lg border p-3 text-left text-sm transition ${
                             installments === plan.count ? "border-foreground" : "border-border"
@@ -1474,8 +1477,12 @@ export function StorePage() {
                     className="mt-3 h-11 w-full"
                     disabled={!store.pix_key}
                     onClick={async () => {
-                      await navigator.clipboard.writeText(store.pix_key);
-                      toast.success("Chave Pix copiada!");
+                      try {
+                        await navigator.clipboard.writeText(store.pix_key);
+                        toast.success("Chave Pix copiada!");
+                      } catch {
+                        toast.error("Não foi possível copiar a chave Pix neste navegador.");
+                      }
                     }}
                   >
                     <Copy className="mr-2 size-4" /> Copiar chave Pix
@@ -1800,7 +1807,7 @@ function ProductDetail({
     !product.is_available ||
     (simpleProduct
       ? product.track_stock && product.stock <= 0
-      : !complete || !variant || variant.stock <= 0 || !variant.is_available);
+      : complete && (!variant || variant.stock <= 0 || !variant.is_available));
   const unitPrice =
     variant?.price ??
     (isJewelryOfferCurrent(product.jewelryOfferActive, product.jewelryOfferExpiresAt) &&
@@ -1812,6 +1819,11 @@ function ProductDetail({
   const maxQuantity = simpleProduct && product.track_stock ? product.stock : (variant?.stock ?? 99);
 
   function addToCart() {
+    if (!simpleProduct && !complete) {
+      const message = missingOptionsMessage(product.options, choices);
+      if (message) toast.error(message);
+      return;
+    }
     if (outOfStock || (!simpleProduct && !variant)) return;
     onAdd(
       {
@@ -1982,7 +1994,11 @@ function ProductDetail({
                   <button
                     key={value}
                     type="button"
-                    onClick={() => setChoices((current) => ({ ...current, [option.name]: value }))}
+                    aria-pressed={choices[option.name] === value}
+                    onClick={() => {
+                      setChoices((current) => ({ ...current, [option.name]: value }));
+                      setQuantity(1);
+                    }}
                     className={cn(
                       "min-w-14 rounded-lg border px-4 py-2.5 text-sm font-medium transition",
                       choices[option.name] === value
@@ -2117,7 +2133,11 @@ function VariantDialog({
                       <button
                         key={value}
                         type="button"
-                        onClick={() => setChoices((c) => ({ ...c, [option.name]: value }))}
+                        aria-pressed={active}
+                        onClick={() => {
+                          setChoices((c) => ({ ...c, [option.name]: value }));
+                          setQuantity(1);
+                        }}
                         className={cn(
                           "min-w-12 rounded-lg border px-3 py-2 text-sm font-medium",
                           active ? "border-transparent text-white" : "border-border bg-card",
@@ -2192,8 +2212,13 @@ function VariantDialog({
             <Button
               className="h-12 w-full"
               style={{ backgroundColor: color }}
-              disabled={!complete || outOfStock}
+              disabled={outOfStock}
               onClick={() => {
+                if (!complete) {
+                  const message = missingOptionsMessage(product.options, choices);
+                  if (message) toast.error(message);
+                  return;
+                }
                 if (!variant) return;
                 onAdd(
                   {
