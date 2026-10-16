@@ -10,6 +10,7 @@ import { useMyStore } from "@/hooks/useAuth";
 import { uploadAsset } from "@/lib/images";
 import { PIX_KEY_TYPES, STORE_CATEGORIES, slugify, whatsappLink } from "@/lib/format";
 import { getStoreNicheModule } from "@/lib/store-niche";
+import { getStorePublicUrl } from "@/components/StoreWhatsAppShare";
 import { QrImage } from "@/components/QrCode";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -171,8 +172,7 @@ function Onboarding() {
     setStep(4);
   }
 
-  const storeUrl =
-    typeof window !== "undefined" ? `${window.location.origin}/s/${slug}` : `/s/${slug}`;
+  const storeUrl = getStorePublicUrl(slug);
 
   if (isLoading) {
     return <div className="p-10 text-center text-sm text-muted-foreground">Carregando...</div>;

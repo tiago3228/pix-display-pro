@@ -2,11 +2,14 @@ import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+/** Endereço publicado do Vitrini — os links das lojas sempre usam este domínio,
+ * mesmo quando o app roda no preview interno do editor. */
+export const PUBLIC_APP_URL = "https://vitrini-br.lovable.app";
+
 export const DEFAULT_SHARE_MESSAGE = "Essa é a minha loja! Entre no link e confira as ofertas.";
 
 export function getStorePublicUrl(slug: string) {
-  if (typeof window === "undefined") return `/s/${slug}`;
-  return `${window.location.origin}/s/${slug}`;
+  return `${PUBLIC_APP_URL}/s/${slug}`;
 }
 
 export function buildStoreShareMessage(message: string | null | undefined, url: string) {

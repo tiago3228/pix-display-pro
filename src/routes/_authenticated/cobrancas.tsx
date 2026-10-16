@@ -140,8 +140,7 @@ function Collections() {
   }, [rows]);
 
   async function charge(row: Row & { state: string }) {
-    const origin = window.location.origin;
-    const link = collectionLink(origin, row.public_token);
+    const link = collectionLink(PUBLIC_APP_URL, row.public_token);
     const product =
       (row.orders?.order_items ?? [])
         .map((i) => `${i.product_name}${i.variant_label ? ` (${i.variant_label})` : ""}`)

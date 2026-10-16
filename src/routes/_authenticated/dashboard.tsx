@@ -18,7 +18,7 @@ import { AppShell, StatCard } from "@/components/AppShell";
 import { brl, formatDate, statusLabel } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { buildStoreShareMessage } from "@/components/StoreWhatsAppShare";
+import { buildStoreShareMessage, getStorePublicUrl } from "@/components/StoreWhatsAppShare";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -70,8 +70,7 @@ function Dashboard() {
     },
   });
 
-  const storeUrl =
-    typeof window !== "undefined" && store ? `${window.location.origin}/s/${store.slug}` : "";
+  const storeUrl = store ? getStorePublicUrl(store.slug) : "";
 
   return (
     <AppShell

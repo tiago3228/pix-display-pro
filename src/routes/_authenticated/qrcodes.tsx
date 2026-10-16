@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
 import { useMyStore } from "@/hooks/useAuth";
 import { AppShell } from "@/components/AppShell";
+import { getStorePublicUrl } from "@/components/StoreWhatsAppShare";
 import { QrImage, downloadQr } from "@/components/QrCode";
 import { slugify } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -30,8 +31,7 @@ function QrCodes() {
     },
   });
 
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const storeUrl = store ? `${origin}/s/${store.slug}` : "";
+  const storeUrl = store ? getStorePublicUrl(store.slug) : "";
 
   async function download(url: string, filename: string) {
     const dataUrl = await QRCode.toDataURL(url, { width: 1024, margin: 2 });

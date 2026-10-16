@@ -1247,9 +1247,7 @@ function MyStore() {
           </div>
           <p className="text-xs text-muted-foreground">
             Link curto:{" "}
-            {typeof window !== "undefined"
-              ? `${window.location.origin}/s/${form.slug || slugify(form.name)}`
-              : ""}
+            {getStorePublicUrl(form.slug || slugify(form.name))}
           </p>
         </div>
 
