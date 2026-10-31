@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Pizza, Plus, Save, Trash2 } from "lucide-react";
+import { Check, Pencil, Pizza, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
@@ -70,6 +70,12 @@ function PizzeriaSettings() {
   const { data: store } = useMyStore();
   const client = useQueryClient();
   const [form, setForm] = useState<PizzeriaSettingsRow | null>(null);
+  const [editingSize, setEditingSize] = useState<string | null>(null);
+  const [sizeDraft, setSizeDraft] = useState({ name: "", diameter_cm: "", max_flavors: "1" });
+  const [editingFlavor, setEditingFlavor] = useState<string | null>(null);
+  const [flavorDraft, setFlavorDraft] = useState({ name: "", description: "", category: "" });
+  const [editingAddon, setEditingAddon] = useState<string | null>(null);
+  const [addonDraft, setAddonDraft] = useState({ group_key: "borda", name: "", description: "", price: "0" });
   const [newFlavor, setNewFlavor] = useState({
     name: "",
     description: "",
@@ -86,7 +92,8 @@ function PizzeriaSettings() {
     queryKey: ["pizzeria-catalog", store?.id],
     enabled: Boolean(store?.id),
     queryFn: async () => {
-      await db.rpc("seed_pizzeria_catalog", { target_store_id: store!.id });
+      const seedResult = await db.rpc("seed_pizzeria_catalog", { target_store_id: store!.id });
+      if (seedResult.error) throw seedResult.error;
       const [settings, sizes, flavors, addons] = await Promise.all([
         db.from("pizzeria_settings").select("*").eq("store_id", store!.id).maybeSingle(),
         db
@@ -135,6 +142,45 @@ function PizzeriaSettings() {
     }
     toast.success("Configurações da pizzaria salvas.");
     await refresh();
+  }
+
+  function startEditSize(size: PizzeriaSize) {
+    setEditingSize(size.id);
+    setSizeDraft({ name: size.name, diameter_cm: size.diameter_cm == null ? "" : String(size.diameter_cm), max_flavors: String(size.max_flavors) });
+  }
+  async function saveSize(size: PizzeriaSize) {
+    const name = sizeDraft.name.trim();
+    const diameter = sizeDraft.diameter_cm.trim() ? Number(sizeDraft.diameter_cm.replace(",", ".")) : null;
+    const maxFlavors = Number(sizeDraft.max_flavors);
+    if (!name || (diameter !== null && (!Number.isFinite(diameter) || diameter <= 0)) || ![1, 2, 4].includes(maxFlavors)) { toast.error("Confira o nome, o diâmetro e a quantidade de sabores."); return; }
+    const result = await db.from("pizzeria_sizes").update({ name, diameter_cm: diameter, max_flavors: maxFlavors }).eq("id", size.id);
+    if (result.error) { toast.error("Não foi possível salvar o tamanho. Verifique se o nome já existe."); return; }
+    setEditingSize(null); toast.success("Tamanho atualizado."); await refresh();
+  }
+  function startEditFlavor(flavor: PizzeriaFlavor) {
+    setEditingFlavor(flavor.id);
+    setFlavorDraft({ name: flavor.name, description: flavor.description, category: flavor.category });
+  }
+  async function saveFlavor(flavor: PizzeriaFlavor) {
+    if (!flavorDraft.name.trim()) { toast.error("Informe o nome do sabor."); return; }
+    const result = await db.from("pizzeria_flavors").update({ name: flavorDraft.name.trim(), description: flavorDraft.description.trim(), category: flavorDraft.category.trim() || "Tradicionais" }).eq("id", flavor.id);
+    if (result.error) { toast.error("Não foi possível salvar o sabor. Verifique se o nome já existe."); return; }
+    setEditingFlavor(null); toast.success("Sabor atualizado."); await refresh();
+  }
+  function startEditAddon(addon: PizzeriaAddon) {
+    setEditingAddon(addon.id);
+    setAddonDraft({ group_key: addon.group_key, name: addon.name, description: addon.description, price: String(addon.price) });
+  }
+  async function saveAddon(addon: PizzeriaAddon) {
+    const price = Number(addonDraft.price.replace(",", "."));
+    if (!addonDraft.name.trim() || !Number.isFinite(price) || price < 0) { toast.error("Informe um nome e um preço válido (maior ou igual a zero)."); return; }
+    const result = await db.from("pizzeria_addons").update({ group_key: addonDraft.group_key, name: addonDraft.name.trim(), description: addonDraft.description.trim(), price }).eq("id", addon.id);
+    if (result.error) { toast.error("Não foi possível salvar o item. Verifique se já existe no grupo."); return; }
+    setEditingAddon(null); toast.success("Item atualizado."); await refresh();
+  }
+  async function toggleAddon(addon: PizzeriaAddon) {
+    const result = await db.from("pizzeria_addons").update({ is_active: !addon.is_active }).eq("id", addon.id);
+    if (result.error) toast.error("Não foi possível atualizar o item."); else await refresh();
   }
 
   async function toggleSize(size: PizzeriaSize) {
@@ -201,18 +247,22 @@ function PizzeriaSettings() {
   }
 
   if (!store) return null;
-  if (catalog.isLoading || !form) {
-    return (
-      <AppShell title="🍕 Pizzaria" description="Carregando a configuração da sua pizzaria..." />
-    );
-  }
   if (catalog.isError) {
     return (
       <AppShell title="🍕 Pizzaria" description="Não foi possível carregar a configuração.">
         <div className="surface p-5 text-sm text-destructive">
           Verifique se a migration da Pizzaria foi executada no Supabase e tente novamente.
+          <p className="mt-2 text-xs">{catalog.error instanceof Error ? catalog.error.message : "Erro desconhecido."}</p>
         </div>
+        <Button className="mt-3" variant="outline" onClick={() => void catalog.refetch()}>
+          Tentar novamente
+        </Button>
       </AppShell>
+    );
+  }
+  if (catalog.isLoading || !form) {
+    return (
+      <AppShell title="🍕 Pizzaria" description="Carregando a configuração da sua pizzaria..." />
     );
   }
 
@@ -302,27 +352,23 @@ function PizzeriaSettings() {
       >
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {catalog.data.sizes.map((size) => (
-            <button
-              key={size.id}
-              type="button"
-              onClick={() => void toggleSize(size)}
-              className="flex items-center justify-between rounded-lg border p-3 text-left hover:bg-muted"
-            >
-              <span>
-                <strong>{size.name}</strong>
-                <span className="ml-2 text-xs text-muted-foreground">
-                  {size.diameter_cm ? `${size.diameter_cm} cm · ` : ""}
-                  {size.max_flavors} sabor(es)
-                </span>
-              </span>
-              {size.is_active ? (
-                <Badge className="gap-1 bg-emerald-600">
-                  <Check className="size-3" /> Ativo
-                </Badge>
+            <div key={size.id} className="rounded-lg border p-3">
+              {editingSize === size.id ? (
+                <div className="space-y-2">
+                  <Input value={sizeDraft.name} onChange={(event) => setSizeDraft({ ...sizeDraft, name: event.target.value })} placeholder="Nome do tamanho" />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input value={sizeDraft.diameter_cm} onChange={(event) => setSizeDraft({ ...sizeDraft, diameter_cm: event.target.value })} placeholder="Diâmetro (cm)" inputMode="decimal" />
+                    <select className="h-9 rounded-md border border-input bg-transparent px-3 text-sm" value={sizeDraft.max_flavors} onChange={(event) => setSizeDraft({ ...sizeDraft, max_flavors: event.target.value })}><option value="1">1 sabor</option><option value="2">2 sabores</option><option value="4">4 sabores</option></select>
+                  </div>
+                  <div className="flex gap-2"><Button size="sm" onClick={() => void saveSize(size)}><Save className="mr-1 size-3" /> Salvar</Button><Button size="sm" variant="outline" onClick={() => setEditingSize(null)}><X className="mr-1 size-3" /> Cancelar</Button></div>
+                </div>
               ) : (
-                <Badge variant="outline">Inativo</Badge>
+                <div className="flex items-center justify-between gap-2">
+                  <button type="button" onClick={() => void toggleSize(size)} className="min-w-0 flex-1 text-left"><strong>{size.name}</strong><span className="ml-2 text-xs text-muted-foreground">{size.diameter_cm ? String(size.diameter_cm) + " cm · " : ""}{size.max_flavors} sabor(es)</span><span className="mt-1 block">{size.is_active ? <Badge className="bg-emerald-600">Ativo</Badge> : <Badge variant="outline">Inativo</Badge>}</span></button>
+                  <Button size="icon" variant="ghost" onClick={() => startEditSize(size)} aria-label={"Editar " + size.name}><Pencil className="size-4" /></Button>
+                </div>
               )}
-            </button>
+            </div>
           ))}
         </div>
       </CollapsibleSection>
@@ -334,24 +380,21 @@ function PizzeriaSettings() {
       >
         <div className="grid gap-2 md:grid-cols-2">
           {catalog.data.flavors.map((flavor) => (
-            <button
-              key={flavor.id}
-              type="button"
-              onClick={() => void toggleFlavor(flavor)}
-              className="rounded-lg border p-3 text-left hover:bg-muted"
-            >
-              <div className="flex items-center justify-between">
-                <strong>{flavor.name}</strong>
-                {flavor.is_active ? (
-                  <Badge className="bg-emerald-600">Ativo</Badge>
-                ) : (
-                  <Badge variant="outline">Inativo</Badge>
-                )}
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {flavor.category} · {flavor.description}
-              </p>
-            </button>
+            <div key={flavor.id} className="rounded-lg border p-3">
+              {editingFlavor === flavor.id ? (
+                <div className="space-y-2">
+                  <Input value={flavorDraft.name} onChange={(event) => setFlavorDraft({ ...flavorDraft, name: event.target.value })} placeholder="Nome do sabor" />
+                  <Input value={flavorDraft.category} onChange={(event) => setFlavorDraft({ ...flavorDraft, category: event.target.value })} placeholder="Categoria" />
+                  <Textarea value={flavorDraft.description} onChange={(event) => setFlavorDraft({ ...flavorDraft, description: event.target.value })} placeholder="Descrição e ingredientes" />
+                  <div className="flex gap-2"><Button size="sm" onClick={() => void saveFlavor(flavor)}><Save className="mr-1 size-3" /> Salvar</Button><Button size="sm" variant="outline" onClick={() => setEditingFlavor(null)}><X className="mr-1 size-3" /> Cancelar</Button></div>
+                </div>
+              ) : (
+                <div className="flex items-start justify-between gap-2">
+                  <button type="button" onClick={() => void toggleFlavor(flavor)} className="min-w-0 flex-1 text-left"><div className="flex items-center justify-between gap-2"><strong>{flavor.name}</strong>{flavor.is_active ? <Badge className="bg-emerald-600">Ativo</Badge> : <Badge variant="outline">Inativo</Badge>}</div><p className="mt-1 text-xs text-muted-foreground">{flavor.category} · {flavor.description}</p></button>
+                  <Button size="icon" variant="ghost" onClick={() => startEditFlavor(flavor)} aria-label={"Editar " + flavor.name}><Pencil className="size-4" /></Button>
+                </div>
+              )}
+            </div>
           ))}
         </div>
         <div className="mt-4 grid gap-2 rounded-lg border border-dashed p-3 md:grid-cols-[1fr_1fr_180px_auto]">
@@ -383,22 +426,21 @@ function PizzeriaSettings() {
       >
         <div className="grid gap-2 md:grid-cols-2">
           {catalog.data.addons.map((addon) => (
-            <div key={addon.id} className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <strong>{addon.name}</strong>
-                <p className="text-xs text-muted-foreground">
-                  {addon.group_key} · {addon.description} · R${" "}
-                  {Number(addon.price).toFixed(2).replace(".", ",")}
-                </p>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => void deleteAddon(addon)}
-                aria-label={`Remover ${addon.name}`}
-              >
-                <Trash2 className="size-4 text-destructive" />
-              </Button>
+            <div key={addon.id} className="rounded-lg border p-3">
+              {editingAddon === addon.id ? (
+                <div className="space-y-2">
+                  <select className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={addonDraft.group_key} onChange={(event) => setAddonDraft({ ...addonDraft, group_key: event.target.value })}><option value="borda">Borda</option><option value="bebida">Bebida</option><option value="molho">Molho</option><option value="adicional">Adicional</option></select>
+                  <Input value={addonDraft.name} onChange={(event) => setAddonDraft({ ...addonDraft, name: event.target.value })} placeholder="Nome" />
+                  <Input value={addonDraft.description} onChange={(event) => setAddonDraft({ ...addonDraft, description: event.target.value })} placeholder="Descrição" />
+                  <Input value={addonDraft.price} onChange={(event) => setAddonDraft({ ...addonDraft, price: event.target.value })} placeholder="Preço" inputMode="decimal" />
+                  <div className="flex gap-2"><Button size="sm" onClick={() => void saveAddon(addon)}><Save className="mr-1 size-3" /> Salvar</Button><Button size="sm" variant="outline" onClick={() => setEditingAddon(null)}><X className="mr-1 size-3" /> Cancelar</Button></div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <button type="button" onClick={() => void toggleAddon(addon)} className="min-w-0 flex-1 text-left"><div className="flex items-center gap-2"><strong>{addon.name}</strong>{addon.is_active ? <Badge className="bg-emerald-600">Ativo</Badge> : <Badge variant="outline">Inativo</Badge>}</div><p className="text-xs text-muted-foreground">{addon.group_key} · {addon.description} · R$ {Number(addon.price).toFixed(2).replace(".", ",")}</p></button>
+                  <div className="flex shrink-0"><Button size="icon" variant="ghost" onClick={() => startEditAddon(addon)} aria-label={"Editar " + addon.name}><Pencil className="size-4" /></Button><Button variant="ghost" size="icon" onClick={() => void deleteAddon(addon)} aria-label={"Remover " + addon.name}><Trash2 className="size-4 text-destructive" /></Button></div>
+                </div>
+              )}
             </div>
           ))}
         </div>
