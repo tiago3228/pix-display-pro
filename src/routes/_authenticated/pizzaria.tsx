@@ -162,7 +162,7 @@ function PizzeriaSettings() {
       toast.error("Informe um nome, diâmetro válido e quantidade de sabores (1, 2 ou 4).");
       return;
     }
-    const nextOrder = Math.max(0, ...catalog.data!.sizes.map((item) => item.sort_order ?? 0)) + 10;
+    const nextOrder = (catalog.data!.sizes.length + 1) * 10;
     const created = await db.from("pizzeria_sizes").insert({ store_id: store.id, name, diameter_cm: diameter, max_flavors: maxFlavors, sort_order: nextOrder }).select("id").single();
     if (created.error || !created.data) {
       toast.error("Não foi possível adicionar o tamanho. Verifique se já existe.");
