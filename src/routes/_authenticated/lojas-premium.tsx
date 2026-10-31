@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useMyStore } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/lojas-premium")({ component: PremiumStores });
 
@@ -61,13 +62,22 @@ function PremiumStores() {
   }
   async function toggle(item: CatalogItem, value: boolean) {
     if (!store || !isPro) return;
-    const result = await supabase
-      .from("store_modules")
-      .update({ is_active: value })
-      .eq("store_id", store.id)
-      .eq("module", moduleKey(item));
-    if (result.error) return;
+    const result = await supabase.from("store_modules").upsert(
+      {
+        store_id: store.id,
+        module: moduleKey(item),
+        name: item.name,
+        is_active: value,
+        sort_order: item.sort_order,
+      },
+      { onConflict: "store_id,module" },
+    );
+    if (result.error) {
+      toast.error("Não foi possível ativar esta loja. Verifique seu acesso PRO e tente novamente.");
+      return;
+    }
     await client.invalidateQueries({ queryKey: ["store-modules", store.id] });
+    toast.success(value ? `${item.name} ativada.` : `${item.name} desativada.`);
   }
   function isActive(item: CatalogItem) {
     return (
