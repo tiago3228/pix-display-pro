@@ -7,6 +7,7 @@ import { AlertTriangle, CheckCircle2, Clock, MessageCircle, Wallet } from "lucid
 import { supabase } from "@/integrations/supabase/client";
 import { useMyStore } from "@/hooks/useAuth";
 import { AppShell, StatCard } from "@/components/AppShell";
+import { PUBLIC_APP_URL } from "@/components/StoreWhatsAppShare";
 import { Paywall } from "@/components/Paywall";
 import { markInstallmentPaid, registerReminder } from "@/lib/billing.functions";
 import {
