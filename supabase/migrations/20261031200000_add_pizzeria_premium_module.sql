@@ -74,6 +74,8 @@ CREATE TABLE IF NOT EXISTS public.pizzeria_addons (
 CREATE INDEX IF NOT EXISTS pizzeria_sizes_store_idx ON public.pizzeria_sizes(store_id, sort_order);
 CREATE INDEX IF NOT EXISTS pizzeria_flavors_store_idx ON public.pizzeria_flavors(store_id, sort_order);
 CREATE INDEX IF NOT EXISTS pizzeria_addons_store_idx ON public.pizzeria_addons(store_id, group_key, sort_order);
+CREATE UNIQUE INDEX IF NOT EXISTS pizzeria_addons_store_group_name_uidx
+  ON public.pizzeria_addons(store_id, group_key, name);
 CREATE INDEX IF NOT EXISTS pizzeria_flavor_prices_store_idx ON public.pizzeria_flavor_prices(store_id, size_id);
 
 ALTER TABLE public.pizzeria_settings ENABLE ROW LEVEL SECURITY;
@@ -211,7 +213,7 @@ BEGIN
     ('adicional','Catupiry extra','Adicional de cobertura',5,20),
     ('adicional','Cheddar extra','Adicional de cobertura',5,30)
   ) AS a(group_key,name,description,price,position)
-  ON NOT EXISTS (SELECT 1 FROM public.pizzeria_addons x WHERE x.store_id=target_store_id AND x.group_key=a.group_key AND x.name=a.name);
+  ON CONFLICT (store_id,group_key,name) DO NOTHING;
 END;
 $$;
 GRANT EXECUTE ON FUNCTION public.seed_pizzeria_catalog(uuid) TO authenticated, service_role;
