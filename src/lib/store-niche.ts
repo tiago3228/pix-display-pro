@@ -5,7 +5,8 @@ export type StoreModule =
   | "calcados"
   | "cafeteria"
   | "marmitaria"
-  | "joias";
+  | "joias"
+  | "pizzaria";
 
 const MODULE_LABELS: Record<StoreModule, string> = {
   roupas: "👕 Roupas",
@@ -15,6 +16,7 @@ const MODULE_LABELS: Record<StoreModule, string> = {
   cafeteria: "☕ Cafeteria",
   marmitaria: "🍱 Marmitaria",
   joias: "💎 Joias e Semijoias",
+  pizzaria: "🍕 Pizzaria",
 };
 
 function normalized(value: string | null | undefined) {
@@ -24,6 +26,7 @@ function normalized(value: string | null | undefined) {
 /** Relaciona as categorias gerais de uma loja ao módulo compatível com seu nicho. */
 export function getStoreNicheModule(category: string | null | undefined): StoreModule {
   const value = normalized(category);
+  if (value.includes("pizzar")) return "pizzaria";
   if (
     value.includes("joia") ||
     value.includes("semijoia") ||
@@ -39,52 +42,30 @@ export function getStoreNicheModule(category: string | null | undefined): StoreM
     value.includes("doces") ||
     value.includes("padaria") ||
     value.includes("confeitaria")
-  ) {
-    return "cafeteria";
-  }
+  ) return "cafeteria";
   if (value.includes("calçado") || value.includes("calcado")) return "calcados";
   if (value.includes("treino") || value.includes("academia")) return "roupas_treino";
   if (value.includes("esport")) return "roupas_esportivas";
   return "roupas";
 }
 
-/** Apresenta o nome do nicho escolhido em vez do rótulo técnico do módulo roupas. */
 export function getStoreNicheLabel(category: string | null | undefined): string {
   const raw = category?.trim();
   if (!raw) return "🛍️ Loja";
   const value = normalized(raw);
-  if (value.includes("joia") || value.includes("acessório") || value.includes("acessorio")) {
-    return `💎 ${raw}`;
-  }
-  if (value.includes("beleza") || value.includes("cosmético") || value.includes("cosmetico")) {
-    return `💄 ${raw}`;
-  }
-  if (
-    value.includes("aliment") ||
-    value.includes("doces") ||
-    value.includes("padaria") ||
-    value.includes("confeitaria")
-  ) {
-    return `🍽️ ${raw}`;
-  }
+  if (value.includes("joia") || value.includes("acessório") || value.includes("acessorio")) return `💎 ${raw}`;
+  if (value.includes("beleza") || value.includes("cosmético") || value.includes("cosmetico")) return `💄 ${raw}`;
+  if (value.includes("pizzar")) return `🍕 ${raw}`;
+  if (value.includes("aliment") || value.includes("doces") || value.includes("padaria") || value.includes("confeitaria")) return `🍽️ ${raw}`;
   const module = getStoreNicheModule(raw);
-  return module === "roupas" && !value.includes("roup")
-    ? `🛍️ ${raw}`
-    : `${MODULE_LABELS[module].split(" ")[0]} ${raw}`;
+  return module === "roupas" && !value.includes("roup") ? `🛍️ ${raw}` : `${MODULE_LABELS[module].split(" ")[0]} ${raw}`;
 }
 
-/** Mostra o nicho próprio para o módulo padrão e nomes técnicos nos módulos adicionais. */
-export function getStoreModuleLabel(
-  category: string | null | undefined,
-  module: StoreModule,
-): string {
+export function getStoreModuleLabel(category: string | null | undefined, module: StoreModule): string {
   if (module === getStoreNicheModule(category)) return getStoreNicheLabel(category);
   return MODULE_LABELS[module];
 }
 
-/** Marca como neutras somente as categorias destinadas a todos os nichos. */
 export function isNeutralCategoryName(name: string): boolean {
-  return ["geral", "outros", "diversos", "sem categoria", "uncategorized"].includes(
-    normalized(name),
-  );
+  return ["geral", "outros", "diversos", "sem categoria", "uncategorized"].includes(normalized(name));
 }
