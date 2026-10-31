@@ -86,7 +86,8 @@ function PizzeriaSettings() {
     queryKey: ["pizzeria-catalog", store?.id],
     enabled: Boolean(store?.id),
     queryFn: async () => {
-      await db.rpc("seed_pizzeria_catalog", { target_store_id: store!.id });
+      const seedResult = await db.rpc("seed_pizzeria_catalog", { target_store_id: store!.id });
+      if (seedResult.error) throw seedResult.error;
       const [settings, sizes, flavors, addons] = await Promise.all([
         db.from("pizzeria_settings").select("*").eq("store_id", store!.id).maybeSingle(),
         db
@@ -201,18 +202,22 @@ function PizzeriaSettings() {
   }
 
   if (!store) return null;
-  if (catalog.isLoading || !form) {
-    return (
-      <AppShell title="🍕 Pizzaria" description="Carregando a configuração da sua pizzaria..." />
-    );
-  }
   if (catalog.isError) {
     return (
       <AppShell title="🍕 Pizzaria" description="Não foi possível carregar a configuração.">
         <div className="surface p-5 text-sm text-destructive">
           Verifique se a migration da Pizzaria foi executada no Supabase e tente novamente.
+          <p className="mt-2 text-xs">{catalog.error instanceof Error ? catalog.error.message : "Erro desconhecido."}</p>
         </div>
+        <Button className="mt-3" variant="outline" onClick={() => void catalog.refetch()}>
+          Tentar novamente
+        </Button>
       </AppShell>
+    );
+  }
+  if (catalog.isLoading || !form) {
+    return (
+      <AppShell title="🍕 Pizzaria" description="Carregando a configuração da sua pizzaria..." />
     );
   }
 
