@@ -36,6 +36,7 @@ import { Route as AuthenticatedLojasPremiumRouteImport } from './routes/_authent
 import { Route as AuthenticatedMinhaLojaRouteImport } from './routes/_authenticated/minha-loja'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedPedidosRouteImport } from './routes/_authenticated/pedidos'
+import { Route as AuthenticatedPizzariaRouteImport } from './routes/_authenticated/pizzaria'
 import { Route as AuthenticatedProdutosRouteImport } from './routes/_authenticated/produtos'
 import { Route as AuthenticatedProdutosIaRouteImport } from './routes/_authenticated/produtos-ia'
 import { Route as AuthenticatedQrcodesRouteImport } from './routes/_authenticated/qrcodes'
@@ -196,6 +197,11 @@ const AuthenticatedPedidosRoute = AuthenticatedPedidosRouteImport.update({
   path: '/pedidos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedPizzariaRoute = AuthenticatedPizzariaRouteImport.update({
+  id: '/pizzaria',
+  path: '/pizzaria',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProdutosRoute = AuthenticatedProdutosRouteImport.update({
   id: '/produtos',
   path: '/produtos',
@@ -335,6 +341,7 @@ export interface FileRoutesByFullPath {
   '/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pedidos': typeof AuthenticatedPedidosRoute
+  '/pizzaria': typeof AuthenticatedPizzariaRoute
   '/produtos': typeof AuthenticatedProdutosRoute
   '/produtos-ia': typeof AuthenticatedProdutosIaRoute
   '/qrcodes': typeof AuthenticatedQrcodesRoute
@@ -383,6 +390,7 @@ export interface FileRoutesByTo {
   '/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/pedidos': typeof AuthenticatedPedidosRoute
+  '/pizzaria': typeof AuthenticatedPizzariaRoute
   '/produtos': typeof AuthenticatedProdutosRoute
   '/produtos-ia': typeof AuthenticatedProdutosIaRoute
   '/qrcodes': typeof AuthenticatedQrcodesRoute
@@ -433,6 +441,7 @@ export interface FileRoutesById {
   '/_authenticated/minha-loja': typeof AuthenticatedMinhaLojaRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/pedidos': typeof AuthenticatedPedidosRoute
+  '/_authenticated/pizzaria': typeof AuthenticatedPizzariaRoute
   '/_authenticated/produtos': typeof AuthenticatedProdutosRoute
   '/_authenticated/produtos-ia': typeof AuthenticatedProdutosIaRoute
   '/_authenticated/qrcodes': typeof AuthenticatedQrcodesRoute
@@ -483,6 +492,7 @@ export interface FileRouteTypes {
     | '/minha-loja'
     | '/onboarding'
     | '/pedidos'
+    | '/pizzaria'
     | '/produtos'
     | '/produtos-ia'
     | '/qrcodes'
@@ -531,6 +541,7 @@ export interface FileRouteTypes {
     | '/minha-loja'
     | '/onboarding'
     | '/pedidos'
+    | '/pizzaria'
     | '/produtos'
     | '/produtos-ia'
     | '/qrcodes'
@@ -580,6 +591,7 @@ export interface FileRouteTypes {
     | '/_authenticated/minha-loja'
     | '/_authenticated/onboarding'
     | '/_authenticated/pedidos'
+    | '/_authenticated/pizzaria'
     | '/_authenticated/produtos'
     | '/_authenticated/produtos-ia'
     | '/_authenticated/qrcodes'
@@ -810,6 +822,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPedidosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pizzaria': {
+      id: '/_authenticated/pizzaria'
+      path: '/pizzaria'
+      fullPath: '/pizzaria'
+      preLoaderRoute: typeof AuthenticatedPizzariaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/produtos': {
       id: '/_authenticated/produtos'
       path: '/produtos'
@@ -971,6 +990,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedMinhaLojaRoute: typeof AuthenticatedMinhaLojaRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedPedidosRoute: typeof AuthenticatedPedidosRoute
+  AuthenticatedPizzariaRoute: typeof AuthenticatedPizzariaRoute
   AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRoute
   AuthenticatedProdutosIaRoute: typeof AuthenticatedProdutosIaRoute
   AuthenticatedQrcodesRoute: typeof AuthenticatedQrcodesRoute
@@ -1006,6 +1026,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMinhaLojaRoute: AuthenticatedMinhaLojaRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedPedidosRoute: AuthenticatedPedidosRoute,
+  AuthenticatedPizzariaRoute: AuthenticatedPizzariaRoute,
   AuthenticatedProdutosRoute: AuthenticatedProdutosRoute,
   AuthenticatedProdutosIaRoute: AuthenticatedProdutosIaRoute,
   AuthenticatedQrcodesRoute: AuthenticatedQrcodesRoute,
