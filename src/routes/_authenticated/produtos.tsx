@@ -25,7 +25,7 @@ import { resolveAsset, uploadAsset } from "@/lib/images";
 import { FREE_PLAN_PRODUCT_LIMIT, brl } from "@/lib/format";
 import { searchProductDiscovery, type DiscoveryResult } from "@/lib/product-discovery.functions";
 import { listSportsNodes, sportsDb, type SportsNode } from "@/lib/sports";
-import { getStoreNicheModule, isNeutralCategoryName } from "@/lib/store-niche";
+import { getStoreNicheModule, isNeutralCategoryName, type StoreModule } from "@/lib/store-niche";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,6 +48,14 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/produtos")({
+  head: () => ({ meta: [
+    { title: "Produtos | Vitrini" },
+    { name: "description", content: "Gerencie produtos, fotos, variações e estoque da sua loja no Vitrini." },
+    { property: "og:title", content: "Produtos | Vitrini" },
+    { property: "og:description", content: "Gerencie produtos, fotos, variações e estoque da sua loja no Vitrini." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ] }),
   component: Products,
 });
 
@@ -61,14 +69,7 @@ type VariantDraft = {
 };
 type OrderTierDraft = { minQuantity: string; unitPrice: string };
 type SmartSuggestion = {
-  module:
-    | "roupas"
-    | "roupas_esportivas"
-    | "roupas_treino"
-    | "calcados"
-    | "cafeteria"
-    | "marmitaria"
-    | "joias";
+  module: StoreModule;
   brand: string | null;
   model: string | null;
   category: string;
@@ -195,14 +196,7 @@ function interpretProductText(
 
 type ProductRow = {
   id: string;
-  module:
-    | "roupas"
-    | "roupas_esportivas"
-    | "roupas_treino"
-    | "calcados"
-    | "cafeteria"
-    | "marmitaria"
-    | "joias";
+  module: StoreModule;
   name: string;
   description: string;
   price: number;

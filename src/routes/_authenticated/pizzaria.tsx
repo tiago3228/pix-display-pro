@@ -14,7 +14,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { useMyStore } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/_authenticated/pizzaria")({ component: PizzeriaSettings });
+export const Route = createFileRoute("/_authenticated/pizzaria")({
+  head: () => ({ meta: [
+    { title: "Pizzaria | Vitrini" },
+    { name: "description", content: "Gerencie o catálogo e as configurações da sua pizzaria no Vitrini." },
+    { property: "og:title", content: "Pizzaria | Vitrini" },
+    { property: "og:description", content: "Gerencie o catálogo e as configurações da sua pizzaria no Vitrini." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ] }),
+  component: PizzeriaSettings,
+});
 
 type PizzeriaSettingsRow = {
   store_id: string;
@@ -107,33 +117,34 @@ function PizzeriaSettings() {
     queryKey: ["pizzeria-catalog", store?.id],
     enabled: Boolean(store?.id),
     queryFn: async () => {
-      const seedResult = await db.rpc("seed_pizzeria_catalog", { target_store_id: store!.id });
+      if (!store) throw new Error("Loja não encontrada.");
+      const seedResult = await db.rpc("seed_pizzeria_catalog", { target_store_id: store.id });
       if (seedResult.error) throw seedResult.error;
       const [settings, sizes, flavors, addons, prices] = await Promise.all([
-        db.from("pizzeria_settings").select("*").eq("store_id", store!.id).maybeSingle(),
+        db.from("pizzeria_settings").select("*").eq("store_id", store.id).maybeSingle(),
         db
           .from("pizzeria_sizes")
           .select("id,name,diameter_cm,max_flavors,is_active")
-          .eq("store_id", store!.id)
+          .eq("store_id", store.id)
           .order("sort_order"),
         db
           .from("pizzeria_flavors")
           .select("id,name,description,category,is_active")
-          .eq("store_id", store!.id)
+          .eq("store_id", store.id)
           .order("sort_order"),
         db
           .from("pizzeria_addons")
           .select("id,group_key,name,description,price,is_active")
-          .eq("store_id", store!.id)
+          .eq("store_id", store.id)
           .order("group_key")
           .order("sort_order"),
-        db.from("pizzeria_flavor_prices").select("size_id,flavor_id,price").eq("store_id", store!.id),
+        db.from("pizzeria_flavor_prices").select("size_id,flavor_id,price").eq("store_id", store.id),
       ]);
       for (const result of [settings, sizes, flavors, addons, prices]) {
         if (result.error) throw result.error;
       }
       return {
-        settings: (settings.data as PizzeriaSettingsRow | null) ?? emptySettings(store!.id),
+        settings: (settings.data as PizzeriaSettingsRow | null) ?? emptySettings(store.id),
         sizes: (sizes.data ?? []) as PizzeriaSize[],
         flavors: (flavors.data ?? []) as PizzeriaFlavor[],
         addons: (addons.data ?? []) as PizzeriaAddon[],
@@ -141,6 +152,8 @@ function PizzeriaSettings() {
       };
     },
   });
+
+  const catalogData = catalog.data;
 
   useEffect(() => {
     if (catalog.data) setForm(catalog.data.settings);
@@ -166,6 +179,7 @@ function PizzeriaSettings() {
     setSizeDraft({ name: size.name, diameter_cm: size.diameter_cm == null ? "" : String(size.diameter_cm), max_flavors: String(size.max_flavors) });
   }
   async function addSize() {
+    if (!catalogData) return;
     if (!store) return;
     const name = newSize.name.trim();
     const diameter = newSize.diameter_cm.trim() ? Number(newSize.diameter_cm.replace(",", ".")) : null;
@@ -174,14 +188,14 @@ function PizzeriaSettings() {
       toast.error("Informe um nome, diâmetro válido e quantidade de sabores (1, 2 ou 4).");
       return;
     }
-    const nextOrder = (catalog.data!.sizes.length + 1) * 10;
+    const nextOrder = (catalogData.sizes.length + 1) * 10;
     const created = await db.from("pizzeria_sizes").insert({ store_id: store.id, name, diameter_cm: diameter, max_flavors: maxFlavors, sort_order: nextOrder }).select("id").single();
     if (created.error || !created.data) {
       toast.error("Não foi possível adicionar o tamanho. Verifique se já existe.");
       return;
     }
-    if (catalog.data!.flavors.length) {
-      const rows = catalog.data!.flavors.map((flavor) => ({ store_id: store.id, size_id: created.data.id, flavor_id: flavor.id, price: 0 }));
+    if (catalogData.flavors.length) {
+      const rows = catalogData.flavors.map((flavor) => ({ store_id: store.id, size_id: created.data.id, flavor_id: flavor.id, price: 0 }));
       const pricesResult = await db.from("pizzeria_flavor_prices").upsert(rows, { onConflict: "size_id,flavor_id" });
       if (pricesResult.error) toast.error("Tamanho criado, mas não foi possível inicializar os preços dos sabores.");
     }
@@ -199,25 +213,27 @@ function PizzeriaSettings() {
     setEditingSize(null); toast.success("Tamanho atualizado."); await refresh();
   }
   function startEditFlavor(flavor: PizzeriaFlavor) {
+    if (!catalogData) return;
     setEditingFlavor(flavor.id);
     setFlavorDraft({ name: flavor.name, description: flavor.description, category: flavor.category });
-    const prices = Object.fromEntries(catalog.data!.sizes.map((size) => {
-      const saved = catalog.data!.prices.find((item) => item.flavor_id === flavor.id && item.size_id === size.id);
+    const prices = Object.fromEntries(catalogData.sizes.map((size) => {
+      const saved = catalogData.prices.find((item) => item.flavor_id === flavor.id && item.size_id === size.id);
       return [size.id, saved ? String(saved.price) : "0"];
     }));
     setFlavorPrices(prices);
   }
   async function saveFlavor(flavor: PizzeriaFlavor) {
+    if (!store || !catalogData) return;
     if (!flavorDraft.name.trim()) { toast.error("Informe o nome do sabor."); return; }
-    const priceRows = catalog.data!.sizes.map((size) => {
+    const priceRows = catalogData.sizes.map((size) => {
       const price = Number((flavorPrices[size.id] ?? "0").replace(",", "."));
-      return { store_id: store!.id, size_id: size.id, flavor_id: flavor.id, price };
+      return { store_id: store.id, size_id: size.id, flavor_id: flavor.id, price };
     });
     if (priceRows.some((row) => !Number.isFinite(row.price) || row.price < 0)) {
       toast.error("Confira os preços: todos devem ser números iguais ou maiores que zero.");
       return;
     }
-    const result = await db.from("pizzeria_flavors").update({ name: flavorDraft.name.trim(), description: flavorDraft.description.trim(), category: flavorDraft.category.trim() || "Tradicionais" }).eq("id", flavor.id).eq("store_id", store!.id);
+    const result = await db.from("pizzeria_flavors").update({ name: flavorDraft.name.trim(), description: flavorDraft.description.trim(), category: flavorDraft.category.trim() || "Tradicionais" }).eq("id", flavor.id).eq("store_id", store.id);
     if (result.error) { toast.error("Não foi possível salvar o sabor. Verifique se o nome já existe."); return; }
     if (priceRows.length) {
       const priceResult = await db.from("pizzeria_flavor_prices").upsert(priceRows, { onConflict: "size_id,flavor_id" });
@@ -260,6 +276,7 @@ function PizzeriaSettings() {
   }
 
   async function addFlavor() {
+    if (!catalogData) return;
     if (!store || !newFlavor.name.trim()) {
       toast.error("Informe o nome do sabor.");
       return;
@@ -272,8 +289,8 @@ function PizzeriaSettings() {
     }).select("id").single();
     if (result.error || !result.data) toast.error("Não foi possível adicionar o sabor.");
     else {
-      if (catalog.data!.sizes.length) {
-        const rows = catalog.data!.sizes.map((size) => ({ store_id: store.id, size_id: size.id, flavor_id: result.data.id, price: 0 }));
+      if (catalogData.sizes.length) {
+        const rows = catalogData.sizes.map((size) => ({ store_id: store.id, size_id: size.id, flavor_id: result.data.id, price: 0 }));
         const priceResult = await db.from("pizzeria_flavor_prices").upsert(rows, { onConflict: "size_id,flavor_id" });
         if (priceResult.error) toast.error("Sabor criado, mas não foi possível inicializar os preços por tamanho.");
       }
@@ -323,9 +340,11 @@ function PizzeriaSettings() {
       </AppShell>
     );
   }
-  if (catalog.isLoading || !form) {
+  if (catalog.isLoading || !form || !catalogData) {
     return (
-      <AppShell title="🍕 Pizzaria" description="Carregando a configuração da sua pizzaria..." />
+      <AppShell title="🍕 Pizzaria" description="Carregando a configuração da sua pizzaria...">
+        <div role="status" aria-live="polite">Carregando...</div>
+      </AppShell>
     );
   }
 
@@ -432,11 +451,11 @@ function PizzeriaSettings() {
 
       <CollapsibleSection
         title="📏 Tamanhos"
-        description={`${catalog.data.sizes.length} tamanhos cadastrados`}
+        description={`${catalogData.sizes.length} tamanhos cadastrados`}
         className="mt-4"
       >
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {catalog.data.sizes.map((size) => (
+          {catalogData.sizes.map((size) => (
             <div key={size.id} className="rounded-lg border p-3">
               {editingSize === size.id ? (
                 <div className="space-y-2">
@@ -467,11 +486,11 @@ function PizzeriaSettings() {
 
       <CollapsibleSection
         title="🍕 Sabores"
-        description={`${catalog.data.flavors.length} sabores cadastrados`}
+        description={`${catalogData.flavors.length} sabores cadastrados`}
         className="mt-4"
       >
         <div className="grid gap-2 md:grid-cols-2">
-          {catalog.data.flavors.map((flavor) => (
+          {catalogData.flavors.map((flavor) => (
             <div key={flavor.id} className="rounded-lg border p-3">
               {editingFlavor === flavor.id ? (
                 <div className="space-y-2">
@@ -481,7 +500,7 @@ function PizzeriaSettings() {
                   <div className="rounded-lg bg-muted/40 p-3">
                     <p className="mb-2 text-sm font-semibold">Preço deste sabor por tamanho</p>
                     <div className="grid gap-2 sm:grid-cols-2">
-                      {catalog.data.sizes.map((size) => (
+                      {catalogData.sizes.map((size) => (
                         <label key={size.id} className="space-y-1 text-xs">
                           <span className="text-muted-foreground">{size.name}{size.is_active ? "" : " (inativo)"}</span>
                           <Input value={flavorPrices[size.id] ?? "0"} onChange={(event) => setFlavorPrices((current) => ({ ...current, [size.id]: event.target.value }))} placeholder="0,00" inputMode="decimal" />
@@ -525,12 +544,12 @@ function PizzeriaSettings() {
 
       <CollapsibleSection
         title="🥤 Bebidas"
-        description={`${catalog.data.addons.filter((addon) => addon.group_key === "bebida").length} bebidas cadastradas`}
+        description={`${catalogData.addons.filter((addon) => addon.group_key === "bebida").length} bebidas cadastradas`}
         className="mt-4"
       >
         <p className="mb-3 text-xs text-muted-foreground">Sugestões iniciais baseadas nas marcas mais escolhidas fora de casa no Brasil. Edite os preços e apresentações conforme seu estoque. Você pode ativar, desativar, editar ou cadastrar novas bebidas.</p>
         <div className="grid gap-2 md:grid-cols-2">
-          {catalog.data.addons.filter((addon) => addon.group_key === "bebida").map((addon) => (
+          {catalogData.addons.filter((addon) => addon.group_key === "bebida").map((addon) => (
             <div key={addon.id} className="rounded-lg border p-3">
               {editingAddon === addon.id ? (
                 <div className="space-y-2">
@@ -558,11 +577,11 @@ function PizzeriaSettings() {
 
       <CollapsibleSection
         title="🧀 Bordas, molhos e adicionais"
-        description={`${catalog.data.addons.filter((addon) => addon.group_key !== "bebida").length} itens cadastrados`}
+        description={`${catalogData.addons.filter((addon) => addon.group_key !== "bebida").length} itens cadastrados`}
         className="mt-4"
       >
         <div className="grid gap-2 md:grid-cols-2">
-          {catalog.data.addons.filter((addon) => addon.group_key !== "bebida").map((addon) => (
+          {catalogData.addons.filter((addon) => addon.group_key !== "bebida").map((addon) => (
             <div key={addon.id} className="rounded-lg border p-3">
               {editingAddon === addon.id ? (
                 <div className="space-y-2">
