@@ -24,6 +24,12 @@ type PizzeriaSettingsRow = {
   order_instructions: string;
   allow_half_flavors: boolean;
   allow_quarter_flavors: boolean;
+  require_size: boolean;
+  require_flavors: boolean;
+  require_border: boolean;
+  require_drink: boolean;
+  require_sauce: boolean;
+  require_additional: boolean;
 };
 type PizzeriaSize = {
   id: string;
@@ -65,6 +71,12 @@ const emptySettings = (storeId: string): PizzeriaSettingsRow => ({
   order_instructions: "Pedido realizado pelo cardápio online.",
   allow_half_flavors: true,
   allow_quarter_flavors: true,
+  require_size: true,
+  require_flavors: true,
+  require_border: false,
+  require_drink: false,
+  require_sauce: false,
+  require_additional: false,
 });
 
 function PizzeriaSettings() {
@@ -394,6 +406,28 @@ function PizzeriaSettings() {
             />
           </label>
         </div>
+        <div className="mt-4 rounded-xl border p-3">
+          <div className="mb-3">
+            <h3 className="text-sm font-semibold">Campos obrigatórios no pedido</h3>
+            <p className="text-xs text-muted-foreground">Defina quais escolhas o cliente precisa fazer antes de adicionar a pizza ao carrinho. As opções inativas nunca serão exigidas.</p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {([
+              ["require_size", "Tamanho da pizza"],
+              ["require_flavors", "Sabores da pizza"],
+              ["require_border", "Borda"],
+              ["require_drink", "Bebida"],
+              ["require_sauce", "Molho"],
+              ["require_additional", "Adicionais"],
+            ] as const).map(([field, label]) => (
+              <label key={field} className="flex items-center justify-between gap-3 rounded-lg bg-muted/30 p-3 text-sm">
+                <span>{label}</span>
+                <Switch checked={form[field]} onCheckedChange={(checked) => setForm({ ...form, [field]: checked })} />
+              </label>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">Padrão recomendado: tamanho e sabores obrigatórios; borda, bebida, molho e adicionais opcionais.</p>
+        </div>
       </CollapsibleSection>
 
       <CollapsibleSection
@@ -490,12 +524,45 @@ function PizzeriaSettings() {
       </CollapsibleSection>
 
       <CollapsibleSection
-        title="🧀 Bordas, bebidas e adicionais"
-        description={`${catalog.data.addons.length} itens cadastrados`}
+        title="🥤 Bebidas"
+        description={`${catalog.data.addons.filter((addon) => addon.group_key === "bebida").length} bebidas cadastradas`}
+        className="mt-4"
+      >
+        <p className="mb-3 text-xs text-muted-foreground">Sugestões iniciais baseadas nas marcas mais escolhidas fora de casa no Brasil. Edite os preços e apresentações conforme seu estoque. Você pode ativar, desativar, editar ou cadastrar novas bebidas.</p>
+        <div className="grid gap-2 md:grid-cols-2">
+          {catalog.data.addons.filter((addon) => addon.group_key === "bebida").map((addon) => (
+            <div key={addon.id} className="rounded-lg border p-3">
+              {editingAddon === addon.id ? (
+                <div className="space-y-2">
+                  <Input value={addonDraft.name} onChange={(event) => setAddonDraft({ ...addonDraft, name: event.target.value })} placeholder="Nome" />
+                  <Input value={addonDraft.description} onChange={(event) => setAddonDraft({ ...addonDraft, description: event.target.value })} placeholder="Descrição / volume" />
+                  <Input value={addonDraft.price} onChange={(event) => setAddonDraft({ ...addonDraft, price: event.target.value })} placeholder="Preço" inputMode="decimal" />
+                  <div className="flex gap-2"><Button size="sm" onClick={() => void saveAddon(addon)}><Save className="mr-1 size-3" /> Salvar</Button><Button size="sm" variant="outline" onClick={() => setEditingAddon(null)}><X className="mr-1 size-3" /> Cancelar</Button></div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <button type="button" onClick={() => void toggleAddon(addon)} className="min-w-0 flex-1 text-left"><div className="flex items-center gap-2"><strong>{addon.name}</strong>{addon.is_active ? <Badge className="bg-emerald-600">Ativo</Badge> : <Badge variant="outline">Inativo</Badge>}</div><p className="text-xs text-muted-foreground">{addon.description} · R$ {Number(addon.price).toFixed(2).replace(".", ",")}</p></button>
+                  <div className="flex shrink-0"><Button size="icon" variant="ghost" onClick={() => startEditAddon(addon)} aria-label={"Editar " + addon.name}><Pencil className="size-4" /></Button><Button variant="ghost" size="icon" onClick={() => void deleteAddon(addon)} aria-label={"Remover " + addon.name}><Trash2 className="size-4 text-destructive" /></Button></div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 grid gap-2 rounded-lg border border-dashed p-3 md:grid-cols-[1fr_1fr_120px_auto]">
+          <Input value={newAddon.name} onChange={(event) => setNewAddon({ ...newAddon, group_key: "bebida", name: event.target.value })} placeholder="Ex.: Coca-Cola Zero 600ml" />
+          <Input value={newAddon.description} onChange={(event) => setNewAddon({ ...newAddon, group_key: "bebida", description: event.target.value })} placeholder="Marca, tipo e volume" />
+          <Input value={newAddon.price} onChange={(event) => setNewAddon({ ...newAddon, group_key: "bebida", price: event.target.value })} placeholder="Preço" inputMode="decimal" />
+          <Button onClick={() => { setNewAddon({ ...newAddon, group_key: "bebida" }); void addAddon(); }}><Plus className="mr-1.5 size-4" /> Adicionar bebida</Button>
+        </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection
+        title="🧀 Bordas, molhos e adicionais"
+        description={`${catalog.data.addons.filter((addon) => addon.group_key !== "bebida").length} itens cadastrados`}
         className="mt-4"
       >
         <div className="grid gap-2 md:grid-cols-2">
-          {catalog.data.addons.map((addon) => (
+          {catalog.data.addons.filter((addon) => addon.group_key !== "bebida").map((addon) => (
             <div key={addon.id} className="rounded-lg border p-3">
               {editingAddon === addon.id ? (
                 <div className="space-y-2">
