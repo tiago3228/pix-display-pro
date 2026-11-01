@@ -172,12 +172,12 @@ function PizzeriaBuilder({ catalog, storeName, storeWhatsapp, color }: {
   function addPizza() {
     if (!size) return toast.error("Nenhum tamanho está disponível.");
     if (settings.require_size && !sizeId) return toast.error("Selecione o tamanho.");
-    if (!selectedFlavors.length) return toast.error("Selecione pelo menos um sabor.");
+    if (settings.require_flavors && !selectedFlavors.length) return toast.error("Selecione pelo menos um sabor.");
     if (selectedFlavors.length > maxFlavors) return toast.error(`Este tamanho permite até ${maxFlavors} sabor(es).`);
     if (settings.require_border && groups.borda.length && !borderId) return toast.error("Selecione uma borda.");
     const summary = [size.name, selectedFlavors.map((v) => v.name).join(" / "), border ? "Borda: " + border.name : ""].filter(Boolean).join(" — ");
     setPizzas((current) => [...current, { summary, price: pizzaPrice }]);
-    setFlavorIds([]); setBorderId([]);
+    setFlavorIds([]); setBorderId("");
     toast.success("Pizza adicionada ao pedido.");
   }
   function sendOrder() {
