@@ -93,6 +93,18 @@ export type StorefrontSportsCollection = {
   is_featured: boolean;
 };
 
+export type StorefrontPizzeria = {
+  settings: {
+    display_name: string | null; address: string; whatsapp: string | null; order_instructions: string;
+    allow_half_flavors: boolean; allow_quarter_flavors: boolean; require_size: boolean; require_flavors: boolean;
+    require_border: boolean; require_drink: boolean; require_sauce: boolean; require_additional: boolean;
+  } | null;
+  sizes: { id: string; name: string; diameter_cm: number | null; max_flavors: number }[];
+  flavors: { id: string; name: string; description: string; category: string; image_url: string | null }[];
+  prices: { size_id: string; flavor_id: string; price: number }[];
+  addons: { id: string; group_key: "borda" | "bebida" | "molho" | "adicional"; name: string; description: string; price: number; image_url: string | null }[];
+};
+
 export type Storefront = {
   store: {
     id: string;
@@ -144,6 +156,7 @@ export type Storefront = {
     collections: StorefrontSportsCollection[];
   };
   products: StorefrontProduct[];
+  pizzeria: StorefrontPizzeria | null;
 } | null;
 
 type StorefrontProductDbRow = {
@@ -331,6 +344,24 @@ export const getStorefront = createServerFn({ method: "GET" })
     // Supabase types are refreshed by Lovable when the SQL is published.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const publicDb = supabase as unknown as { from: (table: string) => any };
+    const pizzeriaPromise = activeModule === "pizzaria"
+      ? Promise.all([
+          publicDb.from("pizzeria_settings").select("display_name,address,whatsapp,order_instructions,allow_half_flavors,allow_quarter_flavors,require_size,require_flavors,require_border,require_drink,require_sauce,require_additional").eq("store_id", store.id).maybeSingle(),
+          publicDb.from("pizzeria_sizes").select("id,name,diameter_cm,max_flavors").eq("store_id", store.id).eq("is_active", true).order("sort_order"),
+          publicDb.from("pizzeria_flavors").select("id,name,description,category,image_url").eq("store_id", store.id).eq("is_active", true).order("sort_order"),
+          publicDb.from("pizzeria_flavor_prices").select("size_id,flavor_id,price").eq("store_id", store.id),
+          publicDb.from("pizzeria_addons").select("id,group_key,name,description,price,image_url").eq("store_id", store.id).eq("is_active", true).order("group_key").order("sort_order"),
+        ])
+      : Promise.resolve(null);
+    const pizzeriaRaw = await pizzeriaPromise;
+    if (pizzeriaRaw) {
+      for (const result of pizzeriaRaw) {
+        if (result.error) console.error("[storefront] erro ao carregar catálogo da pizzaria", result.error.message);
+      }
+    }
+    const [pizzeriaSettings, pizzeriaSizes, pizzeriaFlavors, pizzeriaPrices, pizzeriaAddons] =
+      pizzeriaRaw ?? [null, null, null, null, null];
+
     const [
       { data: sportsSettings },
       { data: sportsNodes },
@@ -509,6 +540,15 @@ export const getStorefront = createServerFn({ method: "GET" })
             ? ((sportsCollections ?? []) as StorefrontSportsCollection[])
             : [],
       },
+      pizzeria: activeModule === "pizzaria" && pizzeriaSettings?.data
+        ? {
+            settings: pizzeriaSettings.data,
+            sizes: (pizzeriaSizes?.data ?? []).map((item: any) => ({ id: item.id, name: item.name, diameter_cm: item.diameter_cm, max_flavors: item.max_flavors })),
+            flavors: (pizzeriaFlavors?.data ?? []).map((item: any) => ({ id: item.id, name: item.name, description: item.description, category: item.category, image_url: item.image_url ?? null })),
+            prices: (pizzeriaPrices?.data ?? []).map((item: any) => ({ size_id: item.size_id, flavor_id: item.flavor_id, price: Number(item.price) })),
+            addons: (pizzeriaAddons?.data ?? []).map((item: any) => ({ id: item.id, group_key: item.group_key, name: item.name, description: item.description, price: Number(item.price), image_url: item.image_url ?? null })),
+          }
+        : null,
       products: storefrontProducts.map((p) => {
         // Produtos legados sem categoria herdaram o módulo roupas por padrão.
         const legacyJewelryCategoryId = legacyJewelryCategoryIds.get(p.id);
