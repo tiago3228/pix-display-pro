@@ -25,6 +25,7 @@ import {
   trackStoreEvent,
   uploadOrderReceipt,
   type StorefrontProduct,
+  type StorefrontPizzeria,
 } from "@/lib/storefront.functions";
 import { useCart, buildOrderMessage, type CartItem } from "@/lib/cart";
 import { brl, whatsappLink, installmentOptions, PIX_KEY_TYPES } from "@/lib/format";
@@ -139,6 +140,93 @@ function sportsBranchIds(
     }
   }
   return ids;
+}
+
+function PizzeriaBuilder({ catalog, storeName, storeWhatsapp, color }: {
+  catalog: StorefrontPizzeria; storeName: string; storeWhatsapp: string; color: string;
+}) {
+  const settings = catalog.settings!;
+  const [sizeId, setSizeId] = useState("");
+  const [flavorIds, setFlavorIds] = useState<string[]>([]);
+  const [borderId, setBorderId] = useState("");
+  const [addonIds, setAddonIds] = useState<string[]>([]);
+  const [pizzas, setPizzas] = useState<{ summary: string; price: number }[]>([]);
+  const [note, setNote] = useState("");
+  const size = catalog.sizes.find((item) => item.id === sizeId) ?? catalog.sizes[0] ?? null;
+  const maxFlavors = size ? (size.max_flavors >= 4 && !settings.allow_quarter_flavors ? 2 :
+    size.max_flavors >= 2 && !settings.allow_half_flavors ? 1 : size.max_flavors) : 1;
+  const selectedFlavors = catalog.flavors.filter((item) => flavorIds.includes(item.id));
+  const groups = {
+    borda: catalog.addons.filter((item) => item.group_key === "borda"),
+    bebida: catalog.addons.filter((item) => item.group_key === "bebida"),
+    molho: catalog.addons.filter((item) => item.group_key === "molho"),
+    adicional: catalog.addons.filter((item) => item.group_key === "adicional"),
+  };
+  const border = groups.borda.find((item) => item.id === borderId);
+  const selectedAddons = catalog.addons.filter((item) => addonIds.includes(item.id));
+  const basePrice = size && selectedFlavors.length ? Math.max(...selectedFlavors.map((flavor) =>
+    catalog.prices.find((price) => price.size_id === size.id && price.flavor_id === flavor.id)?.price ?? 0)) : 0;
+  const pizzaPrice = basePrice + (border?.price ?? 0);
+  const total = pizzas.reduce((sum, item) => sum + item.price, 0) + selectedAddons.reduce((sum, item) => sum + item.price, 0);
+  const toggleAddon = (id: string) => setAddonIds((current) => current.includes(id) ? current.filter((v) => v !== id) : [...current, id]);
+  function addPizza() {
+    if (!size) return toast.error("Nenhum tamanho está disponível.");
+    if (settings.require_size && !sizeId) return toast.error("Selecione o tamanho.");
+    if (settings.require_flavors && !selectedFlavors.length) return toast.error("Selecione pelo menos um sabor.");
+    if (selectedFlavors.length > maxFlavors) return toast.error(`Este tamanho permite até ${maxFlavors} sabor(es).`);
+    if (settings.require_border && groups.borda.length && !borderId) return toast.error("Selecione uma borda.");
+    const summary = [size.name, selectedFlavors.map((v) => v.name).join(" / "), border ? "Borda: " + border.name : ""].filter(Boolean).join(" — ");
+    setPizzas((current) => [...current, { summary, price: pizzaPrice }]);
+    setFlavorIds([]); setBorderId("");
+    toast.success("Pizza adicionada ao pedido.");
+  }
+  function sendOrder() {
+    const phone = settings.whatsapp || storeWhatsapp;
+    if (!phone) return toast.error("O WhatsApp da pizzaria não está configurado.");
+    if (!pizzas.length) return toast.error("Adicione pelo menos uma pizza.");
+    for (const [key, required, label] of [
+      ["bebida", settings.require_drink, "uma bebida"],
+      ["molho", settings.require_sauce, "um molho"],
+      ["adicional", settings.require_additional, "um adicional"],
+    ] as const) {
+      if (required && groups[key].length && !selectedAddons.some((item) => item.group_key === key))
+        return toast.error(`Selecione ${label}.`);
+    }
+    const lines = [
+      `Olá! Gostaria de fazer um pedido na ${settings.display_name || storeName}:`, "",
+      ...pizzas.map((item, i) => `${i + 1}. ${item.summary} — ${brl(item.price)}`),
+      ...selectedAddons.map((item) => `• ${item.name} — ${brl(item.price)}`),
+      "", `Total estimado: ${brl(total)}`, note.trim() ? `Observações: ${note.trim()}` : "",
+      settings.order_instructions || "",
+    ].filter(Boolean);
+    window.open(whatsappLink(phone, lines.join("\n")), "_blank", "noopener,noreferrer");
+  }
+  return <section className="space-y-5 pb-24">
+    <div className="rounded-2xl border bg-card p-4 sm:p-6">
+      <div className="mb-4 flex items-center gap-3"><span className="text-3xl">🍕</span><div><h1 className="text-xl font-bold">Monte sua pizza</h1><p className="text-sm text-muted-foreground">Escolha tamanho, sabores e acompanhamentos.</p></div></div>
+      <h2 className="mb-2 font-semibold">1. Tamanho {settings.require_size ? "*" : ""}</h2>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{catalog.sizes.map((item) => <button key={item.id} type="button" onClick={() => {setSizeId(item.id);setFlavorIds([]);}} className={cn("rounded-xl border p-3 text-left", size?.id===item.id && "border-2")} style={size?.id===item.id?{borderColor:color}:undefined}><strong className="block">{item.name}</strong><span className="text-xs text-muted-foreground">{item.diameter_cm?item.diameter_cm+" cm · ":""}até {item.max_flavors} sabor(es)</span></button>)}</div>
+      <div className="mt-5 flex items-center justify-between"><h2 className="font-semibold">2. Sabores {settings.require_flavors ? "*" : ""}</h2><span className="text-xs text-muted-foreground">{flavorIds.length}/{maxFlavors}</span></div>
+      <p className="mb-2 text-xs text-muted-foreground">O preço é calculado pelo sabor de maior valor.</p>
+      <div className="grid gap-2 sm:grid-cols-2">{catalog.flavors.map((item) => {
+        const active=flavorIds.includes(item.id);
+        const price=size?catalog.prices.find((p)=>p.size_id===size.id&&p.flavor_id===item.id)?.price??0:0;
+        return <button key={item.id} type="button" aria-pressed={active} onClick={()=>setFlavorIds((current)=>active?current.filter((v)=>v!==item.id):current.length<maxFlavors?[...current,item.id]:current)} className={cn("flex items-center gap-3 rounded-xl border p-2 text-left",active&&"border-2")} style={active?{borderColor:color}:undefined}>
+          {item.image_url?<img src={item.image_url} alt={item.name} loading="lazy" className="size-16 rounded-lg object-cover"/>:<span className="flex size-16 items-center justify-center rounded-lg bg-muted text-2xl">🍕</span>}
+          <span className="min-w-0 flex-1"><strong className="block text-sm">{item.name}</strong><span className="block text-xs text-muted-foreground">{item.description}</span><span className="text-xs font-semibold">{brl(price)}</span></span><span>{active?"☑":"□"}</span>
+        </button>;
+      })}</div>
+      {groups.borda.length?<div className="mt-5"><h2 className="mb-2 font-semibold">3. Borda {settings.require_border?"*":""}</h2><div className="grid grid-cols-2 gap-2">{groups.borda.map((item)=><button key={item.id} type="button" onClick={()=>setBorderId(item.id)} className={cn("rounded-xl border p-3 text-left",borderId===item.id&&"border-2")} style={borderId===item.id?{borderColor:color}:undefined}><strong className="block text-sm">{item.name}</strong><span className="text-xs text-muted-foreground">{brl(item.price)}</span></button>)}</div></div>:null}
+      <div className="mt-4 flex justify-between rounded-xl bg-muted/50 p-3 text-sm"><span>Preço desta pizza</span><strong>{brl(pizzaPrice)}</strong></div>
+      <Button className="mt-3 w-full" style={{backgroundColor:color}} onClick={addPizza}>Adicionar pizza ao pedido</Button>
+    </div>
+    {([
+      ["bebida","Bebidas",settings.require_drink],
+      ["molho","Molhos",settings.require_sauce],
+      ["adicional","Adicionais",settings.require_additional],
+    ] as const).map(([key,title,required])=>groups[key].length?<section key={key} className="rounded-2xl border bg-card p-4"><h2 className="mb-3 font-semibold">{title} {required?"*":""}</h2><div className="grid grid-cols-2 gap-2 sm:grid-cols-3">{groups[key].map((item)=>{const active=addonIds.includes(item.id);return <button key={item.id} type="button" aria-pressed={active} onClick={()=>toggleAddon(item.id)} className={cn("rounded-xl border p-2 text-left",active&&"border-2")} style={active?{borderColor:color}:undefined}>{item.image_url?<img src={item.image_url} alt={item.name} loading="lazy" className="mb-2 h-24 w-full rounded-lg bg-white object-contain p-1"/>:<span className="mb-2 flex h-24 items-center justify-center rounded-lg bg-muted text-3xl">🥤</span>}<strong className="block text-sm">{item.name}</strong><span className="text-xs text-muted-foreground">{item.description}</span><span className="block text-sm font-semibold">{brl(item.price)}</span></button>;})}</div></section>:null)}
+    <section className="rounded-2xl border bg-card p-4"><h2 className="mb-3 font-semibold">Seu pedido</h2>{pizzas.length?<ul className="space-y-2">{pizzas.map((item,i)=><li key={i} className="flex justify-between gap-3 text-sm"><span>{i+1}. {item.summary}</span><strong>{brl(item.price)}</strong></li>)}</ul>:<p className="text-sm text-muted-foreground">Nenhuma pizza adicionada ainda.</p>}{selectedAddons.map((item)=><div key={item.id} className="mt-2 flex justify-between gap-3 text-sm"><span>{item.name}</span><strong>{brl(item.price)}</strong></div>)}<label className="mt-4 block space-y-1 text-sm font-medium">Observações<textarea value={note} onChange={(e)=>setNote(e.target.value)} rows={2} className="w-full rounded-lg border bg-background p-2 text-sm font-normal" placeholder="Ex.: retirar cebola, instruções de entrega..."/></label><div className="mt-4 flex justify-between border-t pt-3"><span className="font-semibold">Total estimado</span><strong className="text-xl">{brl(total)}</strong></div><Button className="mt-3 h-12 w-full" style={{backgroundColor:color}} onClick={sendOrder}><MessageCircle className="mr-2 size-4"/>Enviar pedido pelo WhatsApp</Button></section>
+  </section>;
 }
 
 export function StorePage() {
@@ -347,6 +435,8 @@ export function StorePage() {
   }
 
   const { store } = data;
+  const isPizzaria = String(store.category ?? "").toLowerCase().includes("pizzar");
+  const isPizzaria = String(store.category ?? "").toLowerCase().includes("pizzar");
   const isMarmitaria = String(store.category ?? "")
     .toLowerCase()
     .includes("marmit");
@@ -625,7 +715,7 @@ export function StorePage() {
         </div>
       </header>
 
-      <div className="mx-auto mt-4 max-w-3xl px-4">
+      <div className={cn("mx-auto mt-4 max-w-3xl px-4", isPizzaria && "hidden")}>
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -741,7 +831,7 @@ export function StorePage() {
       </main>
 
       <div
-        className="sticky top-0 z-20 mt-4 border-y py-2 backdrop-blur"
+        className={cn("sticky top-0 z-20 mt-4 border-y py-2 backdrop-blur", isPizzaria && "hidden")}
         style={{
           backgroundColor: `${store.theme_palette?.["header"] ?? store.primary_color}eF`,
           borderColor: store.theme_palette?.["borders"] ?? "#e2e8f0",
@@ -957,6 +1047,10 @@ export function StorePage() {
       </div>
 
       <main className="mx-auto mt-5 max-w-3xl px-4">
+        {isPizzaria && data.pizzeria?.settings ? <PizzeriaBuilder catalog={data.pizzeria} storeName={store.name} storeWhatsapp={store.whatsapp} color={store.primary_color} /> : null}
+      </main>
+
+      <main className={cn("mx-auto mt-5 max-w-3xl px-4", isPizzaria && "hidden")}>
         {selected ? (
           <ProductDetail
             product={selected}
