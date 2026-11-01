@@ -747,7 +747,7 @@ export function StorePage() {
         </section>
       ) : null}
 
-      <main className="mx-auto mt-5 max-w-3xl space-y-5 px-4">
+      <main className={cn("mx-auto mt-5 max-w-3xl space-y-5 px-4", isPizzaria && "hidden")}>
         {data.products.some((product) => product.is_featured) ? (
           <StorefrontShelf
             title="⭐ Destaques"
