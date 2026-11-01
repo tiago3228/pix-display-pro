@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Pizzeria flavor and drink photo controls reuse the authenticated store-assets upload and signing functions, saving durable paths in image_url so temporary URLs are never persisted.
