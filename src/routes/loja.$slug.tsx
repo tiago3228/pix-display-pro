@@ -192,7 +192,7 @@ function PizzeriaBuilder({ catalog, storeName, storeWhatsapp, color }: {
   }
 
   async function lookupCep() {
-    const cep = delivery.cep.replace(/\\D/g, "");
+    const cep = delivery.cep.replace(/\D/g, "");
     if (cep.length !== 8) {
       toast.error("Digite um CEP válido com 8 números.");
       return;
@@ -205,7 +205,7 @@ function PizzeriaBuilder({ catalog, storeName, storeWhatsapp, color }: {
       if (result.erro) throw new Error("CEP não encontrado");
       setDelivery((current) => ({
         ...current,
-        cep: cep.replace(/(\\d{5})(\\d{3})/, "$1-$2"),
+        cep: cep.replace(/(\d{5})(\d{3})/, "$1-$2"),
         address: result.logradouro ?? "",
         neighborhood: result.bairro ?? "",
         city: result.localidade ?? "",
@@ -224,7 +224,7 @@ function PizzeriaBuilder({ catalog, storeName, storeWhatsapp, color }: {
     if (!phone) return toast.error("O WhatsApp da pizzaria não está configurado.");
     if (!pizzas.length) return toast.error("Adicione pelo menos uma pizza.");
     if (customer.name.trim().length < 2) return toast.error("Informe seu nome.");
-    if (customer.whatsapp.replace(/\\D/g, "").length < 10) return toast.error("Informe seu WhatsApp com DDD.");
+    if (customer.whatsapp.replace(/\D/g, "").length < 10) return toast.error("Informe seu WhatsApp com DDD.");
     if (!delivery.address.trim() || !delivery.number.trim() || !delivery.neighborhood.trim() ||
         !delivery.city.trim() || delivery.state.trim().length !== 2)
       return toast.error("Preencha o endereço completo. Se não souber o CEP, digite o endereço manualmente.");
@@ -268,7 +268,7 @@ function PizzeriaBuilder({ catalog, storeName, storeWhatsapp, color }: {
         settings.order_instructions || "",
       ].filter(Boolean);
       toast.success(`Pedido #${saved.number} registrado com sucesso!`);
-      window.open(whatsappLink(phone, lines.join("\\n")), "_blank", "noopener,noreferrer");
+      window.open(whatsappLink(phone, lines.join("\n")), "_blank", "noopener,noreferrer");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível registrar o pedido.");
     } finally {
@@ -304,7 +304,7 @@ function PizzeriaBuilder({ catalog, storeName, storeWhatsapp, color }: {
       <p className="text-xs text-muted-foreground">Informe seu endereço. Você pode buscar pelo CEP ou preencher tudo manualmente.</p>
       <div className="space-y-1"><label className="text-sm font-medium">Nome completo *</label><input value={customer.name} onChange={(e)=>setCustomer((v)=>({...v,name:e.target.value}))} autoComplete="name" className="w-full rounded-lg border bg-background p-2 text-sm" placeholder="Seu nome"/></div>
       <div className="space-y-1"><label className="text-sm font-medium">WhatsApp com DDD *</label><input value={customer.whatsapp} onChange={(e)=>setCustomer((v)=>({...v,whatsapp:e.target.value}))} inputMode="tel" autoComplete="tel" className="w-full rounded-lg border bg-background p-2 text-sm" placeholder="(11) 99999-9999"/></div>
-      <div className="space-y-1"><label className="text-sm font-medium">CEP (opcional)</label><div className="flex gap-2"><input value={delivery.cep} onChange={(e)=>setDelivery((v)=>({...v,cep:e.target.value}))} onBlur={()=>{if(delivery.cep.replace(/\\D/g,"").length===8) void lookupCep();}} inputMode="numeric" autoComplete="postal-code" maxLength={9} className="min-w-0 flex-1 rounded-lg border bg-background p-2 text-sm" placeholder="00000-000"/><Button type="button" variant="outline" onClick={()=>void lookupCep()} disabled={lookingUpCep}>{lookingUpCep?"Buscando...":"Buscar CEP"}</Button></div><p className="text-xs text-muted-foreground">Não sabe o CEP? Sem problema: preencha os campos abaixo manualmente.</p></div>
+      <div className="space-y-1"><label className="text-sm font-medium">CEP (opcional)</label><div className="flex gap-2"><input value={delivery.cep} onChange={(e)=>setDelivery((v)=>({...v,cep:e.target.value}))} onBlur={()=>{if(delivery.cep.replace(/\D/g,"").length===8) void lookupCep();}} inputMode="numeric" autoComplete="postal-code" maxLength={9} className="min-w-0 flex-1 rounded-lg border bg-background p-2 text-sm" placeholder="00000-000"/><Button type="button" variant="outline" onClick={()=>void lookupCep()} disabled={lookingUpCep}>{lookingUpCep?"Buscando...":"Buscar CEP"}</Button></div><p className="text-xs text-muted-foreground">Não sabe o CEP? Sem problema: preencha os campos abaixo manualmente.</p></div>
       <div className="space-y-1"><label className="text-sm font-medium">Rua / Avenida *</label><input value={delivery.address} onChange={(e)=>setDelivery((v)=>({...v,address:e.target.value}))} autoComplete="street-address" className="w-full rounded-lg border bg-background p-2 text-sm" placeholder="Nome da rua"/></div>
       <div className="grid grid-cols-2 gap-2"><input aria-label="Número" value={delivery.number} onChange={(e)=>setDelivery((v)=>({...v,number:e.target.value}))} className="min-w-0 rounded-lg border bg-background p-2 text-sm" placeholder="Número *"/><input aria-label="Complemento" value={delivery.complement} onChange={(e)=>setDelivery((v)=>({...v,complement:e.target.value}))} className="min-w-0 rounded-lg border bg-background p-2 text-sm" placeholder="Complemento"/></div>
       <div className="space-y-1"><label className="text-sm font-medium">Bairro *</label><input value={delivery.neighborhood} onChange={(e)=>setDelivery((v)=>({...v,neighborhood:e.target.value}))} autoComplete="address-level3" className="w-full rounded-lg border bg-background p-2 text-sm" placeholder="Bairro"/></div>
