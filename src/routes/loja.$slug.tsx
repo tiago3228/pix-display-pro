@@ -521,7 +521,6 @@ export function StorePage() {
 
   const { store } = data;
   const isPizzaria = String(store.category ?? "").toLowerCase().includes("pizzar");
-  const isPizzaria = String(store.category ?? "").toLowerCase().includes("pizzar");
   const isMarmitaria = String(store.category ?? "")
     .toLowerCase()
     .includes("marmit");
