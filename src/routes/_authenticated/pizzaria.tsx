@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, Pencil, Pizza, Plus, Save, Trash2, X } from "lucide-react";
+import { Check, ImagePlus, Pencil, Pizza, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
@@ -44,6 +44,9 @@ type PizzeriaFlavor = {
   description: string;
   category: string;
   is_active: boolean;
+  image_url: string | null;
+  image_credit: string | null;
+  image_source_url: string | null;
 };
 type PizzeriaFlavorPrice = { size_id: string; flavor_id: string; price: number };
 type PizzeriaAddon = {
@@ -53,6 +56,9 @@ type PizzeriaAddon = {
   description: string;
   price: number;
   is_active: boolean;
+  image_url: string | null;
+  image_credit: string | null;
+  image_source_url: string | null;
 };
 
 const db = {
@@ -90,6 +96,7 @@ function PizzeriaSettings() {
   const [flavorPrices, setFlavorPrices] = useState<Record<string, string>>({});
   const [flavorDraft, setFlavorDraft] = useState({ name: "", description: "", category: "" });
   const [editingAddon, setEditingAddon] = useState<string | null>(null);
+  const [uploadingImage, setUploadingImage] = useState<string | null>(null);
   const [addonDraft, setAddonDraft] = useState({ group_key: "borda", name: "", description: "", price: "0" });
   const [newFlavor, setNewFlavor] = useState({
     name: "",
@@ -118,12 +125,12 @@ function PizzeriaSettings() {
           .order("sort_order"),
         db
           .from("pizzeria_flavors")
-          .select("id,name,description,category,is_active")
+          .select("id,name,description,category,is_active,image_url,image_credit,image_source_url")
           .eq("store_id", store!.id)
           .order("sort_order"),
         db
           .from("pizzeria_addons")
-          .select("id,group_key,name,description,price,is_active")
+          .select("id,group_key,name,description,price,is_active,image_url,image_credit,image_source_url")
           .eq("store_id", store!.id)
           .order("group_key")
           .order("sort_order"),
@@ -148,6 +155,61 @@ function PizzeriaSettings() {
 
   async function refresh() {
     await client.invalidateQueries({ queryKey: ["pizzeria-catalog", store?.id] });
+  }
+
+  async function uploadCatalogImage(file: File, kind: "flavor" | "addon", item: { id: string; name: string }) {
+    if (!store) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("Envie uma imagem JPG, PNG ou WEBP.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 5 MB.");
+      return;
+    }
+    const key = `${kind}:${item.id}`;
+    setUploadingImage(key);
+    const extension = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+    const objectPath = `${store.id}/${kind}/${item.id}/${Date.now()}.${extension}`;
+    try {
+      const uploaded = await supabase.storage.from("pizzeria-images").upload(objectPath, file, {
+        cacheControl: "3600", upsert: false, contentType: file.type,
+      });
+      if (uploaded.error) throw uploaded.error;
+      const imageUrl = supabase.storage.from("pizzeria-images").getPublicUrl(objectPath).data.publicUrl;
+      const saved = kind === "flavor"
+        ? await db.from("pizzeria_flavors").update({ image_url: imageUrl, image_credit: null, image_source_url: null }).eq("id", item.id).eq("store_id", store.id)
+        : await db.from("pizzeria_addons").update({ image_url: imageUrl, image_credit: null, image_source_url: null }).eq("id", item.id).eq("store_id", store.id);
+      if (saved.error) throw saved.error;
+      toast.success(`Foto de "${item.name}" atualizada.`);
+      await refresh();
+    } catch (error) {
+      console.error("Erro ao enviar foto da pizzaria:", error);
+      toast.error("Não foi possível enviar a foto. Confira se a migration de imagens foi aplicada no Supabase.");
+    } finally {
+      setUploadingImage(null);
+    }
+  }
+
+  function imagePicker(kind: "flavor" | "addon", item: { id: string; name: string; image_url: string | null }) {
+    const key = `${kind}:${item.id}`;
+    return (
+      <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium hover:bg-muted">
+        <ImagePlus className="size-3.5" />
+        {uploadingImage === key ? "Enviando..." : item.image_url ? "Trocar foto" : "Adicionar foto"}
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="sr-only"
+          disabled={uploadingImage === key}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) void uploadCatalogImage(file, kind, item);
+            event.target.value = "";
+          }}
+        />
+      </label>
+    );
   }
 
   async function saveSettings() {
@@ -475,6 +537,8 @@ function PizzeriaSettings() {
             <div key={flavor.id} className="rounded-lg border p-3">
               {editingFlavor === flavor.id ? (
                 <div className="space-y-2">
+                  {flavor.image_url ? <img src={flavor.image_url} alt={flavor.name} className="h-28 w-28 rounded-lg border object-cover" /> : null}
+                  <div className="flex flex-wrap items-center gap-2">{imagePicker("flavor", flavor)}{flavor.image_credit && flavor.image_source_url ? <a href={flavor.image_source_url} target="_blank" rel="noreferrer" className="text-xs text-muted-foreground underline">Crédito: {flavor.image_credit}</a> : null}</div>
                   <Input value={flavorDraft.name} onChange={(event) => setFlavorDraft({ ...flavorDraft, name: event.target.value })} placeholder="Nome do sabor" />
                   <Input value={flavorDraft.category} onChange={(event) => setFlavorDraft({ ...flavorDraft, category: event.target.value })} placeholder="Categoria" />
                   <Textarea value={flavorDraft.description} onChange={(event) => setFlavorDraft({ ...flavorDraft, description: event.target.value })} placeholder="Descrição e ingredientes" />
@@ -494,8 +558,8 @@ function PizzeriaSettings() {
                 </div>
               ) : (
                 <div className="flex items-start justify-between gap-2">
-                  <button type="button" onClick={() => void toggleFlavor(flavor)} className="min-w-0 flex-1 text-left"><div className="flex items-center justify-between gap-2"><strong>{flavor.name}</strong>{flavor.is_active ? <Badge className="bg-emerald-600">Ativo</Badge> : <Badge variant="outline">Inativo</Badge>}</div><p className="mt-1 text-xs text-muted-foreground">{flavor.category} · {flavor.description}</p></button>
-                  <Button size="icon" variant="ghost" onClick={() => startEditFlavor(flavor)} aria-label={"Editar " + flavor.name}><Pencil className="size-4" /></Button>
+                  <div className="flex min-w-0 flex-1 items-start gap-3"><button type="button" onClick={() => void toggleFlavor(flavor)} className="min-w-0 flex-1 text-left"><div className="flex items-center justify-between gap-2"><strong>{flavor.name}</strong>{flavor.is_active ? <Badge className="bg-emerald-600">Ativo</Badge> : <Badge variant="outline">Inativo</Badge>}</div><p className="mt-1 text-xs text-muted-foreground">{flavor.category} · {flavor.description}</p></button>{flavor.image_url ? <img src={flavor.image_url} alt={flavor.name} className="size-16 shrink-0 rounded-md border object-cover" /> : null}</div>
+                  <div className="flex shrink-0 flex-col gap-1">{imagePicker("flavor", flavor)}<Button size="icon" variant="ghost" onClick={() => startEditFlavor(flavor)} aria-label={"Editar " + flavor.name}><Pencil className="size-4" /></Button></div>
                 </div>
               )}
             </div>
@@ -534,6 +598,8 @@ function PizzeriaSettings() {
             <div key={addon.id} className="rounded-lg border p-3">
               {editingAddon === addon.id ? (
                 <div className="space-y-2">
+                  {addon.image_url ? <img src={addon.image_url} alt={addon.name} className="h-28 w-28 rounded-lg border bg-white object-contain p-1" /> : null}
+                  <div className="flex flex-wrap items-center gap-2">{imagePicker("addon", addon)}{addon.image_credit && addon.image_source_url ? <a href={addon.image_source_url} target="_blank" rel="noreferrer" className="text-xs text-muted-foreground underline">Crédito: {addon.image_credit}</a> : null}</div>
                   <Input value={addonDraft.name} onChange={(event) => setAddonDraft({ ...addonDraft, name: event.target.value })} placeholder="Nome" />
                   <Input value={addonDraft.description} onChange={(event) => setAddonDraft({ ...addonDraft, description: event.target.value })} placeholder="Descrição / volume" />
                   <Input value={addonDraft.price} onChange={(event) => setAddonDraft({ ...addonDraft, price: event.target.value })} placeholder="Preço" inputMode="decimal" />
@@ -541,8 +607,8 @@ function PizzeriaSettings() {
                 </div>
               ) : (
                 <div className="flex items-center justify-between gap-2">
-                  <button type="button" onClick={() => void toggleAddon(addon)} className="min-w-0 flex-1 text-left"><div className="flex items-center gap-2"><strong>{addon.name}</strong>{addon.is_active ? <Badge className="bg-emerald-600">Ativo</Badge> : <Badge variant="outline">Inativo</Badge>}</div><p className="text-xs text-muted-foreground">{addon.description} · R$ {Number(addon.price).toFixed(2).replace(".", ",")}</p></button>
-                  <div className="flex shrink-0"><Button size="icon" variant="ghost" onClick={() => startEditAddon(addon)} aria-label={"Editar " + addon.name}><Pencil className="size-4" /></Button><Button variant="ghost" size="icon" onClick={() => void deleteAddon(addon)} aria-label={"Remover " + addon.name}><Trash2 className="size-4 text-destructive" /></Button></div>
+                  <div className="flex min-w-0 flex-1 items-start gap-3"><button type="button" onClick={() => void toggleAddon(addon)} className="min-w-0 flex-1 text-left"><div className="flex items-center gap-2"><strong>{addon.name}</strong>{addon.is_active ? <Badge className="bg-emerald-600">Ativo</Badge> : <Badge variant="outline">Inativo</Badge>}</div><p className="text-xs text-muted-foreground">{addon.description} · R$ {Number(addon.price).toFixed(2).replace(".", ",")}</p></button>{addon.image_url ? <img src={addon.image_url} alt={addon.name} className="size-16 shrink-0 rounded-md border bg-white object-contain p-1" /> : null}</div>
+                  <div className="flex shrink-0 flex-col gap-1">{imagePicker("addon", addon)}<div className="flex"><Button size="icon" variant="ghost" onClick={() => startEditAddon(addon)} aria-label={"Editar " + addon.name}><Pencil className="size-4" /></Button><Button variant="ghost" size="icon" onClick={() => void deleteAddon(addon)} aria-label={"Remover " + addon.name}><Trash2 className="size-4 text-destructive" /></Button></div></div>
                 </div>
               )}
             </div>
