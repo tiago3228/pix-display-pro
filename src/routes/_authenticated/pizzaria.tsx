@@ -283,14 +283,14 @@ function PizzeriaSettings() {
     }
   }
 
-  async function addAddon() {
+  async function addAddon(groupOverride?: PizzeriaAddon["group_key"]) {
     if (!store || !newAddon.name.trim()) {
       toast.error("Informe o nome do adicional.");
       return;
     }
     const result = await db.from("pizzeria_addons").insert({
       store_id: store.id,
-      group_key: newAddon.group_key,
+      group_key: groupOverride ?? (newAddon.group_key as PizzeriaAddon["group_key"]),
       name: newAddon.name.trim(),
       description: newAddon.description.trim(),
       price: Number(newAddon.price.replace(",", ".")) || 0,
@@ -552,7 +552,7 @@ function PizzeriaSettings() {
           <Input value={newAddon.name} onChange={(event) => setNewAddon({ ...newAddon, group_key: "bebida", name: event.target.value })} placeholder="Ex.: Coca-Cola Zero 600ml" />
           <Input value={newAddon.description} onChange={(event) => setNewAddon({ ...newAddon, group_key: "bebida", description: event.target.value })} placeholder="Marca, tipo e volume" />
           <Input value={newAddon.price} onChange={(event) => setNewAddon({ ...newAddon, group_key: "bebida", price: event.target.value })} placeholder="Preço" inputMode="decimal" />
-          <Button onClick={() => { setNewAddon({ ...newAddon, group_key: "bebida" }); void addAddon(); }}><Plus className="mr-1.5 size-4" /> Adicionar bebida</Button>
+          <Button onClick={() => void addAddon("bebida")}><Plus className="mr-1.5 size-4" /> Adicionar bebida</Button>
         </div>
       </CollapsibleSection>
 
