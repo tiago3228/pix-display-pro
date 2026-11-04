@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Preencher os 28 sabores sem foto com imagens ilustrativas específicas, preservando fotos existentes.
+- [x] Preencher os 28 sabores sem foto com imagens ilustrativas específicas, preservando fotos existentes.
 
 - [x] Adicionar envio, troca e remoção de fotos nos sabores e bebidas da Pizzaria.
 - [ ] Validar envio e salvamento das fotos com sessão ativa (bloqueado: sessão de teste expirada; entrar no preview).
