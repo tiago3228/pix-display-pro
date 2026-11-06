@@ -56,6 +56,7 @@ import { Route as AuthenticatedAdminNotificacoesRouteImport } from './routes/_au
 import { Route as AuthenticatedAdminPrecosRouteImport } from './routes/_authenticated/admin_.precos'
 import { Route as AuthenticatedAdminSoftwaresRouteImport } from './routes/_authenticated/admin_.softwares'
 import { Route as AuthenticatedAdminSolicitacoesProRouteImport } from './routes/_authenticated/admin_.solicitacoes-pro'
+import { Route as AuthenticatedPizzariaPedidosRouteImport } from './routes/_authenticated/pizzaria_.pedidos'
 import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public/webhooks/mercadopago'
 
 const IndexRoute = IndexRouteImport.update({
@@ -307,6 +308,12 @@ const AuthenticatedAdminSolicitacoesProRoute =
     path: '/admin/solicitacoes-pro',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPizzariaPedidosRoute =
+  AuthenticatedPizzariaPedidosRouteImport.update({
+    id: '/pizzaria_/pedidos',
+    path: '/pizzaria/pedidos',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ApiPublicWebhooksMercadopagoRoute =
   ApiPublicWebhooksMercadopagoRouteImport.update({
     id: '/api/public/webhooks/mercadopago',
@@ -361,6 +368,7 @@ export interface FileRoutesByFullPath {
   '/admin/precos': typeof AuthenticatedAdminPrecosRoute
   '/admin/softwares': typeof AuthenticatedAdminSoftwaresRoute
   '/admin/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
+  '/pizzaria/pedidos': typeof AuthenticatedPizzariaPedidosRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRoutesByTo {
@@ -410,6 +418,7 @@ export interface FileRoutesByTo {
   '/admin/precos': typeof AuthenticatedAdminPrecosRoute
   '/admin/softwares': typeof AuthenticatedAdminSoftwaresRoute
   '/admin/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
+  '/pizzaria/pedidos': typeof AuthenticatedPizzariaPedidosRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRoutesById {
@@ -461,6 +470,7 @@ export interface FileRoutesById {
   '/_authenticated/admin_/precos': typeof AuthenticatedAdminPrecosRoute
   '/_authenticated/admin_/softwares': typeof AuthenticatedAdminSoftwaresRoute
   '/_authenticated/admin_/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
+  '/_authenticated/pizzaria_/pedidos': typeof AuthenticatedPizzariaPedidosRoute
   '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRouteTypes {
@@ -512,6 +522,7 @@ export interface FileRouteTypes {
     | '/admin/precos'
     | '/admin/softwares'
     | '/admin/solicitacoes-pro'
+    | '/pizzaria/pedidos'
     | '/api/public/webhooks/mercadopago'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -561,6 +572,7 @@ export interface FileRouteTypes {
     | '/admin/precos'
     | '/admin/softwares'
     | '/admin/solicitacoes-pro'
+    | '/pizzaria/pedidos'
     | '/api/public/webhooks/mercadopago'
   id:
     | '__root__'
@@ -611,6 +623,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin_/precos'
     | '/_authenticated/admin_/softwares'
     | '/_authenticated/admin_/solicitacoes-pro'
+    | '/_authenticated/pizzaria_/pedidos'
     | '/api/public/webhooks/mercadopago'
   fileRoutesById: FileRoutesById
 }
@@ -962,6 +975,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSolicitacoesProRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/pizzaria_/pedidos': {
+      id: '/_authenticated/pizzaria_/pedidos'
+      path: '/pizzaria/pedidos'
+      fullPath: '/pizzaria/pedidos'
+      preLoaderRoute: typeof AuthenticatedPizzariaPedidosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/api/public/webhooks/mercadopago': {
       id: '/api/public/webhooks/mercadopago'
       path: '/api/public/webhooks/mercadopago'
@@ -1006,6 +1026,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminPrecosRoute: typeof AuthenticatedAdminPrecosRoute
   AuthenticatedAdminSoftwaresRoute: typeof AuthenticatedAdminSoftwaresRoute
   AuthenticatedAdminSolicitacoesProRoute: typeof AuthenticatedAdminSolicitacoesProRoute
+  AuthenticatedPizzariaPedidosRoute: typeof AuthenticatedPizzariaPedidosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1043,6 +1064,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminSoftwaresRoute: AuthenticatedAdminSoftwaresRoute,
   AuthenticatedAdminSolicitacoesProRoute:
     AuthenticatedAdminSolicitacoesProRoute,
+  AuthenticatedPizzariaPedidosRoute: AuthenticatedPizzariaPedidosRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
