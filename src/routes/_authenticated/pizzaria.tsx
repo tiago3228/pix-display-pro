@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ClipboardList } from "lucide-react";
 import { Check, Pencil, Pizza, Plus, Save, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
@@ -509,9 +510,16 @@ function PizzeriaSettings() {
       title="🍕 Pizzaria"
       description="Configure tamanhos, sabores, bordas, bebidas, molhos e adicionais da sua loja."
       action={
+        <div className="flex gap-2">
+        <Button size="sm" variant="outline" asChild>
+          <Link to="/pizzaria/pedidos">
+            <ClipboardList className="mr-1.5 size-4" /> Pedidos
+          </Link>
+        </Button>
         <Button size="sm" onClick={() => void saveSettings()}>
           <Save className="mr-1.5 size-4" /> Salvar configurações
         </Button>
+        </div>
       }
     >
       <div className="mb-5 rounded-2xl border border-orange-200 bg-gradient-to-br from-orange-50 via-background to-amber-50 p-5 dark:border-orange-900 dark:from-orange-950/30">
