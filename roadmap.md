@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Fazer um pedido real pelo montador da Pizzaria e verificar Novos, Confirmados, Em preparo, Saiu para entrega e link de WhatsApp para o cliente.
+
 - [x] Preencher os 28 sabores sem foto com imagens ilustrativas específicas, preservando fotos existentes.
 
 - [x] Adicionar envio, troca e remoção de fotos nos sabores e bebidas da Pizzaria.
