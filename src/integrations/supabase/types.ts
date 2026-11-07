@@ -1298,6 +1298,12 @@ export type Database = {
           allow_quarter_flavors: boolean
           display_name: string | null
           order_instructions: string
+          require_additional: boolean
+          require_border: boolean
+          require_drink: boolean
+          require_flavors: boolean
+          require_sauce: boolean
+          require_size: boolean
           store_id: string
           updated_at: string
           whatsapp: string | null
@@ -1308,6 +1314,12 @@ export type Database = {
           allow_quarter_flavors?: boolean
           display_name?: string | null
           order_instructions?: string
+          require_additional?: boolean
+          require_border?: boolean
+          require_drink?: boolean
+          require_flavors?: boolean
+          require_sauce?: boolean
+          require_size?: boolean
           store_id: string
           updated_at?: string
           whatsapp?: string | null
@@ -1318,6 +1330,12 @@ export type Database = {
           allow_quarter_flavors?: boolean
           display_name?: string | null
           order_instructions?: string
+          require_additional?: boolean
+          require_border?: boolean
+          require_drink?: boolean
+          require_flavors?: boolean
+          require_sauce?: boolean
+          require_size?: boolean
           store_id?: string
           updated_at?: string
           whatsapp?: string | null
