@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Fazer um pedido real pelo montador da Pizzaria e verificar Novos, Confirmados, Em preparo, Saiu para entrega e link de WhatsApp para o cliente.
+- [ ] Fazer um pedido real pelo montador da Pizzaria e verificar Novos, Confirmados, Em preparo, Saiu para entrega e link de WhatsApp para o cliente (bloqueado: montador público ausente no código e na loja publicada /s/camisas; painel autenticado abriu sem erros, mas está vazio; depende de disponibilizar o montador e sua criação de pedidos).
 
 - [x] Preencher os 28 sabores sem foto com imagens ilustrativas específicas, preservando fotos existentes.
 
