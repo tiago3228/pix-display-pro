@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1794021492055,
+      "tag": "0000_pizzeria_require_fields",
+      "breakpoints": true
+    }
+  ]
+}

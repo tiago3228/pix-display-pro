@@ -144,7 +144,36 @@ export type Storefront = {
     collections: StorefrontSportsCollection[];
   };
   products: StorefrontProduct[];
+  pizzeria: PublicPizzeria | null;
 } | null;
+
+export type PublicPizzeria = {
+  displayName: string | null;
+  instructions: string;
+  allowHalf: boolean;
+  allowQuarter: boolean;
+  requireBorder: boolean;
+  requireSauce: boolean;
+  requireAdditional: boolean;
+  requireDrink: boolean;
+  sizes: { id: string; name: string; diameterCm: number | null; maxFlavors: number }[];
+  flavors: {
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+    image: string | null;
+    prices: Record<string, number>;
+  }[];
+  addons: {
+    id: string;
+    group: "borda" | "bebida" | "molho" | "adicional";
+    name: string;
+    description: string;
+    price: number;
+    image: string | null;
+  }[];
+};
 
 type StorefrontProductDbRow = {
   id: string;
@@ -402,7 +431,11 @@ export const getStorefront = createServerFn({ method: "GET" })
         : Promise.resolve({ data: [] as never[] }),
     ]);
 
+    const pizzeriaRaw = await loadPizzeriaRows(publicDb, store.id);
+
     const paths = [
+      ...(pizzeriaRaw?.flavors ?? []).map((f) => f.image_url),
+      ...(pizzeriaRaw?.addons ?? []).map((a) => a.image_url),
       store.logo_url,
       store.banner_url,
       sportsSettings?.logo_url,
@@ -609,8 +642,129 @@ export const getStorefront = createServerFn({ method: "GET" })
           jewelryOfferExpiresAt: p.jewelry_offer_expires_at ?? null,
         };
       }),
+      pizzeria: pizzeriaRaw ? mapPizzeria(pizzeriaRaw, resolve) : null,
     };
   });
+
+type PizzeriaRows = {
+  settings: {
+    display_name: string | null;
+    order_instructions: string;
+    allow_half_flavors: boolean;
+    allow_quarter_flavors: boolean;
+    require_border?: boolean;
+    require_sauce?: boolean;
+    require_additional?: boolean;
+    require_drink?: boolean;
+  } | null;
+  sizes: { id: string; name: string; diameter_cm: number | null; max_flavors: number }[];
+  flavors: {
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+    image_url: string | null;
+  }[];
+  prices: { size_id: string; flavor_id: string; price: number }[];
+  addons: {
+    id: string;
+    group_key: string;
+    name: string;
+    description: string;
+    price: number;
+    image_url: string | null;
+  }[];
+};
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LooseDb = { from: (table: string) => any };
+
+/** Lê o cardápio público da Pizzaria; as regras de acesso do banco exigem módulo ativo e PRO. */
+async function loadPizzeriaRows(db: LooseDb, storeId: string): Promise<PizzeriaRows | null> {
+  const { data: moduleRow } = await db
+    .from("store_modules")
+    .select("id")
+    .eq("store_id", storeId)
+    .eq("module", "pizzaria")
+    .eq("is_active", true)
+    .maybeSingle();
+  if (!moduleRow) return null;
+  const [settings, sizes, flavors, prices, addons] = await Promise.all([
+    db.from("pizzeria_settings").select("*").eq("store_id", storeId).maybeSingle(),
+    db
+      .from("pizzeria_sizes")
+      .select("id, name, diameter_cm, max_flavors")
+      .eq("store_id", storeId)
+      .eq("is_active", true)
+      .order("sort_order"),
+    db
+      .from("pizzeria_flavors")
+      .select("id, name, description, category, image_url")
+      .eq("store_id", storeId)
+      .eq("is_active", true)
+      .order("sort_order")
+      .order("name"),
+    db.from("pizzeria_flavor_prices").select("size_id, flavor_id, price").eq("store_id", storeId),
+    db
+      .from("pizzeria_addons")
+      .select("id, group_key, name, description, price, image_url")
+      .eq("store_id", storeId)
+      .eq("is_active", true)
+      .order("sort_order")
+      .order("name"),
+  ]);
+  const rows: PizzeriaRows = {
+    settings: settings.data ?? null,
+    sizes: sizes.data ?? [],
+    flavors: flavors.data ?? [],
+    prices: prices.data ?? [],
+    addons: addons.data ?? [],
+  };
+  if (!rows.sizes.length || !rows.flavors.length) return null;
+  return rows;
+}
+
+function mapPizzeria(rows: PizzeriaRows, resolve: (p: string | null) => string | null): PublicPizzeria {
+  const s = rows.settings;
+  return {
+    displayName: s?.display_name ?? null,
+    instructions: s?.order_instructions ?? "",
+    allowHalf: s?.allow_half_flavors ?? true,
+    allowQuarter: s?.allow_quarter_flavors ?? true,
+    requireBorder: Boolean(s?.require_border),
+    requireSauce: Boolean(s?.require_sauce),
+    requireAdditional: Boolean(s?.require_additional),
+    requireDrink: Boolean(s?.require_drink),
+    sizes: rows.sizes.map((z) => ({
+      id: z.id,
+      name: z.name,
+      diameterCm: z.diameter_cm,
+      maxFlavors: Math.max(1, Number(z.max_flavors) || 1),
+    })),
+    flavors: rows.flavors
+      .map((f) => ({
+        id: f.id,
+        name: f.name,
+        description: f.description ?? "",
+        category: f.category ?? "",
+        image: resolve(f.image_url),
+        prices: Object.fromEntries(
+          rows.prices.filter((p) => p.flavor_id === f.id).map((p) => [p.size_id, Number(p.price)]),
+        ),
+      }))
+      .filter((f) => Object.keys(f.prices).length > 0),
+    addons: rows.addons
+      .filter((a) => ["borda", "bebida", "molho", "adicional"].includes(a.group_key))
+      .map((a) => ({
+        id: a.id,
+        group: a.group_key as PublicPizzeria["addons"][number]["group"],
+        name: a.name,
+        description: a.description ?? "",
+        price: Number(a.price),
+        image: resolve(a.image_url),
+      })),
+  };
+}
 
 const orderSchema = z.object({
   storeId: z.string().uuid(),
