@@ -144,7 +144,36 @@ export type Storefront = {
     collections: StorefrontSportsCollection[];
   };
   products: StorefrontProduct[];
+  pizzeria: PublicPizzeria | null;
 } | null;
+
+export type PublicPizzeria = {
+  displayName: string | null;
+  instructions: string;
+  allowHalf: boolean;
+  allowQuarter: boolean;
+  requireBorder: boolean;
+  requireSauce: boolean;
+  requireAdditional: boolean;
+  requireDrink: boolean;
+  sizes: { id: string; name: string; diameterCm: number | null; maxFlavors: number }[];
+  flavors: {
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+    image: string | null;
+    prices: Record<string, number>;
+  }[];
+  addons: {
+    id: string;
+    group: "borda" | "bebida" | "molho" | "adicional";
+    name: string;
+    description: string;
+    price: number;
+    image: string | null;
+  }[];
+};
 
 type StorefrontProductDbRow = {
   id: string;
