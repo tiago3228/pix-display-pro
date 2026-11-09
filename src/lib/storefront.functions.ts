@@ -902,6 +902,14 @@ export const submitOrder = createServerFn({ method: "POST" })
         subtotal: Number((unitPrice * item.quantity).toFixed(2)),
       };
     });
+    const items: {
+      product_id: string | null;
+      product_name: string;
+      variant_label: string | null;
+      quantity: number;
+      unit_price: number;
+      subtotal: number;
+    }[] = [...productRows, ...pizzeriaRows];
 
     // Baixa de estoque atômica: só desconta quando ainda há unidades suficientes.
     const taken: { table: "products" | "product_variants"; id: string; quantity: number }[] = [];
@@ -920,7 +928,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       }
     };
 
-    for (const item of data.items) {
+    for (const item of productItems) {
       const product = (products ?? []).find((p) => p.id === item.productId);
       if (!product?.track_stock) continue;
       const variant = item.variantId
