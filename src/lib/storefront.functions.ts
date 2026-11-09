@@ -1181,3 +1181,120 @@ export const getOrderReceiptUrl = createServerFn({ method: "POST" })
       .createSignedUrl(order.receipt_path, 60 * 10);
     return { url: signed?.signedUrl ?? null };
   });
+
+type OrderItemInput = z.infer<typeof orderSchema>["items"][number];
+
+/**
+ * Converte pizzas montadas e bebidas avulsas em linhas de pedido, sempre com
+ * preços lidos do banco. Pizza com vários sabores cobra o sabor mais caro.
+ */
+async function buildPizzeriaOrderRows(db: LooseDb, storeId: string, input: OrderItemInput[]) {
+  const pizzas = input.filter((i) => i.pizza);
+  const loose = input.filter((i) => i.addonId);
+  if (!pizzas.length && !loose.length) return [];
+  const { pizzaUnitPrice, pizzaItemName } = await import("./pizzeria");
+
+  const { data: moduleRow } = await db
+    .from("store_modules")
+    .select("id")
+    .eq("store_id", storeId)
+    .eq("module", "pizzaria")
+    .eq("is_active", true)
+    .maybeSingle();
+  if (!moduleRow) throw new Error("O cardápio da pizzaria está indisponível.");
+
+  const sizeIds = pizzas.map((i) => i.pizza!.sizeId);
+  const flavorIds = pizzas.flatMap((i) => i.pizza!.flavorIds);
+  const addonIds = [
+    ...pizzas.flatMap((i) => i.pizza!.addonIds),
+    ...loose.map((i) => i.addonId!),
+  ];
+  const none = ["00000000-0000-0000-0000-000000000000"];
+  const [sizes, flavors, prices, addons, settings] = await Promise.all([
+    db
+      .from("pizzeria_sizes")
+      .select("id, name, max_flavors")
+      .eq("store_id", storeId)
+      .eq("is_active", true)
+      .in("id", [...none, ...sizeIds]),
+    db
+      .from("pizzeria_flavors")
+      .select("id, name")
+      .eq("store_id", storeId)
+      .eq("is_active", true)
+      .in("id", [...none, ...flavorIds]),
+    db
+      .from("pizzeria_flavor_prices")
+      .select("size_id, flavor_id, price")
+      .eq("store_id", storeId)
+      .in("flavor_id", [...none, ...flavorIds]),
+    db
+      .from("pizzeria_addons")
+      .select("id, group_key, name, price")
+      .eq("store_id", storeId)
+      .eq("is_active", true)
+      .in("id", [...none, ...addonIds]),
+    db
+      .from("pizzeria_settings")
+      .select("allow_half_flavors, allow_quarter_flavors")
+      .eq("store_id", storeId)
+      .maybeSingle(),
+  ]);
+  type Size = { id: string; name: string; max_flavors: number };
+  type Flavor = { id: string; name: string };
+  type Price = { size_id: string; flavor_id: string; price: number };
+  type Addon = { id: string; group_key: string; name: string; price: number };
+  const sizeList = (sizes.data ?? []) as Size[];
+  const flavorList = (flavors.data ?? []) as Flavor[];
+  const priceList = (prices.data ?? []) as Price[];
+  const addonList = (addons.data ?? []) as Addon[];
+  const allowHalf = settings.data?.allow_half_flavors ?? true;
+  const allowQuarter = settings.data?.allow_quarter_flavors ?? true;
+
+  const rows = pizzas.map((item) => {
+    const pizza = item.pizza!;
+    const size = sizeList.find((s) => s.id === pizza.sizeId);
+    if (!size) throw new Error("Tamanho de pizza indisponível.");
+    const uniqueFlavors = Array.from(new Set(pizza.flavorIds));
+    const limit = !allowHalf ? 1 : !allowQuarter ? Math.min(2, size.max_flavors) : size.max_flavors;
+    if (uniqueFlavors.length > Math.max(1, limit))
+      throw new Error(`A pizza ${size.name} aceita no máximo ${limit} sabor(es).`);
+    const chosen = uniqueFlavors.map((id) => {
+      const flavor = flavorList.find((f) => f.id === id);
+      const price = priceList.find((p) => p.flavor_id === id && p.size_id === size.id);
+      if (!flavor || !price) throw new Error("Sabor indisponível para este tamanho.");
+      return { name: flavor.name, price: Number(price.price) };
+    });
+    const extras = Array.from(new Set(pizza.addonIds)).map((id) => {
+      const addon = addonList.find((a) => a.id === id && a.group_key !== "bebida");
+      if (!addon) throw new Error("Adicional indisponível.");
+      return addon;
+    });
+    const unit = pizzaUnitPrice(
+      chosen.map((c) => c.price),
+      extras.map((e) => Number(e.price)),
+    );
+    return {
+      product_id: null,
+      product_name: pizzaItemName(size.name, chosen.map((c) => c.name)).slice(0, 200),
+      variant_label: extras.length ? extras.map((e) => e.name).join(", ").slice(0, 200) : null,
+      quantity: item.quantity,
+      unit_price: unit,
+      subtotal: Number((unit * item.quantity).toFixed(2)),
+    };
+  });
+  for (const item of loose) {
+    const addon = addonList.find((a) => a.id === item.addonId);
+    if (!addon) throw new Error("Item da pizzaria indisponível.");
+    const unit = Number(addon.price);
+    rows.push({
+      product_id: null,
+      product_name: addon.name,
+      variant_label: null,
+      quantity: item.quantity,
+      unit_price: unit,
+      subtotal: Number((unit * item.quantity).toFixed(2)),
+    });
+  }
+  return rows;
+}
