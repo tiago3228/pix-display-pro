@@ -12,6 +12,10 @@ export type CartItem = {
   maxQuantity?: number | null;
   imageUrl?: string | null;
   deliveryEnabled?: boolean;
+  /** Pizza montada no cardápio da Pizzaria (o servidor recalcula o preço). */
+  pizza?: { sizeId: string; flavorIds: string[]; addonIds: string[] } | null;
+  /** Bebida ou item avulso da Pizzaria. */
+  addonId?: string | null;
 };
 
 const storageKey = (slug: string) => `vitrini:cart:${slug}`;

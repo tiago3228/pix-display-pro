@@ -794,12 +794,26 @@ const orderSchema = z.object({
     .optional(),
   items: z
     .array(
-      z.object({
-        productId: z.string().uuid(),
-        variantId: z.string().uuid().nullable().optional(),
-        variantLabel: z.string().max(120).nullable().optional(),
-        quantity: z.number().int().min(1).max(99),
-      }),
+      z
+        .object({
+          productId: z.string().uuid().nullable().optional(),
+          variantId: z.string().uuid().nullable().optional(),
+          variantLabel: z.string().max(120).nullable().optional(),
+          quantity: z.number().int().min(1).max(99),
+          pizza: z
+            .object({
+              sizeId: z.string().uuid(),
+              flavorIds: z.array(z.string().uuid()).min(1).max(4),
+              addonIds: z.array(z.string().uuid()).max(20).default([]),
+            })
+            .nullable()
+            .optional(),
+          addonId: z.string().uuid().nullable().optional(),
+        })
+        .refine(
+          (item) => [item.productId, item.pizza, item.addonId].filter(Boolean).length === 1,
+          "Item de pedido inválido",
+        ),
     )
     .min(1)
     .max(50),
@@ -826,28 +840,35 @@ export const submitOrder = createServerFn({ method: "POST" })
       ? normalizePhone(data.customerWhatsapp, store.default_ddd ?? "31").replace(/^55/, "")
       : "";
 
+    const productItems = data.items
+      .filter((i): i is typeof i & { productId: string } => Boolean(i.productId))
+      .map((i) => ({ ...i, productId: i.productId }));
+    const pizzeriaRows = await buildPizzeriaOrderRows(
+      supabaseAdmin as unknown as LooseDb,
+      store.id,
+      data.items,
+    );
+    const noIds = ["00000000-0000-0000-0000-000000000000"];
+
     const { data: productsRaw } = await supabaseAdmin
       .from("products")
       .select(
         "id, module, name, price, store_id, is_hidden, is_available, order_enabled, stock, track_stock, has_variants, sports_offer_active, sports_offer_price, jewelry_offer_active, jewelry_offer_price, jewelry_offer_expires_at",
       )
-      .in(
-        "id",
-        data.items.map((i) => i.productId),
-      );
+      .in("id", productItems.length ? productItems.map((i) => i.productId) : noIds);
     const products = (productsRaw ?? []) as unknown as (StorefrontProductDbRow & {
       store_id: string;
     })[];
     const { data: variants } = await supabaseAdmin
       .from("product_variants")
       .select("id, product_id, label, price, stock, is_available, sku, image_url")
-      .in(
-        "id",
-        data.items.map((i) => i.variantId).filter((v): v is string => Boolean(v)),
-      );
+      .in("id", [
+        ...noIds,
+        ...productItems.map((i) => i.variantId).filter((v): v is string => Boolean(v)),
+      ]);
 
     // Prices always come from the database, never from the browser payload.
-    const items = data.items.map((item) => {
+    const productRows = productItems.map((item) => {
       const product = (products ?? []).find(
         (p) => p.id === item.productId && p.store_id === store.id && !p.is_hidden && p.is_available,
       );
@@ -881,6 +902,14 @@ export const submitOrder = createServerFn({ method: "POST" })
         subtotal: Number((unitPrice * item.quantity).toFixed(2)),
       };
     });
+    const items: {
+      product_id: string | null;
+      product_name: string;
+      variant_label: string | null;
+      quantity: number;
+      unit_price: number;
+      subtotal: number;
+    }[] = [...productRows, ...pizzeriaRows];
 
     // Baixa de estoque atômica: só desconta quando ainda há unidades suficientes.
     const taken: { table: "products" | "product_variants"; id: string; quantity: number }[] = [];
@@ -899,7 +928,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       }
     };
 
-    for (const item of data.items) {
+    for (const item of productItems) {
       const product = (products ?? []).find((p) => p.id === item.productId);
       if (!product?.track_stock) continue;
       const variant = item.variantId
@@ -1152,3 +1181,120 @@ export const getOrderReceiptUrl = createServerFn({ method: "POST" })
       .createSignedUrl(order.receipt_path, 60 * 10);
     return { url: signed?.signedUrl ?? null };
   });
+
+type OrderItemInput = z.infer<typeof orderSchema>["items"][number];
+
+/**
+ * Converte pizzas montadas e bebidas avulsas em linhas de pedido, sempre com
+ * preços lidos do banco. Pizza com vários sabores cobra o sabor mais caro.
+ */
+async function buildPizzeriaOrderRows(db: LooseDb, storeId: string, input: OrderItemInput[]) {
+  const pizzas = input.filter((i) => i.pizza);
+  const loose = input.filter((i) => i.addonId);
+  if (!pizzas.length && !loose.length) return [];
+  const { pizzaUnitPrice, pizzaItemName } = await import("./pizzeria");
+
+  const { data: moduleRow } = await db
+    .from("store_modules")
+    .select("id")
+    .eq("store_id", storeId)
+    .eq("module", "pizzaria")
+    .eq("is_active", true)
+    .maybeSingle();
+  if (!moduleRow) throw new Error("O cardápio da pizzaria está indisponível.");
+
+  const sizeIds = pizzas.map((i) => i.pizza!.sizeId);
+  const flavorIds = pizzas.flatMap((i) => i.pizza!.flavorIds);
+  const addonIds = [
+    ...pizzas.flatMap((i) => i.pizza!.addonIds),
+    ...loose.map((i) => i.addonId!),
+  ];
+  const none = ["00000000-0000-0000-0000-000000000000"];
+  const [sizes, flavors, prices, addons, settings] = await Promise.all([
+    db
+      .from("pizzeria_sizes")
+      .select("id, name, max_flavors")
+      .eq("store_id", storeId)
+      .eq("is_active", true)
+      .in("id", [...none, ...sizeIds]),
+    db
+      .from("pizzeria_flavors")
+      .select("id, name")
+      .eq("store_id", storeId)
+      .eq("is_active", true)
+      .in("id", [...none, ...flavorIds]),
+    db
+      .from("pizzeria_flavor_prices")
+      .select("size_id, flavor_id, price")
+      .eq("store_id", storeId)
+      .in("flavor_id", [...none, ...flavorIds]),
+    db
+      .from("pizzeria_addons")
+      .select("id, group_key, name, price")
+      .eq("store_id", storeId)
+      .eq("is_active", true)
+      .in("id", [...none, ...addonIds]),
+    db
+      .from("pizzeria_settings")
+      .select("allow_half_flavors, allow_quarter_flavors")
+      .eq("store_id", storeId)
+      .maybeSingle(),
+  ]);
+  type Size = { id: string; name: string; max_flavors: number };
+  type Flavor = { id: string; name: string };
+  type Price = { size_id: string; flavor_id: string; price: number };
+  type Addon = { id: string; group_key: string; name: string; price: number };
+  const sizeList = (sizes.data ?? []) as Size[];
+  const flavorList = (flavors.data ?? []) as Flavor[];
+  const priceList = (prices.data ?? []) as Price[];
+  const addonList = (addons.data ?? []) as Addon[];
+  const allowHalf = settings.data?.allow_half_flavors ?? true;
+  const allowQuarter = settings.data?.allow_quarter_flavors ?? true;
+
+  const rows = pizzas.map((item) => {
+    const pizza = item.pizza!;
+    const size = sizeList.find((s) => s.id === pizza.sizeId);
+    if (!size) throw new Error("Tamanho de pizza indisponível.");
+    const uniqueFlavors = Array.from(new Set(pizza.flavorIds));
+    const limit = !allowHalf ? 1 : !allowQuarter ? Math.min(2, size.max_flavors) : size.max_flavors;
+    if (uniqueFlavors.length > Math.max(1, limit))
+      throw new Error(`A pizza ${size.name} aceita no máximo ${limit} sabor(es).`);
+    const chosen = uniqueFlavors.map((id) => {
+      const flavor = flavorList.find((f) => f.id === id);
+      const price = priceList.find((p) => p.flavor_id === id && p.size_id === size.id);
+      if (!flavor || !price) throw new Error("Sabor indisponível para este tamanho.");
+      return { name: flavor.name, price: Number(price.price) };
+    });
+    const extras = Array.from(new Set(pizza.addonIds)).map((id) => {
+      const addon = addonList.find((a) => a.id === id && a.group_key !== "bebida");
+      if (!addon) throw new Error("Adicional indisponível.");
+      return addon;
+    });
+    const unit = pizzaUnitPrice(
+      chosen.map((c) => c.price),
+      extras.map((e) => Number(e.price)),
+    );
+    return {
+      product_id: null,
+      product_name: pizzaItemName(size.name, chosen.map((c) => c.name)).slice(0, 200),
+      variant_label: extras.length ? extras.map((e) => e.name).join(", ").slice(0, 200) : null,
+      quantity: item.quantity,
+      unit_price: unit,
+      subtotal: Number((unit * item.quantity).toFixed(2)),
+    };
+  });
+  for (const item of loose) {
+    const addon = addonList.find((a) => a.id === item.addonId);
+    if (!addon) throw new Error("Item da pizzaria indisponível.");
+    const unit = Number(addon.price);
+    rows.push({
+      product_id: null,
+      product_name: addon.name,
+      variant_label: null,
+      quantity: item.quantity,
+      unit_price: unit,
+      subtotal: Number((unit * item.quantity).toFixed(2)),
+    });
+  }
+  return rows;
+}
