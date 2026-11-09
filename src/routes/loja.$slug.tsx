@@ -448,6 +448,15 @@ export function StorePage() {
 
   async function handleSend() {
     if (!cart.items.length) return;
+    if (
+      data?.pizzeria?.requireDrink &&
+      data.pizzeria.addons.some((a) => a.group === "bebida") &&
+      cart.items.some((i) => i.pizza) &&
+      !cart.items.some((i) => i.addonId)
+    ) {
+      toast.error("Escolha pelo menos uma bebida para acompanhar a pizza.");
+      return;
+    }
     setSending(true);
     const count = plans.some((p) => p.count === installments) ? installments : 1;
     const message = buildOrderMessage({
