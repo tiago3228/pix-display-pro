@@ -1,24 +1,22 @@
-import { describe, expect, it } from "vitest";
-import { pizzaItemName, pizzaUnitPrice } from "./pizzeria";
+import assert from "node:assert/strict";
+import test from "node:test";
+import { pizzaItemName, pizzaUnitPrice } from "./pizzeria.ts";
 
-describe("pizzaUnitPrice", () => {
-  it("cobra o sabor mais caro quando há meio a meio", () => {
-    expect(pizzaUnitPrice([45, 52])).toBe(52);
-  });
-
-  it("soma borda e adicionais ao preço da pizza", () => {
-    expect(pizzaUnitPrice([40], [8, 4.5])).toBe(52.5);
-  });
-
-  it("sem sabor não tem preço", () => {
-    expect(pizzaUnitPrice([], [8])).toBe(0);
-  });
+test("meio a meio cobra o sabor mais caro", () => {
+  assert.equal(pizzaUnitPrice([45, 52]), 52);
 });
 
-describe("pizzaItemName", () => {
-  it("mostra as frações dos sabores", () => {
-    expect(pizzaItemName("Grande", ["Calabresa", "Portuguesa"])).toBe(
-      "Pizza Grande — ½ Calabresa + ½ Portuguesa",
-    );
-  });
+test("borda e adicionais somam ao preço da pizza", () => {
+  assert.equal(pizzaUnitPrice([40], [8, 4.5]), 52.5);
+});
+
+test("sem sabor não tem preço", () => {
+  assert.equal(pizzaUnitPrice([], [8]), 0);
+});
+
+test("nome mostra as frações dos sabores", () => {
+  assert.equal(
+    pizzaItemName("Grande", ["Calabresa", "Portuguesa"]),
+    "Pizza Grande — ½ Calabresa + ½ Portuguesa",
+  );
 });

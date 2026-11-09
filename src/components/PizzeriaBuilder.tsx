@@ -66,7 +66,7 @@ export function PizzeriaBuilder({
     .filter((a): a is Addon => Boolean(a));
   const price = size
     ? pizzaUnitPrice(
-        chosenFlavors.map((f) => f.prices[size.id]),
+        chosenFlavors.map((f) => f.prices[size.id] ?? 0),
         chosenAddons.map((a) => a.price),
       )
     : 0;
@@ -99,14 +99,21 @@ export function PizzeriaBuilder({
   }
 
   function addPizza() {
-    if (!size) return toast.error("Escolha o tamanho da pizza.");
-    if (!chosenFlavors.length) return toast.error("Escolha pelo menos um sabor.");
-    if (menu.requireBorder && byGroup("borda").length && !single.borda)
-      return toast.error("Escolha a borda.");
-    if (menu.requireSauce && byGroup("molho").length && !single.molho)
-      return toast.error("Escolha o molho.");
-    if (menu.requireAdditional && byGroup("adicional").length && !extras.length)
-      return toast.error("Escolha pelo menos um adicional.");
+    const problem = !size
+      ? "Escolha o tamanho da pizza."
+      : !chosenFlavors.length
+        ? "Escolha pelo menos um sabor."
+        : menu.requireBorder && byGroup("borda").length && !single.borda
+          ? "Escolha a borda."
+          : menu.requireSauce && byGroup("molho").length && !single.molho
+            ? "Escolha o molho."
+            : menu.requireAdditional && byGroup("adicional").length && !extras.length
+              ? "Escolha pelo menos um adicional."
+              : null;
+    if (problem || !size) {
+      toast.error(problem ?? "Escolha o tamanho da pizza.");
+      return;
+    }
     const addonIds = chosenAddons.map((a) => a.id);
     const key = `pizza:${size.id}:${[...flavorIds].sort().join(",")}:${[...addonIds].sort().join(",")}`;
     onAdd({
@@ -239,7 +246,7 @@ export function PizzeriaBuilder({
                     </p>
                   ) : null}
                   {size ? (
-                    <p className="mt-1 text-xs font-bold">{brl(flavor.prices[size.id])}</p>
+                    <p className="mt-1 text-xs font-bold">{brl(flavor.prices[size.id] ?? 0)}</p>
                   ) : null}
                 </div>
               </button>
