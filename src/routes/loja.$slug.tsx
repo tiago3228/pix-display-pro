@@ -42,6 +42,7 @@ import { isJewelryOfferCurrent } from "@/lib/jewelry";
 import { missingOptionsMessage } from "@/lib/product-options";
 import { EncomendaDialog } from "@/components/EncomendaDialog";
 import { BackButton } from "@/components/BackButton";
+import { PizzeriaBuilder } from "@/components/PizzeriaBuilder";
 
 function instagramHref(value: string | null | undefined) {
   const raw = value?.trim();
@@ -472,12 +473,18 @@ export function StorePage() {
           installments: count,
           receiptPath: receipt?.path ?? null,
           deliveryAddress: deliveryRequired ? delivery : null,
-          items: cart.items.map((i) => ({
-            productId: i.productId,
-            variantId: i.variantId ?? null,
-            variantLabel: i.variantLabel ?? null,
-            quantity: i.quantity,
-          })),
+          items: cart.items.map((i) =>
+            i.pizza
+              ? { pizza: i.pizza, quantity: i.quantity }
+              : i.addonId
+                ? { addonId: i.addonId, quantity: i.quantity }
+                : {
+                    productId: i.productId,
+                    variantId: i.variantId ?? null,
+                    variantLabel: i.variantLabel ?? null,
+                    quantity: i.quantity,
+                  },
+          ),
         },
       });
     } catch {
@@ -658,6 +665,17 @@ export function StorePage() {
       ) : null}
 
       <main className="mx-auto mt-5 max-w-3xl space-y-5 px-4">
+        {data.pizzeria ? (
+          <PizzeriaBuilder
+            menu={data.pizzeria}
+            color={store.primary_color}
+            onAdd={(item) => {
+              cart.add(item, 1);
+              void track({ data: { storeId: store.id, type: "add_to_cart" } });
+              toast.success(`${item.name} adicionado!`);
+            }}
+          />
+        ) : null}
         {data.products.some((product) => product.is_featured) ? (
           <StorefrontShelf
             title="⭐ Destaques"
