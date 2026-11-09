@@ -794,12 +794,26 @@ const orderSchema = z.object({
     .optional(),
   items: z
     .array(
-      z.object({
-        productId: z.string().uuid(),
-        variantId: z.string().uuid().nullable().optional(),
-        variantLabel: z.string().max(120).nullable().optional(),
-        quantity: z.number().int().min(1).max(99),
-      }),
+      z
+        .object({
+          productId: z.string().uuid().nullable().optional(),
+          variantId: z.string().uuid().nullable().optional(),
+          variantLabel: z.string().max(120).nullable().optional(),
+          quantity: z.number().int().min(1).max(99),
+          pizza: z
+            .object({
+              sizeId: z.string().uuid(),
+              flavorIds: z.array(z.string().uuid()).min(1).max(4),
+              addonIds: z.array(z.string().uuid()).max(20).default([]),
+            })
+            .nullable()
+            .optional(),
+          addonId: z.string().uuid().nullable().optional(),
+        })
+        .refine(
+          (item) => [item.productId, item.pizza, item.addonId].filter(Boolean).length === 1,
+          "Item de pedido inválido",
+        ),
     )
     .min(1)
     .max(50),
