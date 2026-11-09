@@ -840,28 +840,35 @@ export const submitOrder = createServerFn({ method: "POST" })
       ? normalizePhone(data.customerWhatsapp, store.default_ddd ?? "31").replace(/^55/, "")
       : "";
 
+    const productItems = data.items
+      .filter((i): i is typeof i & { productId: string } => Boolean(i.productId))
+      .map((i) => ({ ...i, productId: i.productId }));
+    const pizzeriaRows = await buildPizzeriaOrderRows(
+      supabaseAdmin as unknown as LooseDb,
+      store.id,
+      data.items,
+    );
+    const noIds = ["00000000-0000-0000-0000-000000000000"];
+
     const { data: productsRaw } = await supabaseAdmin
       .from("products")
       .select(
         "id, module, name, price, store_id, is_hidden, is_available, order_enabled, stock, track_stock, has_variants, sports_offer_active, sports_offer_price, jewelry_offer_active, jewelry_offer_price, jewelry_offer_expires_at",
       )
-      .in(
-        "id",
-        data.items.map((i) => i.productId),
-      );
+      .in("id", productItems.length ? productItems.map((i) => i.productId) : noIds);
     const products = (productsRaw ?? []) as unknown as (StorefrontProductDbRow & {
       store_id: string;
     })[];
     const { data: variants } = await supabaseAdmin
       .from("product_variants")
       .select("id, product_id, label, price, stock, is_available, sku, image_url")
-      .in(
-        "id",
-        data.items.map((i) => i.variantId).filter((v): v is string => Boolean(v)),
-      );
+      .in("id", [
+        ...noIds,
+        ...productItems.map((i) => i.variantId).filter((v): v is string => Boolean(v)),
+      ]);
 
     // Prices always come from the database, never from the browser payload.
-    const items = data.items.map((item) => {
+    const productRows = productItems.map((item) => {
       const product = (products ?? []).find(
         (p) => p.id === item.productId && p.store_id === store.id && !p.is_hidden && p.is_available,
       );
