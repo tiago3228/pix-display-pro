@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Configurar frete e raio de entrega por CEP na Pizzaria, bloquear pedidos fora da área e validar as regras.
+
 - [x] Montador de pizza na loja pública e pedido real verificado em Novos, Confirmados, Em preparo, Saiu para entrega e WhatsApp.
 
 - [x] Preencher os 28 sabores sem foto com imagens ilustrativas específicas, preservando fotos existentes.
