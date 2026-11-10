@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { validateDeliveryOrigin } from "@/lib/delivery.functions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ClipboardList } from "lucide-react";
@@ -50,6 +52,10 @@ type PizzeriaSettingsRow = {
   require_drink: boolean;
   require_sauce: boolean;
   require_additional: boolean;
+  delivery_enabled: boolean;
+  delivery_origin_cep: string;
+  delivery_radius_km: number;
+  delivery_fee: number;
 };
 type PizzeriaSize = {
   id: string;
@@ -99,11 +105,17 @@ const emptySettings = (storeId: string): PizzeriaSettingsRow => ({
   require_drink: false,
   require_sauce: false,
   require_additional: false,
+  delivery_enabled: false,
+  delivery_origin_cep: "",
+  delivery_radius_km: 5,
+  delivery_fee: 0,
 });
 
 function PizzeriaSettings() {
   const { data: store } = useMyStore();
   const client = useQueryClient();
+  const validateOrigin = useServerFn(validateDeliveryOrigin);
+  const [savingSettings, setSavingSettings] = useState(false);
   const [form, setForm] = useState<PizzeriaSettingsRow | null>(null);
   const [editingSize, setEditingSize] = useState<string | null>(null);
   const [sizeDraft, setSizeDraft] = useState({ name: "", diameter_cm: "", max_flavors: "1" });
@@ -194,13 +206,28 @@ function PizzeriaSettings() {
 
   async function saveSettings() {
     if (!form) return;
-    const result = await db.from("pizzeria_settings").upsert(form, { onConflict: "store_id" });
+    if (!Number.isFinite(form.delivery_radius_km) || form.delivery_radius_km <= 0 || !Number.isFinite(form.delivery_fee) || form.delivery_fee < 0) {
+      toast.error("Informe um limite maior que zero e uma taxa de frete válida.");
+      return;
+    }
+    setSavingSettings(true);
+    try {
+    const cep = form.delivery_origin_cep.replace(/\D/g, "");
+    if (form.delivery_enabled) {
+      await validateOrigin({ data: { cep } });
+    }
+    const result = await db.from("pizzeria_settings").upsert({ ...form, delivery_origin_cep: cep }, { onConflict: "store_id" });
     if (result.error) {
       toast.error("Não foi possível salvar as configurações da pizzaria.");
       return;
     }
     toast.success("Configurações da pizzaria salvas.");
     await refresh();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível verificar o CEP da pizzaria.");
+    } finally {
+      setSavingSettings(false);
+    }
   }
 
   function startEditSize(size: PizzeriaSize) {
@@ -516,7 +543,7 @@ function PizzeriaSettings() {
             <ClipboardList className="mr-1.5 size-4" /> Pedidos
           </Link>
         </Button>
-        <Button size="sm" onClick={() => void saveSettings()}>
+        <Button size="sm" disabled={savingSettings} onClick={() => void saveSettings()}>
           <Save className="mr-1.5 size-4" /> Salvar configurações
         </Button>
         </div>
@@ -625,6 +652,30 @@ function PizzeriaSettings() {
             opcionais.
           </p>
         </div>
+      </CollapsibleSection>
+
+      <CollapsibleSection title="Entrega e frete" description="Área atendida e taxa de entrega" className="mt-4">
+        <label className="flex items-center justify-between gap-3 text-sm">
+          <span>Habilitar entrega</span>
+          <Switch checked={form.delivery_enabled} onCheckedChange={(checked) => setForm({ ...form, delivery_enabled: checked })} />
+        </label>
+        {form.delivery_enabled ? (
+          <div className="mt-4 grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label htmlFor="origin-cep">CEP da pizzaria</Label>
+              <Input id="origin-cep" inputMode="numeric" maxLength={9} value={form.delivery_origin_cep} onChange={(e) => setForm({ ...form, delivery_origin_cep: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="delivery-radius">Limite de distância (km)</Label>
+              <Input id="delivery-radius" type="number" min="0.1" step="0.1" value={form.delivery_radius_km} onChange={(e) => setForm({ ...form, delivery_radius_km: Number(e.target.value) })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="delivery-fee">Frete (R$)</Label>
+              <Input id="delivery-fee" type="number" min="0" step="0.01" value={form.delivery_fee} onChange={(e) => setForm({ ...form, delivery_fee: Number(e.target.value) })} />
+            </div>
+            <p className="text-xs text-muted-foreground sm:col-span-3">Raio aproximado entre os CEPs, em linha reta. Não representa o trajeto pelas ruas. Use R$ 0 para entrega grátis.</p>
+          </div>
+        ) : <p className="mt-3 text-xs text-muted-foreground">Pedidos da pizzaria disponíveis para retirada.</p>}
       </CollapsibleSection>
 
       <CollapsibleSection

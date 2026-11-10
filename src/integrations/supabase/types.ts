@@ -930,6 +930,8 @@ export type Database = {
           delivery_cep: string | null
           delivery_city: string | null
           delivery_complement: string | null
+          delivery_distance_km: number | null
+          delivery_fee: number
           delivery_neighborhood: string | null
           delivery_number: string | null
           delivery_state: string | null
@@ -954,6 +956,8 @@ export type Database = {
           delivery_cep?: string | null
           delivery_city?: string | null
           delivery_complement?: string | null
+          delivery_distance_km?: number | null
+          delivery_fee?: number
           delivery_neighborhood?: string | null
           delivery_number?: string | null
           delivery_state?: string | null
@@ -978,6 +982,8 @@ export type Database = {
           delivery_cep?: string | null
           delivery_city?: string | null
           delivery_complement?: string | null
+          delivery_distance_km?: number | null
+          delivery_fee?: number
           delivery_neighborhood?: string | null
           delivery_number?: string | null
           delivery_state?: string | null
@@ -1296,6 +1302,10 @@ export type Database = {
           address: string
           allow_half_flavors: boolean
           allow_quarter_flavors: boolean
+          delivery_enabled: boolean
+          delivery_fee: number
+          delivery_origin_cep: string
+          delivery_radius_km: number
           display_name: string | null
           order_instructions: string
           require_additional: boolean
@@ -1312,6 +1322,10 @@ export type Database = {
           address?: string
           allow_half_flavors?: boolean
           allow_quarter_flavors?: boolean
+          delivery_enabled?: boolean
+          delivery_fee?: number
+          delivery_origin_cep?: string
+          delivery_radius_km?: number
           display_name?: string | null
           order_instructions?: string
           require_additional?: boolean
@@ -1328,6 +1342,10 @@ export type Database = {
           address?: string
           allow_half_flavors?: boolean
           allow_quarter_flavors?: boolean
+          delivery_enabled?: boolean
+          delivery_fee?: number
+          delivery_origin_cep?: string
+          delivery_radius_km?: number
           display_name?: string | null
           order_instructions?: string
           require_additional?: boolean

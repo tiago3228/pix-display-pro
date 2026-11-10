@@ -1,0 +1,4 @@
+ALTER TABLE public.pizzeria_settings ADD COLUMN delivery_enabled boolean NOT NULL DEFAULT false, ADD COLUMN delivery_origin_cep text NOT NULL DEFAULT '', ADD COLUMN delivery_radius_km numeric NOT NULL DEFAULT 5, ADD COLUMN delivery_fee numeric NOT NULL DEFAULT 0;
+ALTER TABLE public.pizzeria_settings ADD CONSTRAINT pizzeria_delivery_valid CHECK (delivery_radius_km > 0 AND delivery_fee >= 0 AND (NOT delivery_enabled OR delivery_origin_cep ~ '^[0-9]{8}$')) NOT VALID;
+ALTER TABLE public.orders ADD COLUMN delivery_fee numeric NOT NULL DEFAULT 0, ADD COLUMN delivery_distance_km numeric;
+COMMENT ON COLUMN public.pizzeria_settings.delivery_radius_km IS 'Approximate straight-line radius between postal-code coordinates, not road distance';

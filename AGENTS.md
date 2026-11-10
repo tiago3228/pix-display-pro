@@ -12,3 +12,5 @@
 - Pizzeria flavor and drink photo controls reuse the authenticated store-assets upload and signing functions, saving durable paths in image_url so temporary URLs are never persisted.
 
 - Pizzeria public builder items (pizza/addon) flow through the normal cart and submitOrder; the server recalculates every pizza price from the database (most expensive flavor + addons) so browser prices are never trusted.
+
+- Delivery eligibility uses BrasilAPI postal-code coordinates and a straight-line radius; submitOrder revalidates eligibility and database fees before any writes, and rejected orders never fall back to WhatsApp.
