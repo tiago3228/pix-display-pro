@@ -5,6 +5,7 @@ import { createPublicClient } from "./supabase-public.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizePhone } from "@/lib/format";
 import { isJewelryOfferCurrent } from "@/lib/jewelry";
+import { deliveryTotal } from "./delivery";
 
 export type StorefrontVariant = {
   id: string;
@@ -148,6 +149,9 @@ export type Storefront = {
 } | null;
 
 export type PublicPizzeria = {
+  deliveryEnabled: boolean;
+  deliveryRadiusKm: number;
+  deliveryFee: number;
   displayName: string | null;
   instructions: string;
   allowHalf: boolean;
@@ -648,6 +652,9 @@ export const getStorefront = createServerFn({ method: "GET" })
 
 type PizzeriaRows = {
   settings: {
+    delivery_enabled?: boolean;
+    delivery_radius_km?: number;
+    delivery_fee?: number;
     display_name: string | null;
     order_instructions: string;
     allow_half_flavors: boolean;
@@ -727,6 +734,9 @@ async function loadPizzeriaRows(db: LooseDb, storeId: string): Promise<PizzeriaR
 function mapPizzeria(rows: PizzeriaRows, resolve: (p: string | null) => string | null): PublicPizzeria {
   const s = rows.settings;
   return {
+    deliveryEnabled: Boolean(s?.delivery_enabled),
+    deliveryRadiusKm: Number(s?.delivery_radius_km ?? 5),
+    deliveryFee: Number(s?.delivery_fee ?? 0),
     displayName: s?.display_name ?? null,
     instructions: s?.order_instructions ?? "",
     allowHalf: s?.allow_half_flavors ?? true,
@@ -833,6 +843,24 @@ export const submitOrder = createServerFn({ method: "POST" })
       .eq("id", data.storeId)
       .maybeSingle();
     if (!store || !store.is_active) throw new Error("Loja indisponível");
+    let deliveryFee = 0;
+    let deliveryDistance: number | null = null;
+    const hasPizzeriaItems = data.items.some((i) => i.pizza || i.addonId);
+    if (hasPizzeriaItems) {
+      const { data: settings, error: settingsError } = await supabaseAdmin.from("pizzeria_settings")
+        .select("delivery_enabled, delivery_origin_cep, delivery_radius_km, delivery_fee").eq("store_id", store.id).maybeSingle();
+      if (settingsError) throw new Error("Não foi possível verificar a área de entrega.");
+      if (data.deliveryAddress) {
+        if (!settings?.delivery_enabled) throw new Error("Entrega indisponível; selecione retirada na pizzaria.");
+        const address = data.deliveryAddress;
+        if (![address.address, address.number, address.neighborhood, address.city, address.state].every((v) => v.trim())) throw new Error("Preencha o endereço completo de entrega.");
+        const { checkPostalDelivery } = await import("./delivery.server");
+        const result = await checkPostalDelivery(settings.delivery_origin_cep, address.cep, Number(settings.delivery_radius_km));
+        if (!result.allowed) throw new Error(`Não entregamos neste endereço. O limite de entrega é ${settings.delivery_radius_km} km, aproximadamente pelo CEP.`);
+        deliveryFee = Number(settings.delivery_fee);
+        deliveryDistance = result.distanceKm;
+      }
+    }
     const hasProAccess =
       store.plan === "pro" ||
       Boolean(store.pro_trial_ends_at && new Date(store.pro_trial_ends_at).getTime() > Date.now());
@@ -955,7 +983,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       taken.push({ table, id: rowId, quantity: item.quantity });
     }
 
-    const total = Number(items.reduce((sum, i) => sum + i.subtotal, 0).toFixed(2));
+    const total = deliveryTotal(items.reduce((sum, i) => sum + i.subtotal, 0), deliveryFee);
 
     let customerId: string | null = null;
     if (normalizedCustomerWhatsapp) {
@@ -1016,6 +1044,8 @@ export const submitOrder = createServerFn({ method: "POST" })
         delivery_neighborhood: data.deliveryAddress?.neighborhood ?? null,
         delivery_city: data.deliveryAddress?.city ?? null,
         delivery_state: data.deliveryAddress?.state ?? null,
+        delivery_fee: deliveryFee,
+        delivery_distance_km: deliveryDistance,
         total,
         payment_declared: data.paymentDeclared,
         receipt_path: data.receiptPath ?? null,
@@ -1087,7 +1117,7 @@ export const submitOrder = createServerFn({ method: "POST" })
       console.error("[push] falha ao notificar novo pedido", error);
     }
 
-    return { orderId: order.id, number: order.number, total };
+    return { orderId: order.id, number: order.number, total, deliveryFee };
   });
 
 export const trackStoreEvent = createServerFn({ method: "POST" })
