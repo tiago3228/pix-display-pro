@@ -8,6 +8,13 @@
       "when": 1794021492055,
       "tag": "0000_pizzeria_require_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794329166912,
+      "tag": "0001_pizzeria_delivery_radius",
+      "breakpoints": true
     }
   ]
 }
