@@ -43,6 +43,8 @@ import { missingOptionsMessage } from "@/lib/product-options";
 import { EncomendaDialog } from "@/components/EncomendaDialog";
 import { BackButton } from "@/components/BackButton";
 import { PizzeriaBuilder } from "@/components/PizzeriaBuilder";
+import { quoteDelivery } from "@/lib/delivery.functions";
+import { deliveryTotal } from "@/lib/delivery";
 
 function instagramHref(value: string | null | undefined) {
   const raw = value?.trim();
@@ -148,6 +150,11 @@ export function StorePage() {
   const cart = useCart(params.slug);
   const track = useServerFn(trackStoreEvent);
   const sendOrder = useServerFn(submitOrder);
+  const getDeliveryQuote = useServerFn(quoteDelivery);
+  const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">("delivery");
+  const [deliveryQuote, setDeliveryQuote] = useState<{ allowed: boolean; distanceKm: number; fee: number; cep: string } | null>(null);
+  const [checkingDelivery, setCheckingDelivery] = useState(false);
+  const [deliveryError, setDeliveryError] = useState("");
 
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [moduleFilter, setModuleFilter] = useState<string>("all");
@@ -177,6 +184,10 @@ export function StorePage() {
     state: "",
   });
   const [lookingUpCep, setLookingUpCep] = useState(false);
+  useEffect(() => {
+    setDeliveryQuote(null);
+    setDeliveryError("");
+  }, [delivery.cep]);
   const [sending, setSending] = useState(false);
   const uploadReceipt = useServerFn(uploadOrderReceipt);
   const [receipt, setReceipt] = useState<{ name: string; path: string; url: string | null } | null>(
@@ -329,14 +340,19 @@ export function StorePage() {
     return Math.max(product.stock, 0);
   }
 
+  const hasPizzaItems = cart.items.some((item) => item.pizza || item.addonId);
+  const pizzaDelivery = hasPizzaItems && Boolean(data?.pizzeria?.deliveryEnabled) && fulfillment === "delivery";
+  const currentQuote = deliveryQuote?.cep === delivery.cep.replace(/\D/g, "") ? deliveryQuote : null;
+  const shippingFee = pizzaDelivery ? (currentQuote?.allowed ? currentQuote.fee : Number(data?.pizzeria?.deliveryFee ?? 0)) : 0;
+  const checkoutTotal = deliveryTotal(cart.total, shippingFee);
   const plans = useMemo(() => {
     if (!data?.store.allow_installments) return [];
     return installmentOptions(
-      cart.total,
+      checkoutTotal,
       data.store.max_installments,
       data.store.min_installment_amount,
     );
-  }, [data, cart.total]);
+  }, [data, checkoutTotal]);
 
   if (!data) {
     return (
@@ -351,7 +367,27 @@ export function StorePage() {
   const isMarmitaria = String(store.category ?? "")
     .toLowerCase()
     .includes("marmit");
-  const deliveryRequired = isMarmitaria && cart.items.some((item) => item.deliveryEnabled);
+  const deliveryRequired = pizzaDelivery || (isMarmitaria && cart.items.some((item) => item.deliveryEnabled));
+
+  async function checkDelivery() {
+    const cep = delivery.cep.replace(/\D/g, "");
+    if (cep.length !== 8) {
+      setDeliveryError("Informe um CEP válido com 8 dígitos.");
+      return;
+    }
+    setCheckingDelivery(true);
+    setDeliveryError("");
+    setDeliveryQuote(null);
+    try {
+      const result = await getDeliveryQuote({ data: { slug: params.slug, cep } });
+      setDeliveryQuote(result);
+      if (!result.allowed) setDeliveryError(`Não entregamos neste endereço. Limite: ${result.radiusKm} km aproximadamente pelo CEP. Você pode escolher retirada.`);
+    } catch (error) {
+      setDeliveryError(error instanceof Error ? error.message : "Não foi possível verificar a entrega. Tente novamente.");
+    } finally {
+      setCheckingDelivery(false);
+    }
+  }
 
   async function lookupCep() {
     const cep = delivery.cep.replace(/\D/g, "");
@@ -448,6 +484,14 @@ export function StorePage() {
 
   async function handleSend() {
     if (!cart.items.length) return;
+    if (pizzaDelivery && !currentQuote?.allowed) {
+      toast.error("Verifique o CEP de entrega antes de enviar o pedido.");
+      return;
+    }
+    if (deliveryRequired && ![delivery.address, delivery.number, delivery.neighborhood, delivery.city, delivery.state].every((value) => value.trim())) {
+      toast.error("Preencha o endereço completo de entrega.");
+      return;
+    }
     if (
       data?.pizzeria?.requireDrink &&
       data.pizzeria.addons.some((a) => a.group === "bebida") &&
@@ -459,49 +503,33 @@ export function StorePage() {
     }
     setSending(true);
     const count = plans.some((p) => p.count === installments) ? installments : 1;
-    const message = buildOrderMessage({
-      sellerName: store.seller_name || store.name,
-      items: cart.items,
-      total: cart.total,
-      paid: count > 1 ? false : paid,
-      customerName: customer.name,
-      note: customer.note,
-      installments: count,
-      receiptUrl: receipt?.url ?? null,
-      deliveryAddress: deliveryRequired ? delivery : null,
-    });
     try {
-      await sendOrder({
+      const order = await sendOrder({
         data: {
           storeId: store.id,
           customerName: customer.name,
           customerWhatsapp: customer.whatsapp,
-          note: customer.note,
+          note: hasPizzaItems && !pizzaDelivery ? `${customer.note}${customer.note ? "\n" : ""}Retirada na pizzaria.` : customer.note,
           paymentDeclared: count > 1 ? false : paid,
           paymentMethod: count > 1 ? "parcelado" : "pix_avista",
           installments: count,
           receiptPath: receipt?.path ?? null,
           deliveryAddress: deliveryRequired ? delivery : null,
-          items: cart.items.map((i) =>
-            i.pizza
-              ? { pizza: i.pizza, quantity: i.quantity }
-              : i.addonId
-                ? { addonId: i.addonId, quantity: i.quantity }
-                : {
-                    productId: i.productId,
-                    variantId: i.variantId ?? null,
-                    variantLabel: i.variantLabel ?? null,
-                    quantity: i.quantity,
-                  },
-          ),
+          items: cart.items.map((i) => i.pizza ? { pizza: i.pizza, quantity: i.quantity } : i.addonId ? { addonId: i.addonId, quantity: i.quantity } : { productId: i.productId, variantId: i.variantId ?? null, variantLabel: i.variantLabel ?? null, quantity: i.quantity }),
         },
       });
-    } catch {
-      // The WhatsApp message is the core flow, so it should open even if the
-      // order could not be recorded.
-      toast.warning("Registramos seu pedido apenas no WhatsApp.");
-    }
-    setSending(false);
+      const message = buildOrderMessage({
+      sellerName: store.seller_name || store.name,
+      items: cart.items,
+      total: order.total,
+      deliveryFee: order.deliveryFee,
+      paid: count > 1 ? false : paid,
+      customerName: customer.name,
+      note: hasPizzaItems && !pizzaDelivery ? `${customer.note}\nRetirada na pizzaria.`.trim() : customer.note,
+      installments: count,
+      receiptUrl: receipt?.url ?? null,
+      deliveryAddress: deliveryRequired ? delivery : null,
+    });
     window.open(whatsappLink(store.whatsapp, message), "_blank", "noopener");
     cart.clear();
     setCartOpen(false);
@@ -510,6 +538,11 @@ export function StorePage() {
     setReceipt(null);
     setInstallments(1);
     toast.success("Pedido enviado para o WhatsApp da loja!");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível registrar o pedido. Tente novamente.");
+    } finally {
+      setSending(false);
+    }
   }
 
   const pixTypeLabel =
@@ -1440,12 +1473,24 @@ export function StorePage() {
             {cart.items.length > 0 ? (
               <div className="flex items-center justify-between border-t pt-3">
                 <span className="text-sm text-muted-foreground">TOTAL</span>
-                <span className="text-xl font-bold">{brl(cart.total)}</span>
+                <span className="text-xl font-bold">{brl(step === "checkout" ? checkoutTotal : cart.total)}</span>
               </div>
             ) : null}
 
             {step === "checkout" && cart.items.length > 0 ? (
               <div className="space-y-4 pt-2">
+                {hasPizzaItems ? (
+                  <div className="space-y-3 border-b pb-4">
+                    <p className="text-sm font-semibold">Entrega ou retirada</p>
+                    {data.pizzeria?.deliveryEnabled ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button variant={fulfillment === "delivery" ? "default" : "outline"} onClick={() => setFulfillment("delivery")}>Entrega</Button>
+                        <Button variant={fulfillment === "pickup" ? "default" : "outline"} onClick={() => setFulfillment("pickup")}>Retirada</Button>
+                      </div>
+                    ) : <p className="text-sm text-muted-foreground">Retirada na pizzaria</p>}
+                    {pizzaDelivery ? <p className="text-sm">Frete: {brl(shippingFee)} · Raio aproximado de {data.pizzeria?.deliveryRadiusKm} km pelo CEP</p> : null}
+                  </div>
+                ) : null}
                 {plans.length > 0 ? (
                   <div className="rounded-xl border bg-card p-4">
                     <p className="text-sm font-semibold">Como você quer pagar?</p>
@@ -1460,7 +1505,7 @@ export function StorePage() {
                       >
                         <span className="font-medium">Pix à vista</span>
                         <span className="block text-xs text-muted-foreground">
-                          {brl(cart.total)}
+                          {brl(checkoutTotal)}
                         </span>
                       </button>
                       {plans.map((plan) => (
@@ -1569,7 +1614,7 @@ export function StorePage() {
                     <div>
                       <p className="text-sm font-semibold">Endereço de entrega</p>
                       <p className="text-xs text-muted-foreground">
-                        Obrigatório para pedidos de Marmitaria.
+                        {pizzaDelivery ? "Distância aproximada pelo CEP, em linha reta." : "Obrigatório para entrega."}
                       </p>
                     </div>
                     <div className="grid grid-cols-[1fr_auto] gap-2">
@@ -1590,6 +1635,13 @@ export function StorePage() {
                         {lookingUpCep ? "Buscando..." : "Buscar CEP"}
                       </Button>
                     </div>
+                    {pizzaDelivery ? (
+                      <div className="space-y-2">
+                        <Button variant="outline" disabled={checkingDelivery} onClick={() => void checkDelivery()}>{checkingDelivery ? "Verificando..." : "Verificar entrega"}</Button>
+                        {deliveryError ? <p role="alert" className="text-sm text-destructive">{deliveryError}</p> : null}
+                        {currentQuote?.allowed ? <p role="status" className="text-sm text-primary">Entregamos neste CEP · {currentQuote.distanceKm} km aproximadamente · Frete {brl(currentQuote.fee)}</p> : null}
+                      </div>
+                    ) : null}
                     <Input
                       placeholder="Rua / avenida"
                       value={delivery.address}
@@ -1680,7 +1732,7 @@ export function StorePage() {
                 <>
                   <Button
                     className="h-12 bg-[var(--whatsapp)] text-[var(--whatsapp-foreground)] hover:bg-[var(--whatsapp)]/90"
-                    disabled={sending || uploadingReceipt || (paid && !receipt)}
+                    disabled={sending || uploadingReceipt || (paid && !receipt) || (pizzaDelivery && !currentQuote?.allowed)}
                     onClick={handleSend}
                   >
                     <MessageCircle className="mr-2 size-4" />
