@@ -12,6 +12,10 @@ export type CartItem = {
   maxQuantity?: number | null;
   imageUrl?: string | null;
   deliveryEnabled?: boolean;
+  /** Pizza montada no cardápio da Pizzaria (o servidor recalcula o preço). */
+  pizza?: { sizeId: string; flavorIds: string[]; addonIds: string[] } | null;
+  /** Bebida ou item avulso da Pizzaria. */
+  addonId?: string | null;
 };
 
 const storageKey = (slug: string) => `vitrini:cart:${slug}`;
@@ -99,6 +103,7 @@ export function buildOrderMessage(opts: {
   note?: string;
   installments?: number;
   receiptUrl?: string | null;
+  deliveryFee?: number;
   deliveryAddress?: {
     cep: string;
     address: string;
@@ -126,6 +131,9 @@ export function buildOrderMessage(opts: {
     }
   }
   lines.push("");
+  if (opts.deliveryAddress) {
+    lines.push(`🚚 Frete: ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(opts.deliveryFee ?? 0)}`);
+  }
   lines.push(
     `💰 Total: ${new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
       opts.total,

@@ -53,6 +53,8 @@ export const ORDER_STATUS = [
   { value: "negociacao", label: "Em negociação" },
   { value: "pagamento_informado", label: "Pagamento informado" },
   { value: "confirmado", label: "Confirmado" },
+  { value: "em_preparo", label: "Em preparo" },
+  { value: "saiu_entrega", label: "Saiu para entrega" },
   { value: "entregue", label: "Entregue" },
   { value: "cancelado", label: "Cancelado" },
   { value: "teste_cancelado", label: "Teste/Cancelado" },

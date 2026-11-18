@@ -8,7 +8,17 @@ import { useMyStore } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/lojas-premium")({ component: PremiumStores });
+export const Route = createFileRoute("/_authenticated/lojas-premium")({
+  head: () => ({ meta: [
+    { title: "Lojas Premium | Vitrini" },
+    { name: "description", content: "Gerencie os segmentos especializados da sua loja no Vitrini." },
+    { property: "og:title", content: "Lojas Premium | Vitrini" },
+    { property: "og:description", content: "Gerencie os segmentos especializados da sua loja no Vitrini." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ] }),
+  component: PremiumStores,
+});
 
 type CatalogItem = {
   id: string;
@@ -20,6 +30,7 @@ type CatalogItem = {
   route: string;
   plan_required: string;
   featured: boolean;
+  sort_order: number;
   promotional_text: string | null;
 };
 type StoreModule = { module: string; is_active: boolean };
@@ -34,7 +45,7 @@ function PremiumStores() {
       const result = await supabase
         .from("premium_store_modules")
         .select(
-          "id,name,slug,description,icon,status,route,plan_required,featured,promotional_text",
+          "id,name,slug,description,icon,status,route,plan_required,featured,promotional_text,sort_order",
         )
         .order("sort_order");
       if (result.error) throw result.error;
