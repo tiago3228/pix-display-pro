@@ -1890,6 +1890,7 @@ export type Database = {
           sports_product_type: string | null
           sports_sort_order: number
           stock: number
+          service_estimated_time: string | null
           store_id: string
           track_stock: boolean
           updated_at: string
@@ -1954,6 +1955,7 @@ export type Database = {
           sports_product_type?: string | null
           sports_sort_order?: number
           stock?: number
+          service_estimated_time?: string | null
           store_id: string
           track_stock?: boolean
           updated_at?: string
@@ -2018,6 +2020,7 @@ export type Database = {
           sports_product_type?: string | null
           sports_sort_order?: number
           stock?: number
+          service_estimated_time?: string | null
           store_id?: string
           track_stock?: boolean
           updated_at?: string

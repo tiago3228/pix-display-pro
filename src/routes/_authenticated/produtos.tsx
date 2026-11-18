@@ -211,6 +211,7 @@ type ProductRow = {
   module: StoreModule;
   name: string;
   description: string;
+  service_estimated_time: string | null;
   price: number;
   stock: number;
   track_stock: boolean;
@@ -268,6 +269,7 @@ const emptyForm = {
   module: "roupas" as ProductRow["module"],
   name: "",
   description: "",
+  service_estimated_time: "",
   price: "",
   stock: "",
   track_stock: false,
@@ -380,11 +382,32 @@ const guidedDescriptionDefaults: Record<string, Record<string, string>> = {
   },
 };
 
+const informaticaServiceDefaults: Record<string, { price: string; time: string }> = {
+  Formatação: { price: "150", time: "1 dia útil" },
+  Backup: { price: "120", time: "4 horas" },
+  "Instalação de programas": { price: "100", time: "2 horas" },
+  "Upgrade para SSD": { price: "180", time: "4 horas" },
+  "Montagem e manutenção": { price: "250", time: "1 dia útil" },
+  "Redes e Wi-Fi": { price: "180", time: "4 horas" },
+  "Criação de sites": { price: "1200", time: "7 dias úteis" },
+  "SaaS sob medida": { price: "3500", time: "30 dias úteis" },
+  "Planilha inteligente": { price: "350", time: "3 dias úteis" },
+  "Peças e acessórios": { price: "0", time: "Conforme disponibilidade" },
+  "Suporte técnico": { price: "100", time: "1 hora" },
+  "Outro serviço": { price: "0", time: "A combinar" },
+};
+
 function getGuidedDescription(module: ProductRow["module"], label: string) {
   return (
     guidedDescriptionDefaults[module]?.[label] ??
     `${label} selecionado para oferecer qualidade, praticidade e um ótimo atendimento.`
   );
+}
+
+function getGuidedServiceDefaults(module: ProductRow["module"], label: string) {
+  return module === "informatica"
+    ? (informaticaServiceDefaults[label] ?? { price: "0", time: "A combinar" })
+    : { price: "", time: "" };
 }
 
 function CategoryImagePreview({ path }: { path: string | null | undefined }) {
@@ -578,7 +601,7 @@ function Products() {
       let query = supabase
         .from("products")
         .select(
-          "id, module, name, description, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, meal_period, delivery_enabled, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at, product_variants(id, label, price, stock, sku, image_url), product_order_tiers(min_quantity, unit_price)",
+          "id, module, name, description, service_estimated_time, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, meal_period, delivery_enabled, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at, product_variants(id, label, price, stock, sku, image_url), product_order_tiers(min_quantity, unit_price)",
         )
         .eq("store_id", store!.id);
       if (trainingOnly) query = query.eq("module", "roupas_treino");
@@ -676,6 +699,7 @@ function Products() {
       module: product.module ?? "roupas",
       name: product.name,
       description: product.description,
+      service_estimated_time: product.service_estimated_time ?? "",
       price: String(product.price),
       stock: String(product.stock),
       track_stock: product.track_stock,
@@ -958,6 +982,8 @@ function Products() {
                 ? "cafeteria"
                 : form.module,
       name: form.name.trim(),
+      service_estimated_time:
+        form.module === "informatica" ? form.service_estimated_time.trim() || null : null,
       meal_period: form.module === "marmitaria" || marmitariaOnly ? form.meal_period : "both",
       delivery_enabled:
         form.module === "marmitaria" || marmitariaOnly ? Boolean(form.delivery_enabled) : false,
@@ -1674,11 +1700,14 @@ function Products() {
                         normalizeCategory(category.name).includes(normalizeCategory(target)),
                       );
                     });
+                    const serviceDefaults = getGuidedServiceDefaults(module, label);
                     setForm({
                       ...emptyForm,
                       module,
                       name: module === "joias" || module === "informatica" ? label : "",
                       description: getGuidedDescription(module, label),
+                      price: serviceDefaults.price,
+                      service_estimated_time: serviceDefaults.time,
                       category_id: matchingCategory?.id ?? "none",
                       sports_product_type:
                         module === "joias" || module === "informatica" ? "none" : label,
@@ -2072,7 +2101,9 @@ function Products() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Preço (R$)</Label>
+                  <Label>
+                    {form.module === "informatica" ? "Preço sugerido (R$)" : "Preço (R$)"}
+                  </Label>
                   <Input
                     inputMode="decimal"
                     value={form.price}
@@ -2088,6 +2119,19 @@ function Products() {
                   />
                 </div>
               </div>
+              {form.module === "informatica" ? (
+                <div className="space-y-1.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
+                  <Label>Tempo estimado de execução</Label>
+                  <Input
+                    value={form.service_estimated_time}
+                    onChange={(e) => setForm({ ...form, service_estimated_time: e.target.value })}
+                    placeholder="Ex.: 1 dia útil, 4 horas ou a combinar"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Você pode ajustar o prazo sugerido antes de salvar o serviço.
+                  </p>
+                </div>
+              ) : null}
               <div className="space-y-1.5">
                 <Label>Categoria</Label>
                 <Select
