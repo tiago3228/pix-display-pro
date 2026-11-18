@@ -1513,27 +1513,42 @@ function Products() {
                       ["🥤", "Bebida"],
                       ["⭐", "Combo"],
                     ]
-                  : trainingOnly
+                  : informaticaOnly
                     ? [
-                        ["👕", "Camiseta de treino"],
-                        ["💨", "Camiseta Dry Fit"],
-                        ["🏃", "Regata"],
-                        ["👚", "Top"],
-                        ["🩳", "Shorts"],
-                        ["🦵", "Legging"],
-                        ["🏋️", "Conjunto Fitness"],
-                        ["🎯", "Personalizado"],
+                        ["🛠️", "Formatação"],
+                        ["💾", "Backup"],
+                        ["📦", "Instalação de programas"],
+                        ["⚡", "Upgrade para SSD"],
+                        ["🧰", "Montagem e manutenção"],
+                        ["🌐", "Redes e Wi-Fi"],
+                        ["🖥️", "Criação de sites"],
+                        ["🚀", "SaaS sob medida"],
+                        ["📊", "Planilha inteligente"],
+                        ["🧩", "Peças e acessórios"],
+                        ["🎧", "Suporte técnico"],
+                        ["✨", "Outro serviço"],
                       ]
-                    : [
-                        ["👕", "Camisa"],
-                        ["👚", "Blusa"],
-                        ["👗", "Vestido"],
-                        ["👖", "Calça"],
-                        ["🩳", "Shorts"],
-                        ["🧥", "Jaqueta"],
-                        ["🧶", "Moletom"],
-                        ["✨", "Personalizado"],
-                      ]
+                    : trainingOnly
+                      ? [
+                          ["👕", "Camiseta de treino"],
+                          ["💨", "Camiseta Dry Fit"],
+                          ["🏃", "Regata"],
+                          ["👚", "Top"],
+                          ["🩳", "Shorts"],
+                          ["🦵", "Legging"],
+                          ["🏋️", "Conjunto Fitness"],
+                          ["🎯", "Personalizado"],
+                        ]
+                      : [
+                          ["👕", "Camisa"],
+                          ["👚", "Blusa"],
+                          ["👗", "Vestido"],
+                          ["👖", "Calça"],
+                          ["🩳", "Shorts"],
+                          ["🧥", "Jaqueta"],
+                          ["🧶", "Moletom"],
+                          ["✨", "Personalizado"],
+                        ]
             )
               .map(([icon, label]) => [icon ?? "", label ?? ""] as const)
               .map(([icon, label]) => (
@@ -1550,13 +1565,15 @@ function Products() {
                           ? "cafeteria"
                           : marmitariaOnly
                             ? "marmitaria"
-                            : shoesOnly
-                              ? "calcados"
-                              : sportsOnly
-                                ? "roupas_esportivas"
-                                : trainingOnly
-                                  ? "roupas_treino"
-                                  : currentCategoryModule();
+                            : informaticaOnly
+                              ? "informatica"
+                              : shoesOnly
+                                ? "calcados"
+                                : sportsOnly
+                                  ? "roupas_esportivas"
+                                  : trainingOnly
+                                    ? "roupas_treino"
+                                    : currentCategoryModule();
                     const jewelryCategoryByType: Record<string, string> = {
                       Anel: "aneis",
                       Aliança: "aliancas",
@@ -1582,9 +1599,10 @@ function Products() {
                     setForm({
                       ...emptyForm,
                       module,
-                      name: module === "joias" && label !== "Outro" ? label : "",
+                      name: module === "joias" || module === "informatica" ? label : "",
                       category_id: matchingCategory?.id ?? "none",
-                      sports_product_type: module === "joias" ? "none" : label,
+                      sports_product_type:
+                        module === "joias" || module === "informatica" ? "none" : label,
                     });
                     setEditing(null);
                     setVariants([]);
