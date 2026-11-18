@@ -68,7 +68,8 @@ type SmartSuggestion = {
     | "calcados"
     | "cafeteria"
     | "marmitaria"
-    | "joias";
+    | "joias"
+    | "informatica";
   brand: string | null;
   model: string | null;
   category: string;
@@ -101,7 +102,11 @@ function interpretProductText(
               ? "roupas_treino"
               : /flamengo|vasco|corinthians|seleção|selecao|camisa de futebol|futebol/.test(lower)
                 ? "roupas_esportivas"
-                : defaultModule;
+                : /informática|informatica|computador|notebook|ssd|hd|memória|memoria|placa|fonte|backup|site|planilha|office/.test(
+                      lower,
+                    )
+                  ? "informatica"
+                  : defaultModule;
   const brands = [
     "Nike",
     "adidas",
@@ -202,7 +207,8 @@ type ProductRow = {
     | "calcados"
     | "cafeteria"
     | "marmitaria"
-    | "joias";
+    | "joias"
+    | "informatica";
   name: string;
   description: string;
   price: number;
@@ -348,6 +354,7 @@ function Products() {
   const [cafeteriaOnly, setCafeteriaOnly] = useState(false);
   const [marmitariaOnly, setMarmitariaOnly] = useState(false);
   const [jewelryOnly, setJewelryOnly] = useState(false);
+  const [informaticaOnly, setInformaticaOnly] = useState(false);
   const [sportsOnly, setSportsOnly] = useState(false);
   const sportsCatalogEnabled = ["roupas", "roupas_esportivas", "roupas_treino"].includes(
     form.module,
@@ -360,6 +367,7 @@ function Products() {
     if (shoesOnly) return "calcados";
     if (trainingOnly) return "roupas_treino";
     if (sportsOnly) return "roupas_esportivas";
+    if (informaticaOnly) return "informatica";
     return getStoreNicheModule(store?.category);
   }
   const [guidedOpen, setGuidedOpen] = useState(false);
@@ -395,6 +403,10 @@ function Products() {
     setCafeteriaOnly(params.get("module") === "cafeteria");
     setMarmitariaOnly(params.get("module") === "marmitaria");
     setJewelryOnly(params.get("module") === "joias");
+    setInformaticaOnly(params.get("module") === "informatica");
+    if (params.get("module") === "informatica") {
+      setForm((current) => ({ ...current, module: "informatica" }));
+    }
     if (params.get("guided") === "1") setGuidedOpen(true);
   }, []);
 
@@ -481,6 +493,7 @@ function Products() {
       cafeteriaOnly,
       marmitariaOnly,
       jewelryOnly,
+      informaticaOnly,
     ],
     enabled: Boolean(store?.id),
     queryFn: async () => {
@@ -495,6 +508,7 @@ function Products() {
       if (cafeteriaOnly) query = query.eq("module", "cafeteria");
       if (marmitariaOnly) query = query.eq("module", "marmitaria");
       if (jewelryOnly) query = query.eq("module", "joias");
+      if (informaticaOnly) query = query.eq("module", "informatica");
       const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
       return data as unknown as ProductRow[];
@@ -1857,17 +1871,24 @@ function Products() {
             >
               <div className="space-y-1.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
                 <Label>Módulo da loja</Label>
-                {trainingOnly || shoesOnly || cafeteriaOnly || marmitariaOnly || jewelryOnly ? (
+                {trainingOnly ||
+                shoesOnly ||
+                cafeteriaOnly ||
+                marmitariaOnly ||
+                jewelryOnly ||
+                informaticaOnly ? (
                   <div className="rounded-md border bg-background px-3 py-2 text-sm font-medium">
-                    {jewelryOnly
-                      ? "💎 Joias e Semijoias"
-                      : marmitariaOnly
-                        ? "🍱 Marmitaria"
-                        : cafeteriaOnly
-                          ? "☕ Cafeteria"
-                          : trainingOnly
-                            ? "🏋️ Roupas de Treino / Academia"
-                            : "👟 Calçados"}
+                    {informaticaOnly
+                      ? "💻 Informática & Tecnologia"
+                      : jewelryOnly
+                        ? "💎 Joias e Semijoias"
+                        : marmitariaOnly
+                          ? "🍱 Marmitaria"
+                          : cafeteriaOnly
+                            ? "☕ Cafeteria"
+                            : trainingOnly
+                              ? "🏋️ Roupas de Treino / Academia"
+                              : "👟 Calçados"}
                   </div>
                 ) : (
                   <Select
@@ -1880,7 +1901,8 @@ function Products() {
                         | "calcados"
                         | "cafeteria"
                         | "marmitaria"
-                        | "joias",
+                        | "joias"
+                        | "informatica",
                     ) => setForm({ ...form, module: value })}
                   >
                     <SelectTrigger>
@@ -1894,7 +1916,10 @@ function Products() {
                       <SelectItem value="cafeteria">☕ Cafeteria</SelectItem>
                       <SelectItem value="marmitaria">🍱 Marmitaria</SelectItem>
                       {store?.plan === "pro" ? (
-                        <SelectItem value="joias">💎 Joias e Semijoias</SelectItem>
+                        <>
+                          <SelectItem value="joias">💎 Joias e Semijoias</SelectItem>
+                          <SelectItem value="informatica">💻 Informática & Tecnologia</SelectItem>
+                        </>
                       ) : null}
                     </SelectContent>
                   </Select>
