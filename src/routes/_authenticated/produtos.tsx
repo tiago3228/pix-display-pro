@@ -309,6 +309,84 @@ const emptyForm = {
   jewelry_offer_expires_at: "",
 };
 
+const guidedDescriptionDefaults: Record<string, Record<string, string>> = {
+  informatica: {
+    Formatação: "Formatação de computadores e notebooks, com instalação e configuração inicial.",
+    Backup: "Backup e recuperação de arquivos importantes de computadores e notebooks.",
+    "Instalação de programas": "Instalação e configuração de programas, drivers e pacote Office.",
+    "Upgrade para SSD": "Troca de HD antigo por SSD para deixar o computador mais rápido.",
+    "Montagem e manutenção": "Montagem, limpeza preventiva e manutenção de computadores.",
+    "Redes e Wi-Fi": "Configuração de redes, Wi-Fi, roteadores, impressoras e periféricos.",
+    "Criação de sites": "Criação de sites profissionais, responsivos e personalizados.",
+    "SaaS sob medida": "Desenvolvimento de sistemas SaaS sob medida para sua empresa.",
+    "Planilha inteligente":
+      "Criação de planilhas inteligentes com fórmulas, automações e indicadores.",
+    "Peças e acessórios": "Venda de peças, acessórios e periféricos para computadores e notebooks.",
+    "Suporte técnico":
+      "Suporte técnico remoto ou presencial para resolver problemas de informática.",
+    "Outro serviço": "Serviço de informática personalizado conforme a necessidade do cliente.",
+  },
+  joias: {
+    Anel: "Anel selecionado para compor looks especiais e presentes marcantes.",
+    Aliança: "Aliança para celebrar momentos especiais e histórias únicas.",
+    Colar: "Colar elegante para complementar diferentes estilos e ocasiões.",
+    Corrente: "Corrente versátil para usar sozinha ou com seu pingente favorito.",
+    Brinco: "Brinco delicado e elegante para valorizar o visual.",
+    Pulseira: "Pulseira charmosa para completar sua produção com estilo.",
+    Pingente: "Pingente especial para personalizar correntes e acessórios.",
+    Conjunto: "Conjunto de joias combinando para um visual completo.",
+    Outro: "Joia ou semijoia selecionada para surpreender em qualquer ocasião.",
+  },
+  calcados: {
+    Tênis: "Tênis confortável e estiloso para acompanhar sua rotina.",
+    Botas: "Bota resistente e confortável para diferentes ocasiões.",
+    Sapatos: "Sapato elegante e confortável para completar seu visual.",
+    Sandálias: "Sandália leve e confortável para os dias mais quentes.",
+    Sapatilhas: "Sapatilha confortável e versátil para o dia a dia.",
+    Infantil: "Calçado infantil confortável, seguro e adequado para os pequenos.",
+    Esportivos: "Calçado esportivo para treinos, caminhadas e atividades físicas.",
+    Personalizados: "Calçado personalizado conforme o estilo e a necessidade do cliente.",
+  },
+  cafeteria: {
+    Café: "Café preparado na hora com sabor e aroma especiais.",
+    Cappuccino: "Cappuccino cremoso para acompanhar seu momento de pausa.",
+    Empada: "Empada assada com massa leve e recheio saboroso.",
+    "Pastel Assado": "Pastel assado com massa dourada e recheio caprichado.",
+    Tortinha: "Tortinha artesanal com recheio especial e massa crocante.",
+    Bolo: "Bolo caseiro macio e saboroso, feito com carinho.",
+    Doce: "Doce especial para adoçar seu dia.",
+    Bebida: "Bebida refrescante para acompanhar seu pedido.",
+    Combo: "Combo especial com itens selecionados por um preço diferenciado.",
+  },
+  roupas_treino: {
+    "Camiseta de treino": "Camiseta confortável para treinos e atividades físicas.",
+    "Camiseta Dry Fit": "Camiseta Dry Fit leve, respirável e de secagem rápida.",
+    Regata: "Regata leve e confortável para treinar com liberdade.",
+    Top: "Top esportivo com conforto e sustentação para seus treinos.",
+    Shorts: "Shorts esportivo leve para treinos e atividades físicas.",
+    Legging: "Legging confortável com elasticidade para acompanhar seus movimentos.",
+    "Conjunto Fitness": "Conjunto fitness completo para treinar com estilo e conforto.",
+    Personalizado: "Peça esportiva personalizada conforme sua preferência.",
+  },
+  roupas: {
+    Camisa: "Camisa versátil e confortável para diferentes ocasiões.",
+    Blusa: "Blusa confortável para compor looks do dia a dia.",
+    Vestido: "Vestido elegante e confortável para valorizar seu estilo.",
+    Calça: "Calça confortável e versátil para completar seu visual.",
+    Shorts: "Shorts leve e confortável para os dias mais quentes.",
+    Jaqueta: "Jaqueta estilosa para proteger do frio e completar o look.",
+    Moletom: "Moletom macio e confortável para os dias frios.",
+    Personalizado: "Peça personalizada conforme o estilo e a necessidade do cliente.",
+  },
+};
+
+function getGuidedDescription(module: ProductRow["module"], label: string) {
+  return (
+    guidedDescriptionDefaults[module]?.[label] ??
+    `${label} selecionado para oferecer qualidade, praticidade e um ótimo atendimento.`
+  );
+}
+
 function CategoryImagePreview({ path }: { path: string | null | undefined }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
@@ -1600,6 +1678,7 @@ function Products() {
                       ...emptyForm,
                       module,
                       name: module === "joias" || module === "informatica" ? label : "",
+                      description: getGuidedDescription(module, label),
                       category_id: matchingCategory?.id ?? "none",
                       sports_product_type:
                         module === "joias" || module === "informatica" ? "none" : label,
