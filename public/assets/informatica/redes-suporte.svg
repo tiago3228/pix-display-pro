@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-label="Redes e suporte">
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#082f49"/><stop offset="1" stop-color="#0f766e"/></linearGradient><linearGradient id="line" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#67e8f9"/><stop offset="1" stop-color="#5eead4"/></linearGradient></defs>
+  <rect width="1200" height="900" rx="48" fill="url(#bg)"/><circle cx="950" cy="160" r="180" fill="#67e8f9" opacity=".12"/><circle cx="170" cy="710" r="240" fill="#5eead4" opacity=".1"/>
+  <path d="M220 300h245M735 300h245M330 610h180M690 610h180M600 450V300M600 450v160" stroke="url(#line)" stroke-width="16" opacity=".8"/>
+  <rect x="470" y="360" width="260" height="180" rx="28" fill="#0f172a" stroke="#a5f3fc" stroke-width="12"/><circle cx="535" cy="450" r="16" fill="#22d3ee"/><circle cx="600" cy="450" r="16" fill="#2dd4bf"/><circle cx="665" cy="450" r="16" fill="#5eead4"/>
+  <rect x="130" y="230" width="180" height="140" rx="22" fill="#e0f2fe"/><path d="M170 300c40-55 100-55 140 0M195 330c24-28 66-28 90 0" fill="none" stroke="#0891b2" stroke-width="13" stroke-linecap="round"/>
+  <rect x="890" y="230" width="180" height="140" rx="22" fill="#ccfbf1"/><path d="M950 320h60M980 290v60" stroke="#0f766e" stroke-width="14" stroke-linecap="round"/>
+  <rect x="240" y="570" width="180" height="140" rx="22" fill="#cffafe"/><path d="M280 635h100M280 670h70" stroke="#0e7490" stroke-width="13" stroke-linecap="round"/>
+  <rect x="780" y="570" width="180" height="140" rx="22" fill="#d1fae5"/><path d="M830 650c0-28 22-50 50-50s50 22 50 50" fill="none" stroke="#047857" stroke-width="13"/><path d="M820 650h20M940 650h20" stroke="#047857" stroke-width="13" stroke-linecap="round"/>
+</svg>

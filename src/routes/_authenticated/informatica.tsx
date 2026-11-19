@@ -23,6 +23,7 @@ const serviceSuggestions = [
   {
     icon: Wrench,
     title: "Formatação e otimização",
+    image: "/assets/informatica/formatacao.webp",
     items: [
       "Formatação de computadores e notebooks",
       "Instalação do Windows e drivers",
@@ -32,6 +33,7 @@ const serviceSuggestions = [
   {
     icon: ShieldCheck,
     title: "Backup e recuperação",
+    image: "/assets/informatica/backup.webp",
     items: [
       "Backup de arquivos e fotos",
       "Recuperação de dados",
@@ -41,6 +43,7 @@ const serviceSuggestions = [
   {
     icon: Computer,
     title: "Instalação e configuração",
+    image: "/assets/informatica/instalacao-programas.svg",
     items: [
       "Instalação do pacote Office",
       "Antivírus e programas essenciais",
@@ -50,6 +53,7 @@ const serviceSuggestions = [
   {
     icon: Wrench,
     title: "Upgrades e montagem",
+    image: "/assets/informatica/upgrades-montagem.webp",
     items: [
       "Troca de HD antigo por SSD",
       "Upgrade de memória RAM",
@@ -59,6 +63,7 @@ const serviceSuggestions = [
   {
     icon: Computer,
     title: "Peças e acessórios",
+    image: "/assets/informatica/pecas-acessorios.webp",
     items: [
       "SSDs, HDs e memórias RAM",
       "Fontes, placas e componentes",
@@ -68,6 +73,7 @@ const serviceSuggestions = [
   {
     icon: Headphones,
     title: "Redes e suporte",
+    image: "/assets/informatica/redes-suporte.svg",
     items: [
       "Configuração de Wi-Fi e redes",
       "Suporte remoto e presencial",
@@ -77,6 +83,7 @@ const serviceSuggestions = [
   {
     icon: ClipboardList,
     title: "Soluções digitais",
+    image: "/assets/informatica/solucoes-digitais.webp",
     items: ["Criação de sites", "Sistemas SaaS sob medida", "Planilhas inteligentes e automações"],
   },
 ];
@@ -164,8 +171,14 @@ function InformaticaStore() {
       </div>
 
       <section className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {serviceSuggestions.map(({ icon: Icon, title, items }) => (
-          <article key={title} className="surface p-4">
+        {serviceSuggestions.map(({ icon: Icon, title, image, items }) => (
+          <article key={title} className="surface overflow-hidden p-4">
+            <img
+              src={image}
+              alt={`${title} — categoria de informática`}
+              className="mb-4 aspect-[4/3] w-full rounded-xl object-cover"
+              loading="lazy"
+            />
             <div className="flex items-center gap-2">
               <Icon className="size-5 text-primary" />
               <h3 className="font-semibold">{title}</h3>
