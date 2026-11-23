@@ -26,7 +26,8 @@ export type StorefrontProduct = {
     | "calcados"
     | "cafeteria"
     | "marmitaria"
-    | "joias";
+    | "joias"
+    | "informatica";
   mealPeriod: "lunch" | "dinner" | "both";
   deliveryEnabled: boolean;
   name: string;
@@ -50,6 +51,10 @@ export type StorefrontProduct = {
   orderNotes: string | null;
   orderProgressivePricing: boolean;
   orderTiers: { minQuantity: number; unitPrice: number }[];
+  purchaseEnabled: boolean;
+  quantityEnabled: boolean;
+  priceVisible: boolean;
+  quoteEnabled: boolean;
   sportsNodeIds: string[];
   sportsProductType: string | null;
   sportsAudience: string | null;
@@ -127,6 +132,7 @@ export type Storefront = {
     allow_installments: boolean;
     max_installments: number;
     min_installment_amount: number;
+    is_premium: boolean;
   };
   categories: { id: string; name: string; module?: string; image: string | null }[];
   sports: {
@@ -188,10 +194,15 @@ type StorefrontProductDbRow = {
     | "calcados"
     | "cafeteria"
     | "marmitaria"
-    | "joias";
+    | "joias"
+    | "informatica";
   name: string;
   description: string;
   price: number | string;
+  purchase_enabled?: boolean | null;
+  quantity_enabled?: boolean | null;
+  price_visible?: boolean | null;
+  quote_enabled?: boolean | null;
   image_url: string | null;
   stock: number;
   track_stock: boolean;
@@ -296,7 +307,7 @@ export const getStorefront = createServerFn({ method: "GET" })
       supabase
         .from("products")
         .select(
-          "id, module, name, description, price, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, meal_period, delivery_enabled, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, shoe_brand_id, shoe_model_id, shoe_brands(name), shoe_models(name), shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at",
+          "id, module, name, description, price, purchase_enabled, quantity_enabled, price_visible, quote_enabled, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, meal_period, delivery_enabled, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, shoe_brand_id, shoe_model_id, shoe_brands(name), shoe_models(name), shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at",
         )
         .eq("store_id", store.id)
         .or(
@@ -507,6 +518,7 @@ export const getStorefront = createServerFn({ method: "GET" })
 
         max_installments: store.max_installments,
         min_installment_amount: Number(store.min_installment_amount),
+        is_premium: Boolean(store.is_premium),
       },
       categories: visibleCategories.map((c) => {
         const category = c as unknown as {
@@ -555,6 +567,10 @@ export const getStorefront = createServerFn({ method: "GET" })
           name: p.name,
           description: p.description,
           price: Number(p.price),
+          purchaseEnabled: p.purchase_enabled !== false,
+          quantityEnabled: p.quantity_enabled !== false,
+          priceVisible: p.price_visible !== false,
+          quoteEnabled: Boolean(p.quote_enabled),
           image: resolve(p.image_url),
           images: (() => {
             const list = (gallery ?? [])
@@ -731,7 +747,10 @@ async function loadPizzeriaRows(db: LooseDb, storeId: string): Promise<PizzeriaR
   return rows;
 }
 
-function mapPizzeria(rows: PizzeriaRows, resolve: (p: string | null) => string | null): PublicPizzeria {
+function mapPizzeria(
+  rows: PizzeriaRows,
+  resolve: (p: string | null) => string | null,
+): PublicPizzeria {
   const s = rows.settings;
   return {
     deliveryEnabled: Boolean(s?.delivery_enabled),
@@ -847,16 +866,36 @@ export const submitOrder = createServerFn({ method: "POST" })
     let deliveryDistance: number | null = null;
     const hasPizzeriaItems = data.items.some((i) => i.pizza || i.addonId);
     if (hasPizzeriaItems) {
-      const { data: settings, error: settingsError } = await supabaseAdmin.from("pizzeria_settings")
-        .select("delivery_enabled, delivery_origin_cep, delivery_radius_km, delivery_fee").eq("store_id", store.id).maybeSingle();
+      const { data: settings, error: settingsError } = await supabaseAdmin
+        .from("pizzeria_settings")
+        .select("delivery_enabled, delivery_origin_cep, delivery_radius_km, delivery_fee")
+        .eq("store_id", store.id)
+        .maybeSingle();
       if (settingsError) throw new Error("Não foi possível verificar a área de entrega.");
       if (data.deliveryAddress) {
-        if (!settings?.delivery_enabled) throw new Error("Entrega indisponível; selecione retirada na pizzaria.");
+        if (!settings?.delivery_enabled)
+          throw new Error("Entrega indisponível; selecione retirada na pizzaria.");
         const address = data.deliveryAddress;
-        if (![address.address, address.number, address.neighborhood, address.city, address.state].every((v) => v.trim())) throw new Error("Preencha o endereço completo de entrega.");
+        if (
+          ![
+            address.address,
+            address.number,
+            address.neighborhood,
+            address.city,
+            address.state,
+          ].every((v) => v.trim())
+        )
+          throw new Error("Preencha o endereço completo de entrega.");
         const { checkPostalDelivery } = await import("./delivery.server");
-        const result = await checkPostalDelivery(settings.delivery_origin_cep, address.cep, Number(settings.delivery_radius_km));
-        if (!result.allowed) throw new Error(`Não entregamos neste endereço. O limite de entrega é ${settings.delivery_radius_km} km, aproximadamente pelo CEP.`);
+        const result = await checkPostalDelivery(
+          settings.delivery_origin_cep,
+          address.cep,
+          Number(settings.delivery_radius_km),
+        );
+        if (!result.allowed)
+          throw new Error(
+            `Não entregamos neste endereço. O limite de entrega é ${settings.delivery_radius_km} km, aproximadamente pelo CEP.`,
+          );
         deliveryFee = Number(settings.delivery_fee);
         deliveryDistance = result.distanceKm;
       }
@@ -983,7 +1022,10 @@ export const submitOrder = createServerFn({ method: "POST" })
       taken.push({ table, id: rowId, quantity: item.quantity });
     }
 
-    const total = deliveryTotal(items.reduce((sum, i) => sum + i.subtotal, 0), deliveryFee);
+    const total = deliveryTotal(
+      items.reduce((sum, i) => sum + i.subtotal, 0),
+      deliveryFee,
+    );
 
     let customerId: string | null = null;
     if (normalizedCustomerWhatsapp) {
@@ -1235,10 +1277,7 @@ async function buildPizzeriaOrderRows(db: LooseDb, storeId: string, input: Order
 
   const sizeIds = pizzas.map((i) => i.pizza!.sizeId);
   const flavorIds = pizzas.flatMap((i) => i.pizza!.flavorIds);
-  const addonIds = [
-    ...pizzas.flatMap((i) => i.pizza!.addonIds),
-    ...loose.map((i) => i.addonId!),
-  ];
+  const addonIds = [...pizzas.flatMap((i) => i.pizza!.addonIds), ...loose.map((i) => i.addonId!)];
   const none = ["00000000-0000-0000-0000-000000000000"];
   const [sizes, flavors, prices, addons, settings] = await Promise.all([
     db
@@ -1306,8 +1345,16 @@ async function buildPizzeriaOrderRows(db: LooseDb, storeId: string, input: Order
     );
     return {
       product_id: null,
-      product_name: pizzaItemName(size.name, chosen.map((c) => c.name)).slice(0, 200),
-      variant_label: extras.length ? extras.map((e) => e.name).join(", ").slice(0, 200) : null,
+      product_name: pizzaItemName(
+        size.name,
+        chosen.map((c) => c.name),
+      ).slice(0, 200),
+      variant_label: extras.length
+        ? extras
+            .map((e) => e.name)
+            .join(", ")
+            .slice(0, 200)
+        : null,
       quantity: item.quantity,
       unit_price: unit,
       subtotal: Number((unit * item.quantity).toFixed(2)),

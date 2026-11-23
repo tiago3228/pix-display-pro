@@ -152,7 +152,12 @@ export function StorePage() {
   const sendOrder = useServerFn(submitOrder);
   const getDeliveryQuote = useServerFn(quoteDelivery);
   const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">("delivery");
-  const [deliveryQuote, setDeliveryQuote] = useState<{ allowed: boolean; distanceKm: number; fee: number; cep: string } | null>(null);
+  const [deliveryQuote, setDeliveryQuote] = useState<{
+    allowed: boolean;
+    distanceKm: number;
+    fee: number;
+    cep: string;
+  } | null>(null);
   const [checkingDelivery, setCheckingDelivery] = useState(false);
   const [deliveryError, setDeliveryError] = useState("");
 
@@ -341,9 +346,15 @@ export function StorePage() {
   }
 
   const hasPizzaItems = cart.items.some((item) => item.pizza || item.addonId);
-  const pizzaDelivery = hasPizzaItems && Boolean(data?.pizzeria?.deliveryEnabled) && fulfillment === "delivery";
-  const currentQuote = deliveryQuote?.cep === delivery.cep.replace(/\D/g, "") ? deliveryQuote : null;
-  const shippingFee = pizzaDelivery ? (currentQuote?.allowed ? currentQuote.fee : Number(data?.pizzeria?.deliveryFee ?? 0)) : 0;
+  const pizzaDelivery =
+    hasPizzaItems && Boolean(data?.pizzeria?.deliveryEnabled) && fulfillment === "delivery";
+  const currentQuote =
+    deliveryQuote?.cep === delivery.cep.replace(/\D/g, "") ? deliveryQuote : null;
+  const shippingFee = pizzaDelivery
+    ? currentQuote?.allowed
+      ? currentQuote.fee
+      : Number(data?.pizzeria?.deliveryFee ?? 0)
+    : 0;
   const checkoutTotal = deliveryTotal(cart.total, shippingFee);
   const plans = useMemo(() => {
     if (!data?.store.allow_installments) return [];
@@ -367,7 +378,20 @@ export function StorePage() {
   const isMarmitaria = String(store.category ?? "")
     .toLowerCase()
     .includes("marmit");
-  const deliveryRequired = pizzaDelivery || (isMarmitaria && cart.items.some((item) => item.deliveryEnabled));
+  const isPremium = Boolean(store.is_premium);
+  const deliveryRequired =
+    pizzaDelivery || (isMarmitaria && cart.items.some((item) => item.deliveryEnabled));
+
+  function openQuote(product: StorefrontProduct, choices: Record<string, string>) {
+    const selectedOptions = product.options
+      .map((option) => (choices[option.name] ? `${option.name}: ${choices[option.name]}` : null))
+      .filter((value): value is string => Boolean(value));
+    const optionsText = selectedOptions.length
+      ? ` Opções escolhidas: ${selectedOptions.join(", ")}.`
+      : "";
+    const message = `Olá, gostaria de fazer um orçamento para ${product.name}.${optionsText} Gostaria de ver a disponibilidade para fazer este serviço!`;
+    window.open(whatsappLink(store.whatsapp, message), "_blank", "noopener");
+  }
 
   async function checkDelivery() {
     const cep = delivery.cep.replace(/\D/g, "");
@@ -381,9 +405,16 @@ export function StorePage() {
     try {
       const result = await getDeliveryQuote({ data: { slug: params.slug, cep } });
       setDeliveryQuote(result);
-      if (!result.allowed) setDeliveryError(`Não entregamos neste endereço. Limite: ${result.radiusKm} km aproximadamente pelo CEP. Você pode escolher retirada.`);
+      if (!result.allowed)
+        setDeliveryError(
+          `Não entregamos neste endereço. Limite: ${result.radiusKm} km aproximadamente pelo CEP. Você pode escolher retirada.`,
+        );
     } catch (error) {
-      setDeliveryError(error instanceof Error ? error.message : "Não foi possível verificar a entrega. Tente novamente.");
+      setDeliveryError(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível verificar a entrega. Tente novamente.",
+      );
     } finally {
       setCheckingDelivery(false);
     }
@@ -488,7 +519,16 @@ export function StorePage() {
       toast.error("Verifique o CEP de entrega antes de enviar o pedido.");
       return;
     }
-    if (deliveryRequired && ![delivery.address, delivery.number, delivery.neighborhood, delivery.city, delivery.state].every((value) => value.trim())) {
+    if (
+      deliveryRequired &&
+      ![
+        delivery.address,
+        delivery.number,
+        delivery.neighborhood,
+        delivery.city,
+        delivery.state,
+      ].every((value) => value.trim())
+    ) {
       toast.error("Preencha o endereço completo de entrega.");
       return;
     }
@@ -509,37 +549,58 @@ export function StorePage() {
           storeId: store.id,
           customerName: customer.name,
           customerWhatsapp: customer.whatsapp,
-          note: hasPizzaItems && !pizzaDelivery ? `${customer.note}${customer.note ? "\n" : ""}Retirada na pizzaria.` : customer.note,
+          note:
+            hasPizzaItems && !pizzaDelivery
+              ? `${customer.note}${customer.note ? "\n" : ""}Retirada na pizzaria.`
+              : customer.note,
           paymentDeclared: count > 1 ? false : paid,
           paymentMethod: count > 1 ? "parcelado" : "pix_avista",
           installments: count,
           receiptPath: receipt?.path ?? null,
           deliveryAddress: deliveryRequired ? delivery : null,
-          items: cart.items.map((i) => i.pizza ? { pizza: i.pizza, quantity: i.quantity } : i.addonId ? { addonId: i.addonId, quantity: i.quantity } : { productId: i.productId, variantId: i.variantId ?? null, variantLabel: i.variantLabel ?? null, quantity: i.quantity }),
+          items: cart.items.map((i) =>
+            i.pizza
+              ? { pizza: i.pizza, quantity: i.quantity }
+              : i.addonId
+                ? { addonId: i.addonId, quantity: i.quantity }
+                : {
+                    productId: i.productId,
+                    variantId: i.variantId ?? null,
+                    variantLabel: i.variantLabel ?? null,
+                    quantity: i.quantity,
+                  },
+          ),
         },
       });
       const message = buildOrderMessage({
-      sellerName: store.seller_name || store.name,
-      items: cart.items,
-      total: order.total,
-      deliveryFee: order.deliveryFee,
-      paid: count > 1 ? false : paid,
-      customerName: customer.name,
-      note: hasPizzaItems && !pizzaDelivery ? `${customer.note}\nRetirada na pizzaria.`.trim() : customer.note,
-      installments: count,
-      receiptUrl: receipt?.url ?? null,
-      deliveryAddress: deliveryRequired ? delivery : null,
-    });
-    window.open(whatsappLink(store.whatsapp, message), "_blank", "noopener");
-    cart.clear();
-    setCartOpen(false);
-    setStep("cart");
-    setPaid(false);
-    setReceipt(null);
-    setInstallments(1);
-    toast.success("Pedido enviado para o WhatsApp da loja!");
+        sellerName: store.seller_name || store.name,
+        items: cart.items,
+        total: order.total,
+        deliveryFee: order.deliveryFee,
+        paid: count > 1 ? false : paid,
+        customerName: customer.name,
+        note:
+          hasPizzaItems && !pizzaDelivery
+            ? `${customer.note}\nRetirada na pizzaria.`.trim()
+            : customer.note,
+        installments: count,
+        receiptUrl: receipt?.url ?? null,
+        deliveryAddress: deliveryRequired ? delivery : null,
+      });
+      window.open(whatsappLink(store.whatsapp, message), "_blank", "noopener");
+      cart.clear();
+      setCartOpen(false);
+      setStep("cart");
+      setPaid(false);
+      setReceipt(null);
+      setInstallments(1);
+      toast.success("Pedido enviado para o WhatsApp da loja!");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível registrar o pedido. Tente novamente.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível registrar o pedido. Tente novamente.",
+      );
     } finally {
       setSending(false);
     }
@@ -817,6 +878,7 @@ export function StorePage() {
               "cafeteria",
               "marmitaria",
               "joias",
+              "informatica",
             ] as const
           ).map((module) => {
             return data.products.some((product) => product.module === module) ? (
@@ -1024,8 +1086,10 @@ export function StorePage() {
               data.categories.find((category) => category.id === selected.category_id)?.name ?? ""
             }
             color={data.sports.settings?.primary_color ?? store.primary_color}
+            isPremium={isPremium}
             onBack={() => setSelected(null)}
             onOrder={() => setOrderProduct(selected)}
+            onQuote={openQuote}
             onOpenGallery={openGallery}
             onAdd={(item, quantity) => {
               cart.add(item, quantity);
@@ -1079,12 +1143,16 @@ export function StorePage() {
                       {product.description}
                     </p>
                     <div className="mt-1 flex flex-wrap items-center gap-2">
-                      {(product.sportsOfferActive && product.sportsOfferPrice !== null) ||
-                      (isJewelryOfferCurrent(
-                        product.jewelryOfferActive,
-                        product.jewelryOfferExpiresAt,
-                      ) &&
-                        product.jewelryOfferPrice !== null) ? (
+                      {isPremium && !product.priceVisible ? (
+                        <span className="text-sm font-semibold text-muted-foreground">
+                          Consulte o preço
+                        </span>
+                      ) : (product.sportsOfferActive && product.sportsOfferPrice !== null) ||
+                        (isJewelryOfferCurrent(
+                          product.jewelryOfferActive,
+                          product.jewelryOfferExpiresAt,
+                        ) &&
+                          product.jewelryOfferPrice !== null) ? (
                         <>
                           <span className="text-xs text-muted-foreground line-through">
                             {brl(
@@ -1105,18 +1173,6 @@ export function StorePage() {
                                 : (product.sportsOfferPrice ?? product.price),
                             )}
                           </span>
-                          {(
-                            product.module === "joias"
-                              ? product.jewelryOfferPercent
-                              : product.sportsOfferPercent
-                          ) ? (
-                            <Badge variant="secondary">
-                              {product.module === "joias"
-                                ? product.jewelryOfferPercent
-                                : product.sportsOfferPercent}
-                              % OFF
-                            </Badge>
-                          ) : null}
                         </>
                       ) : (
                         <span
@@ -1148,19 +1204,31 @@ export function StorePage() {
                     <div className="mt-auto pt-2">
                       {product.has_variants ? (
                         <div className="space-y-2">
-                          <Button
-                            size="sm"
-                            className="w-full"
-                            style={{ backgroundColor: store.primary_color }}
-                            disabled={
-                              status === "sold_out" ||
-                              status === "sold_out_with_order" ||
-                              status === "unavailable"
-                            }
-                            onClick={() => setSelected(product)}
-                          >
-                            Escolher opções
-                          </Button>
+                          {!isPremium || product.purchaseEnabled ? (
+                            <Button
+                              size="sm"
+                              className="w-full"
+                              style={{ backgroundColor: store.primary_color }}
+                              disabled={
+                                status === "sold_out" ||
+                                status === "sold_out_with_order" ||
+                                status === "unavailable"
+                              }
+                              onClick={() => setSelected(product)}
+                            >
+                              Escolher opções
+                            </Button>
+                          ) : null}
+                          {isPremium && product.quoteEnabled ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full"
+                              onClick={() => setSelected(product)}
+                            >
+                              <MessageCircle className="mr-1 size-4" /> Fazer orçamento
+                            </Button>
+                          ) : null}
                           {product.orderEnabled ? (
                             <Button
                               size="sm"
@@ -1174,48 +1242,68 @@ export function StorePage() {
                         </div>
                       ) : (
                         <div className="flex flex-wrap gap-2">
-                          <label className="sr-only" htmlFor={`quantity-${product.id}`}>
-                            Quantidade de {product.name}
-                          </label>
-                          <select
-                            id={`quantity-${product.id}`}
-                            aria-label={`Quantidade de ${product.name}`}
-                            value={productQuantities[product.id] ?? 1}
-                            onChange={(event) =>
-                              setProductQuantities((current) => ({
-                                ...current,
-                                [product.id]: Number(event.target.value),
-                              }))
-                            }
-                            className="h-9 w-20 rounded-md border border-input bg-background px-2 text-sm font-medium"
-                            disabled={
-                              status === "sold_out" ||
-                              status === "sold_out_with_order" ||
-                              status === "unavailable"
-                            }
-                          >
-                            {Array.from(
-                              { length: product.track_stock ? Math.min(stockOf(product), 20) : 20 },
-                              (_, index) => index + 1,
-                            ).map((quantity) => (
-                              <option key={quantity} value={quantity}>
-                                {quantity}x
-                              </option>
-                            ))}
-                          </select>
-                          <Button
-                            size="sm"
-                            className="min-w-0 flex-1"
-                            style={{ backgroundColor: store.primary_color }}
-                            disabled={
-                              status === "sold_out" ||
-                              status === "sold_out_with_order" ||
-                              status === "unavailable"
-                            }
-                            onClick={() => addSimple(product, productQuantities[product.id] ?? 1)}
-                          >
-                            Comprar
-                          </Button>
+                          {!isPremium || product.quantityEnabled ? (
+                            <>
+                              <label className="sr-only" htmlFor={`quantity-${product.id}`}>
+                                Quantidade de {product.name}
+                              </label>
+                              <select
+                                id={`quantity-${product.id}`}
+                                aria-label={`Quantidade de ${product.name}`}
+                                value={productQuantities[product.id] ?? 1}
+                                onChange={(event) =>
+                                  setProductQuantities((current) => ({
+                                    ...current,
+                                    [product.id]: Number(event.target.value),
+                                  }))
+                                }
+                                className="h-9 w-20 rounded-md border border-input bg-background px-2 text-sm font-medium"
+                                disabled={
+                                  status === "sold_out" ||
+                                  status === "sold_out_with_order" ||
+                                  status === "unavailable"
+                                }
+                              >
+                                {Array.from(
+                                  {
+                                    length: product.track_stock
+                                      ? Math.min(stockOf(product), 20)
+                                      : 20,
+                                  },
+                                  (_, index) => index + 1,
+                                ).map((quantity) => (
+                                  <option key={quantity} value={quantity}>
+                                    {quantity}x
+                                  </option>
+                                ))}
+                              </select>
+                            </>
+                          ) : null}
+                          {!isPremium || product.purchaseEnabled ? (
+                            <Button
+                              size="sm"
+                              className="min-w-0 flex-1"
+                              style={{ backgroundColor: store.primary_color }}
+                              disabled={
+                                status === "sold_out" ||
+                                status === "sold_out_with_order" ||
+                                status === "unavailable"
+                              }
+                              onClick={() => addSimple(product, productQuantities[product.id] ?? 1)}
+                            >
+                              Comprar
+                            </Button>
+                          ) : null}
+                          {isPremium && product.quoteEnabled ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="min-w-0 flex-1"
+                              onClick={() => openQuote(product, {})}
+                            >
+                              <MessageCircle className="mr-1 size-4" /> Orçamento
+                            </Button>
+                          ) : null}
                           {product.orderEnabled ? (
                             <Button
                               size="sm"
@@ -1473,7 +1561,9 @@ export function StorePage() {
             {cart.items.length > 0 ? (
               <div className="flex items-center justify-between border-t pt-3">
                 <span className="text-sm text-muted-foreground">TOTAL</span>
-                <span className="text-xl font-bold">{brl(step === "checkout" ? checkoutTotal : cart.total)}</span>
+                <span className="text-xl font-bold">
+                  {brl(step === "checkout" ? checkoutTotal : cart.total)}
+                </span>
               </div>
             ) : null}
 
@@ -1484,11 +1574,28 @@ export function StorePage() {
                     <p className="text-sm font-semibold">Entrega ou retirada</p>
                     {data.pizzeria?.deliveryEnabled ? (
                       <div className="grid grid-cols-2 gap-2">
-                        <Button variant={fulfillment === "delivery" ? "default" : "outline"} onClick={() => setFulfillment("delivery")}>Entrega</Button>
-                        <Button variant={fulfillment === "pickup" ? "default" : "outline"} onClick={() => setFulfillment("pickup")}>Retirada</Button>
+                        <Button
+                          variant={fulfillment === "delivery" ? "default" : "outline"}
+                          onClick={() => setFulfillment("delivery")}
+                        >
+                          Entrega
+                        </Button>
+                        <Button
+                          variant={fulfillment === "pickup" ? "default" : "outline"}
+                          onClick={() => setFulfillment("pickup")}
+                        >
+                          Retirada
+                        </Button>
                       </div>
-                    ) : <p className="text-sm text-muted-foreground">Retirada na pizzaria</p>}
-                    {pizzaDelivery ? <p className="text-sm">Frete: {brl(shippingFee)} · Raio aproximado de {data.pizzeria?.deliveryRadiusKm} km pelo CEP</p> : null}
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Retirada na pizzaria</p>
+                    )}
+                    {pizzaDelivery ? (
+                      <p className="text-sm">
+                        Frete: {brl(shippingFee)} · Raio aproximado de{" "}
+                        {data.pizzeria?.deliveryRadiusKm} km pelo CEP
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
                 {plans.length > 0 ? (
@@ -1614,7 +1721,9 @@ export function StorePage() {
                     <div>
                       <p className="text-sm font-semibold">Endereço de entrega</p>
                       <p className="text-xs text-muted-foreground">
-                        {pizzaDelivery ? "Distância aproximada pelo CEP, em linha reta." : "Obrigatório para entrega."}
+                        {pizzaDelivery
+                          ? "Distância aproximada pelo CEP, em linha reta."
+                          : "Obrigatório para entrega."}
                       </p>
                     </div>
                     <div className="grid grid-cols-[1fr_auto] gap-2">
@@ -1637,9 +1746,24 @@ export function StorePage() {
                     </div>
                     {pizzaDelivery ? (
                       <div className="space-y-2">
-                        <Button variant="outline" disabled={checkingDelivery} onClick={() => void checkDelivery()}>{checkingDelivery ? "Verificando..." : "Verificar entrega"}</Button>
-                        {deliveryError ? <p role="alert" className="text-sm text-destructive">{deliveryError}</p> : null}
-                        {currentQuote?.allowed ? <p role="status" className="text-sm text-primary">Entregamos neste CEP · {currentQuote.distanceKm} km aproximadamente · Frete {brl(currentQuote.fee)}</p> : null}
+                        <Button
+                          variant="outline"
+                          disabled={checkingDelivery}
+                          onClick={() => void checkDelivery()}
+                        >
+                          {checkingDelivery ? "Verificando..." : "Verificar entrega"}
+                        </Button>
+                        {deliveryError ? (
+                          <p role="alert" className="text-sm text-destructive">
+                            {deliveryError}
+                          </p>
+                        ) : null}
+                        {currentQuote?.allowed ? (
+                          <p role="status" className="text-sm text-primary">
+                            Entregamos neste CEP · {currentQuote.distanceKm} km aproximadamente ·
+                            Frete {brl(currentQuote.fee)}
+                          </p>
+                        ) : null}
                       </div>
                     ) : null}
                     <Input
@@ -1732,7 +1856,12 @@ export function StorePage() {
                 <>
                   <Button
                     className="h-12 bg-[var(--whatsapp)] text-[var(--whatsapp-foreground)] hover:bg-[var(--whatsapp)]/90"
-                    disabled={sending || uploadingReceipt || (paid && !receipt) || (pizzaDelivery && !currentQuote?.allowed)}
+                    disabled={
+                      sending ||
+                      uploadingReceipt ||
+                      (paid && !receipt) ||
+                      (pizzaDelivery && !currentQuote?.allowed)
+                    }
                     onClick={handleSend}
                   >
                     <MessageCircle className="mr-2 size-4" />
@@ -1828,20 +1957,24 @@ function StorefrontShelf({
               isJewelryOfferCurrent(product.jewelryOfferActive, product.jewelryOfferExpiresAt) &&
               product.jewelryOfferPrice !== null ? (
                 <p className="mt-1 text-xs text-muted-foreground line-through">
-                  {brl(product.jewelryOriginalPrice ?? product.price)}
+                  {product.priceVisible
+                    ? brl(product.jewelryOriginalPrice ?? product.price)
+                    : "Consulte o preço"}
                 </p>
               ) : null}
               <p className="mt-1 text-sm font-bold">
-                {brl(
-                  product.module === "joias" &&
-                    isJewelryOfferCurrent(
-                      product.jewelryOfferActive,
-                      product.jewelryOfferExpiresAt,
-                    ) &&
-                    product.jewelryOfferPrice !== null
-                    ? product.jewelryOfferPrice
-                    : product.price,
-                )}
+                {product.priceVisible
+                  ? brl(
+                      product.module === "joias" &&
+                        isJewelryOfferCurrent(
+                          product.jewelryOfferActive,
+                          product.jewelryOfferExpiresAt,
+                        ) &&
+                        product.jewelryOfferPrice !== null
+                        ? product.jewelryOfferPrice
+                        : product.price,
+                    )
+                  : "Consulte o preço"}
               </p>
             </div>
           </button>
@@ -1857,6 +1990,8 @@ function ProductDetail({
   color,
   onBack,
   onOrder,
+  onQuote,
+  isPremium,
   onOpenGallery,
   onAdd,
 }: {
@@ -1865,6 +2000,8 @@ function ProductDetail({
   color: string;
   onBack: () => void;
   onOrder: () => void;
+  onQuote: (product: StorefrontProduct, choices: Record<string, string>) => void;
+  isPremium: boolean;
   onOpenGallery: (product: StorefrontProduct, index?: number) => void;
   onAdd: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
 }) {
@@ -2010,7 +2147,11 @@ function ProductDetail({
               isJewelryOfferCurrent(product.jewelryOfferActive, product.jewelryOfferExpiresAt) &&
               product.jewelryOfferPrice !== null ? (
                 <>
-                  <span className="text-2xl font-bold">{brl(product.jewelryOfferPrice)}</span>
+                  <span className="text-2xl font-bold">
+                    {isPremium && !product.priceVisible
+                      ? "Consulte o preço"
+                      : brl(product.jewelryOfferPrice)}
+                  </span>
                   <span className="text-sm text-muted-foreground line-through">
                     {brl(product.jewelryOriginalPrice ?? product.price)}
                   </span>
@@ -2028,13 +2169,19 @@ function ProductDetail({
                 </>
               ) : product.sportsOfferActive && product.sportsOfferPrice !== null ? (
                 <>
-                  <span className="text-2xl font-bold">{brl(product.sportsOfferPrice)}</span>
+                  <span className="text-2xl font-bold">
+                    {isPremium && !product.priceVisible
+                      ? "Consulte o preço"
+                      : brl(product.sportsOfferPrice)}
+                  </span>
                   <span className="text-sm text-muted-foreground line-through">
                     {brl(product.sportsOriginalPrice ?? product.price)}
                   </span>
                 </>
               ) : (
-                <span className="text-2xl font-bold">{brl(unitPrice)}</span>
+                <span className="text-2xl font-bold">
+                  {isPremium && !product.priceVisible ? "Consulte o preço" : brl(unitPrice)}
+                </span>
               )}
             </div>
           </div>
@@ -2091,41 +2238,62 @@ function ProductDetail({
             </div>
           ))}
 
-          <div className="flex items-center justify-between rounded-xl border p-3">
-            <span className="text-sm font-semibold">Quantidade</span>
-            <div className="flex items-center gap-3">
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                className="size-9"
-                disabled={quantity <= 1}
-                onClick={() => setQuantity((current) => Math.max(1, current - 1))}
-              >
-                <Minus className="size-4" />
-              </Button>
-              <span className="w-7 text-center font-semibold">{quantity}</span>
-              <Button
-                type="button"
-                size="icon"
-                variant="outline"
-                className="size-9"
-                disabled={quantity >= maxQuantity}
-                onClick={() => setQuantity((current) => Math.min(maxQuantity, current + 1))}
-              >
-                <Plus className="size-4" />
-              </Button>
+          {!isPremium || product.quantityEnabled ? (
+            <div className="flex items-center justify-between rounded-xl border p-3">
+              <span className="text-sm font-semibold">Quantidade</span>
+              <div className="flex items-center gap-3">
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  className="size-9"
+                  disabled={quantity <= 1}
+                  onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+                >
+                  <Minus className="size-4" />
+                </Button>
+                <span className="w-7 text-center font-semibold">{quantity}</span>
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="outline"
+                  className="size-9"
+                  disabled={quantity >= maxQuantity}
+                  onClick={() => setQuantity((current) => Math.min(maxQuantity, current + 1))}
+                >
+                  <Plus className="size-4" />
+                </Button>
+              </div>
             </div>
-          </div>
-          <Button
-            type="button"
-            className="h-12 w-full text-sm uppercase tracking-wide"
-            style={{ backgroundColor: color }}
-            disabled={outOfStock}
-            onClick={addToCart}
-          >
-            {simpleProduct || complete ? "Adicionar ao carrinho" : "Escolha as opções"}
-          </Button>
+          ) : null}
+          {!isPremium || product.purchaseEnabled ? (
+            <Button
+              type="button"
+              className="h-12 w-full text-sm uppercase tracking-wide"
+              style={{ backgroundColor: color }}
+              disabled={outOfStock}
+              onClick={addToCart}
+            >
+              {simpleProduct || complete ? "Adicionar ao carrinho" : "Escolha as opções"}
+            </Button>
+          ) : null}
+          {isPremium && product.quoteEnabled ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="h-11 w-full"
+              onClick={() => {
+                if (!simpleProduct && !complete) {
+                  const message = missingOptionsMessage(product.options, choices);
+                  if (message) toast.error(message);
+                  return;
+                }
+                onQuote(product, choices);
+              }}
+            >
+              <MessageCircle className="mr-2 size-4" /> Fazer orçamento pelo WhatsApp
+            </Button>
+          ) : null}
           {product.orderEnabled ? (
             <Button type="button" variant="outline" className="h-11 w-full" onClick={onOrder}>
               <PackageOpen className="mr-2 size-4" /> Encomendar pelo WhatsApp
@@ -2239,7 +2407,9 @@ function VariantDialog({
               <p className="text-xs text-muted-foreground">SKU: {variant.sku}</p>
             ) : null}
             <div className="flex items-center justify-between border-t pt-3">
-              <span className="text-lg font-bold">{brl(variant?.price ?? product.price)}</span>
+              <span className="text-lg font-bold">
+                {product.priceVisible ? brl(variant?.price ?? product.price) : "Consulte o preço"}
+              </span>
               {complete ? (
                 outOfStock ? (
                   <Badge variant="outline">Esgotado</Badge>

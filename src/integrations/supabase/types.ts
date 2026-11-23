@@ -1870,6 +1870,10 @@ export type Database = {
           original_price: number | null
           position: number
           price: number
+          price_visible: boolean
+          purchase_enabled: boolean
+          quantity_enabled: boolean
+          quote_enabled: boolean
           shoe_authenticity: string
           shoe_brand_id: string | null
           shoe_brand_manual: string | null
@@ -1956,6 +1960,10 @@ export type Database = {
           sports_sort_order?: number
           stock?: number
           service_estimated_time?: string | null
+          price_visible?: boolean
+          purchase_enabled?: boolean
+          quantity_enabled?: boolean
+          quote_enabled?: boolean
           store_id: string
           track_stock?: boolean
           updated_at?: string
@@ -2021,6 +2029,10 @@ export type Database = {
           sports_sort_order?: number
           stock?: number
           service_estimated_time?: string | null
+          price_visible?: boolean
+          purchase_enabled?: boolean
+          quantity_enabled?: boolean
+          quote_enabled?: boolean
           store_id?: string
           track_stock?: boolean
           updated_at?: string

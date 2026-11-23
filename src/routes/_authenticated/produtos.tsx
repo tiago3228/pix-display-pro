@@ -213,6 +213,10 @@ type ProductRow = {
   description: string;
   service_estimated_time: string | null;
   price: number;
+  purchase_enabled: boolean;
+  quantity_enabled: boolean;
+  price_visible: boolean;
+  quote_enabled: boolean;
   stock: number;
   track_stock: boolean;
   has_variants: boolean;
@@ -271,6 +275,10 @@ const emptyForm = {
   description: "",
   service_estimated_time: "",
   price: "",
+  purchase_enabled: true,
+  quantity_enabled: true,
+  price_visible: true,
+  quote_enabled: false,
   stock: "",
   track_stock: false,
   is_hidden: false,
@@ -601,7 +609,7 @@ function Products() {
       let query = supabase
         .from("products")
         .select(
-          "id, module, name, description, service_estimated_time, price, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, meal_period, delivery_enabled, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at, product_variants(id, label, price, stock, sku, image_url), product_order_tiers(min_quantity, unit_price)",
+          "id, module, name, description, service_estimated_time, price, purchase_enabled, quantity_enabled, price_visible, quote_enabled, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, meal_period, delivery_enabled, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at, product_variants(id, label, price, stock, sku, image_url), product_order_tiers(min_quantity, unit_price)",
         )
         .eq("store_id", store!.id);
       if (trainingOnly) query = query.eq("module", "roupas_treino");
@@ -701,6 +709,10 @@ function Products() {
       description: product.description,
       service_estimated_time: product.service_estimated_time ?? "",
       price: String(product.price),
+      purchase_enabled: product.purchase_enabled ?? true,
+      quantity_enabled: product.quantity_enabled ?? true,
+      price_visible: product.price_visible ?? true,
+      quote_enabled: product.quote_enabled ?? false,
       stock: String(product.stock),
       track_stock: product.track_stock,
       is_hidden: product.is_hidden,
@@ -984,6 +996,10 @@ function Products() {
       name: form.name.trim(),
       service_estimated_time:
         form.module === "informatica" ? form.service_estimated_time.trim() || null : null,
+      purchase_enabled: store.plan === "pro" ? Boolean(form.purchase_enabled) : true,
+      quantity_enabled: store.plan === "pro" ? Boolean(form.quantity_enabled) : true,
+      price_visible: store.plan === "pro" ? Boolean(form.price_visible) : true,
+      quote_enabled: store.plan === "pro" ? Boolean(form.quote_enabled) : false,
       meal_period: form.module === "marmitaria" || marmitariaOnly ? form.meal_period : "both",
       delivery_enabled:
         form.module === "marmitaria" || marmitariaOnly ? Boolean(form.delivery_enabled) : false,
@@ -2130,6 +2146,42 @@ function Products() {
                   <p className="text-xs text-muted-foreground">
                     Você pode ajustar o prazo sugerido antes de salvar o serviço.
                   </p>
+                </div>
+              ) : null}
+              {store?.plan === "pro" ? (
+                <div className="space-y-2 rounded-lg border border-amber-300/60 bg-amber-50/50 p-3 dark:border-amber-900/60 dark:bg-amber-950/20">
+                  <div>
+                    <p className="text-sm font-semibold">⭐ Opções da loja Premium</p>
+                    <p className="text-xs text-muted-foreground">
+                      Escolha como este produto ou serviço será apresentado ao cliente.
+                    </p>
+                  </div>
+                  <ToggleRow
+                    label="🛒 Permitir botão Comprar"
+                    checked={form.purchase_enabled}
+                    onChange={(value) => setForm({ ...form, purchase_enabled: value })}
+                  />
+                  <ToggleRow
+                    label="🔢 Permitir escolha de quantidade"
+                    checked={form.quantity_enabled}
+                    onChange={(value) => setForm({ ...form, quantity_enabled: value })}
+                  />
+                  <ToggleRow
+                    label="💰 Exibir preço para o cliente"
+                    checked={form.price_visible}
+                    onChange={(value) => setForm({ ...form, price_visible: value })}
+                  />
+                  <ToggleRow
+                    label="💬 Permitir Fazer orçamento"
+                    checked={form.quote_enabled}
+                    onChange={(value) => setForm({ ...form, quote_enabled: value })}
+                  />
+                  {!form.price_visible ? (
+                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                      Ideal para serviços sob orçamento. Ative “Fazer orçamento” para o cliente
+                      entrar em contato pelo WhatsApp.
+                    </p>
+                  ) : null}
                 </div>
               ) : null}
               <div className="space-y-1.5">
