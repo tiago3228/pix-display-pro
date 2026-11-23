@@ -173,6 +173,7 @@ export function StorePage() {
   const [orderProduct, setOrderProduct] = useState<StorefrontProduct | null>(null);
   const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
   const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
+  const [expandedStoreDescription, setExpandedStoreDescription] = useState(false);
   const [gallery, setGallery] = useState<StorefrontProduct | null>(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [cartOpen, setCartOpen] = useState(false);
@@ -700,7 +701,24 @@ export function StorePage() {
                 VITRINI • LOJA ONLINE
               </p>
               <h1 className="truncate text-xl font-bold sm:text-2xl">{store.name}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">{store.description}</p>
+              <p
+                className={cn(
+                  "mt-1 text-sm text-muted-foreground",
+                  !expandedStoreDescription && "line-clamp-5",
+                )}
+              >
+                {store.description}
+              </p>
+              {store.description.length > 260 ? (
+                <button
+                  type="button"
+                  className="mt-0.5 w-fit text-xs font-semibold text-[var(--store-links)] hover:underline"
+                  aria-expanded={expandedStoreDescription}
+                  onClick={() => setExpandedStoreDescription((current) => !current)}
+                >
+                  {expandedStoreDescription ? "Ver menos" : "Ver descrição completa"}
+                </button>
+              ) : null}
               <div className="mt-2 flex flex-wrap gap-2">
                 <a
                   href={whatsappLink(store.whatsapp, `Olá, ${store.seller_name || store.name}!`)}
