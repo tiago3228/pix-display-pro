@@ -92,6 +92,15 @@ test("associa cards aos serviços cadastrados sem criar valores", () => {
   );
 });
 
+test("cada serviço das duas áreas apresenta um benefício descritivo", () => {
+  assert.equal(technologyServices.filter((service) => service.group === "informatica").length, 6);
+  assert.equal(
+    technologyServices.filter((service) => service.group === "solucoes-digitais").length,
+    6,
+  );
+  assert.ok(technologyServices.every((service) => service.benefit.trim().length > 0));
+});
+
 test("mensagem de orçamento inclui o serviço solicitado", () => {
   const message = buildTechnologyQuoteMessage("Formatação e otimização");
   assert.equal(
