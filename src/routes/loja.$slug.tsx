@@ -678,7 +678,7 @@ export function StorePage() {
           ) : null}
         </div>
         <div className="mx-auto max-w-3xl px-4">
-          <div className="surface vitrini-glow -mt-12 flex items-start gap-4 p-4 sm:p-5">
+          <div className="surface vitrini-glow mt-4 flex items-start gap-4 p-4 sm:p-5">
             <div
               className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-2xl font-bold text-white sm:size-20"
               style={{
