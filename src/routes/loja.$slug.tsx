@@ -705,7 +705,7 @@ export function StorePage() {
               <p
                 className={cn(
                   "mt-1 text-sm text-muted-foreground",
-                  !expandedStoreDescription && "line-clamp-5",
+                  !expandedStoreDescription && "line-clamp-3",
                 )}
               >
                 {store.description}
@@ -1162,12 +1162,12 @@ export function StorePage() {
                     <p
                       className={cn(
                         "text-xs text-muted-foreground",
-                        !expandedDescriptions[product.id] && "line-clamp-2",
+                        !expandedDescriptions[product.id] && "line-clamp-3",
                       )}
                     >
                       {product.description}
                     </p>
-                    {product.description.length > 110 ? (
+                    {product.description.trim() ? (
                       <button
                         type="button"
                         className="mt-0.5 w-fit text-[11px] font-semibold text-[var(--store-links)] hover:underline"
