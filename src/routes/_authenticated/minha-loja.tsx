@@ -194,6 +194,7 @@ type EditableBanner = {
   subtitle: string;
   cta_label: string;
   cta_href: string;
+  content_visible: boolean;
   is_active: boolean;
   position: number;
 };
@@ -540,6 +541,7 @@ function MyStore() {
         subtitle: bannerDraft.subtitle,
         cta_label: bannerDraft.cta_label,
         cta_href: bannerDraft.cta_href,
+        content_visible: bannerDraft.content_visible,
         is_active: bannerDraft.is_active,
       } as never)
       .eq("id", bannerDraft.id);
@@ -1246,8 +1248,7 @@ function MyStore() {
             <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} />
           </div>
           <p className="text-xs text-muted-foreground">
-            Link curto:{" "}
-            {getStorePublicUrl(form.slug || slugify(form.name))}
+            Link curto: {getStorePublicUrl(form.slug || slugify(form.name))}
           </p>
         </div>
 
@@ -1707,6 +1708,20 @@ function MyStore() {
                     value={bannerDraft.cta_href}
                     onChange={(event) =>
                       setBannerDraft({ ...bannerDraft, cta_href: event.target.value })
+                    }
+                  />
+                </div>
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div>
+                    <p className="text-sm font-medium">Textos do banner</p>
+                    <p className="text-xs text-muted-foreground">
+                      Exibir título, subtítulo e botão sobre a imagem
+                    </p>
+                  </div>
+                  <Switch
+                    checked={bannerDraft.content_visible}
+                    onCheckedChange={(checked) =>
+                      setBannerDraft({ ...bannerDraft, content_visible: checked })
                     }
                   />
                 </div>

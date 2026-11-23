@@ -2591,6 +2591,7 @@ export type Database = {
           created_at: string
           cta_href: string
           cta_label: string
+          content_visible: boolean
           ends_at: string | null
           id: string
           image_url: string | null
@@ -2607,6 +2608,7 @@ export type Database = {
           created_at?: string
           cta_href?: string
           cta_label?: string
+          content_visible?: boolean
           ends_at?: string | null
           id?: string
           image_url?: string | null
@@ -2623,6 +2625,7 @@ export type Database = {
           created_at?: string
           cta_href?: string
           cta_label?: string
+          content_visible?: boolean
           ends_at?: string | null
           id?: string
           image_url?: string | null

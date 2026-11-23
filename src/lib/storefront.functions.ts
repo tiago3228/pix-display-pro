@@ -362,7 +362,7 @@ export const getStorefront = createServerFn({ method: "GET" })
     const visibleCategories = [...activeCategories, ...(defaultNeutral ? [defaultNeutral] : [])];
     const { data: promoBanner } = await supabase
       .from("storefront_banners")
-      .select("title, subtitle, cta_label, cta_href, image_url")
+      .select("title, subtitle, cta_label, cta_href, image_url, content_visible")
       .eq("store_id", store.id)
       .eq("is_active", true)
       .or("starts_at.is.null,starts_at.lte." + new Date().toISOString())
@@ -506,6 +506,7 @@ export const getStorefront = createServerFn({ method: "GET" })
               subtitle: promoBanner.subtitle,
               cta_label: promoBanner.cta_label,
               cta_href: promoBanner.cta_href,
+              content_visible: promoBanner.content_visible !== false,
               image_url: promoBanner.image_url,
             }
           : null,

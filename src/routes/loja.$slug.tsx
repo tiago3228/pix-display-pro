@@ -649,7 +649,7 @@ export function StorePage() {
                 : "linear-gradient(120deg, #ffffff 0%, #f8fafc 52%, #e2e8f0 150%)",
           }}
         >
-          {store.promo_banner ? (
+          {store.promo_banner?.content_visible ? (
             <div
               className="mx-auto flex h-full max-w-3xl items-center px-6 drop-shadow-lg"
               style={{ color: store.theme_palette?.["header"] ?? store.primary_color }}
