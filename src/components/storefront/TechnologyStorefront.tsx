@@ -119,6 +119,15 @@ export function TechnologyStorefrontTop({
       services: technologyServices.filter((service) => service.group === "solucoes-digitais"),
     },
   ];
+  const serviceMatches = technologyServices.map((service) => ({
+    service,
+    product: findTechnologyServiceProduct(service, products, categories),
+  }));
+  const featuredMatches = serviceMatches.filter(({ product }) => product?.is_featured);
+  const highlightedServices = (featuredMatches.length ? featuredMatches : serviceMatches).slice(
+    0,
+    4,
+  );
 
   return (
     <>
@@ -409,32 +418,70 @@ export function TechnologyStorefrontTop({
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-8 pt-2 sm:pb-10">
-        <div
-          className="flex flex-col justify-between gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center sm:p-6"
-          style={{
-            borderColor: `${store.accent_color}66`,
-            background: `linear-gradient(120deg, ${store.primary_color}0d, transparent 75%)`,
-          }}
-        >
-          <div>
-            <p
-              className="text-xs font-semibold uppercase tracking-[0.14em]"
-              style={{ color: store.primary_color }}
-            >
-              Serviços em destaque
-            </p>
-            <h2 className="mt-1 text-lg font-bold">Veja os cadastros e valores disponíveis</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Consulte os serviços publicados ou use a busca para encontrar uma categoria.
-            </p>
-          </div>
-          <a
-            href="#catalogo"
-            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border bg-card px-4 text-sm font-semibold transition hover:bg-muted"
+        <div className="mb-5 max-w-3xl">
+          <p
+            className="text-sm font-semibold uppercase tracking-[0.14em]"
+            style={{ color: store.primary_color }}
           >
-            Ver serviços cadastrados <ArrowRight className="size-4" aria-hidden="true" />
-          </a>
+            Serviços em destaque
+          </p>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
+            Comece pela solução que você precisa
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            Conheça alguns serviços prioritários e fale diretamente sobre o que precisa resolver.
+          </p>
         </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {highlightedServices.map(({ service, product }) => {
+            const Icon = serviceIcons[service.id] ?? MonitorCog;
+            return (
+              <article
+                key={`highlight-${service.id}`}
+                className="group flex h-full flex-col rounded-2xl border bg-card p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--store-accent)] hover:shadow-lg"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span
+                    className="rounded-xl border bg-background p-3 transition group-hover:scale-105"
+                    style={{ borderColor: `${store.accent_color}66` }}
+                  >
+                    <Icon
+                      className="size-6"
+                      style={{ color: store.primary_color }}
+                      aria-hidden="true"
+                    />
+                  </span>
+                  <span
+                    className="text-right text-xs font-semibold leading-5"
+                    style={{
+                      color:
+                        product && product.priceVisible && product.price > 0
+                          ? store.primary_color
+                          : undefined,
+                    }}
+                  >
+                    {technologyServicePriceLabel(product)}
+                  </span>
+                </div>
+                <h3 className="mt-5 text-base font-bold">{service.name}</h3>
+                <p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">
+                  {service.benefit}
+                </p>
+                <QuoteLink
+                  store={store}
+                  serviceName={service.name}
+                  className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:opacity-95"
+                />
+              </article>
+            );
+          })}
+        </div>
+        <a
+          href="#catalogo"
+          className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border bg-card px-4 text-sm font-semibold transition hover:bg-muted"
+        >
+          Ver todos os serviços cadastrados <ArrowRight className="size-4" aria-hidden="true" />
+        </a>
       </section>
     </>
   );
@@ -454,7 +501,8 @@ export function TechnologyStorefrontBottom({ store, hasCart }: { store: Store; h
     "Conte o que você precisa pelo WhatsApp.",
     "A necessidade é entendida e, quando aplicável, avaliada tecnicamente.",
     "Você recebe as informações e a proposta para o serviço.",
-    "Com a proposta aprovada, o serviço pode ser iniciado.",
+    "Aprove a proposta quando estiver de acordo com a solução.",
+    "A execução é iniciada e você acompanha os próximos passos.",
   ];
   const faqs = [
     {
@@ -692,6 +740,24 @@ export function TechnologyStorefrontBottom({ store, hasCart }: { store: Store; h
             </div>
           </div>
           <div className="flex flex-wrap gap-3 text-sm">
+            <a
+              href="#servicos"
+              className="inline-flex items-center rounded-lg border border-white/20 px-3 py-2 transition hover:bg-white/10"
+            >
+              Serviços
+            </a>
+            <a
+              href="#assistencia-tecnica"
+              className="inline-flex items-center rounded-lg border border-white/20 px-3 py-2 transition hover:bg-white/10"
+            >
+              Informática
+            </a>
+            <a
+              href="#solucoes-digitais"
+              className="inline-flex items-center rounded-lg border border-white/20 px-3 py-2 transition hover:bg-white/10"
+            >
+              Soluções digitais
+            </a>
             <a
               href={contactHref}
               target="_blank"
