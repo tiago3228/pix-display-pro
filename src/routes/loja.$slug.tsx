@@ -172,6 +172,7 @@ export function StorePage() {
   const [selected, setSelected] = useState<StorefrontProduct | null>(null);
   const [orderProduct, setOrderProduct] = useState<StorefrontProduct | null>(null);
   const [productQuantities, setProductQuantities] = useState<Record<string, number>>({});
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Record<string, boolean>>({});
   const [gallery, setGallery] = useState<StorefrontProduct | null>(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [cartOpen, setCartOpen] = useState(false);
@@ -1139,9 +1140,29 @@ export function StorePage() {
                   </button>
                   <div className="flex min-w-0 flex-1 flex-col">
                     <h2 className="font-semibold">{product.name}</h2>
-                    <p className="line-clamp-2 text-xs text-muted-foreground">
+                    <p
+                      className={cn(
+                        "text-xs text-muted-foreground",
+                        !expandedDescriptions[product.id] && "line-clamp-2",
+                      )}
+                    >
                       {product.description}
                     </p>
+                    {product.description.length > 110 ? (
+                      <button
+                        type="button"
+                        className="mt-0.5 w-fit text-[11px] font-semibold text-[var(--store-links)] hover:underline"
+                        aria-expanded={Boolean(expandedDescriptions[product.id])}
+                        onClick={() =>
+                          setExpandedDescriptions((current) => ({
+                            ...current,
+                            [product.id]: !current[product.id],
+                          }))
+                        }
+                      >
+                        {expandedDescriptions[product.id] ? "Ver menos" : "Ver descrição completa"}
+                      </button>
+                    ) : null}
                     <div className="mt-1 flex flex-wrap items-center gap-2">
                       {isPremium && !product.priceVisible ? (
                         <span className="text-sm font-semibold text-muted-foreground">
