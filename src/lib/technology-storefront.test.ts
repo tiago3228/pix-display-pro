@@ -41,6 +41,7 @@ function product(overrides: Partial<StorefrontProduct> = {}): StorefrontProduct 
     purchaseEnabled: true,
     quantityEnabled: true,
     priceVisible: true,
+    showPriceFrom: false,
     quoteEnabled: false,
     sportsNodeIds: [],
     sportsProductType: null,
@@ -82,6 +83,11 @@ test("associa cards aos serviços cadastrados sem criar valores", () => {
   const registered = product();
   assert.equal(findTechnologyServiceProduct(upgrade, [registered])?.id, registered.id);
   assert.ok(technologyServicePriceLabel(registered).includes("150,00"));
+
+  assert.equal(
+    technologyServicePriceLabel(product({ showPriceFrom: true })),
+    "A partir de R$ 150,00",
+  );
 
   const hiddenPrice = product({ priceVisible: false });
   assert.equal(technologyServicePriceLabel(hiddenPrice), "Solicite um orçamento personalizado");

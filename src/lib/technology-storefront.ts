@@ -1,4 +1,5 @@
-import type { StorefrontProduct } from "./storefront.functions";
+import type { StorefrontProduct } from "@/lib/storefront.functions";
+import { storefrontPrice } from "./format.ts";
 
 export const TECHNOLOGY_STOREFRONT_SLUG = "ti";
 
@@ -149,14 +150,12 @@ export function findTechnologyServiceProduct(
 }
 
 export function technologyServicePriceLabel(
-  product: Pick<StorefrontProduct, "price" | "priceVisible"> | null,
+  product: Pick<StorefrontProduct, "price" | "priceVisible" | "showPriceFrom"> | null,
 ): string {
   if (!product || !product.priceVisible || !Number.isFinite(product.price) || product.price <= 0) {
     return "Solicite um orçamento personalizado";
   }
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-    product.price,
-  );
+  return storefrontPrice(product.price, product.showPriceFrom);
 }
 
 export function buildTechnologyQuoteMessage(serviceName: string): string {

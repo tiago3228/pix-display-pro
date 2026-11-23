@@ -54,6 +54,7 @@ export type StorefrontProduct = {
   purchaseEnabled: boolean;
   quantityEnabled: boolean;
   priceVisible: boolean;
+  showPriceFrom: boolean;
   quoteEnabled: boolean;
   sportsNodeIds: string[];
   sportsProductType: string | null;
@@ -203,6 +204,7 @@ type StorefrontProductDbRow = {
   purchase_enabled?: boolean | null;
   quantity_enabled?: boolean | null;
   price_visible?: boolean | null;
+  show_price_from?: boolean | null;
   quote_enabled?: boolean | null;
   image_url: string | null;
   stock: number;
@@ -308,7 +310,7 @@ export const getStorefront = createServerFn({ method: "GET" })
       supabase
         .from("products")
         .select(
-          "id, module, name, description, price, purchase_enabled, quantity_enabled, price_visible, quote_enabled, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, meal_period, delivery_enabled, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, shoe_brand_id, shoe_model_id, shoe_brands(name), shoe_models(name), shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at",
+          "id, module, name, description, price, purchase_enabled, quantity_enabled, price_visible, show_price_from, quote_enabled, image_url, stock, track_stock, is_available, is_featured, has_variants, category_id, position, meal_period, delivery_enabled, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, shoe_brand_id, shoe_model_id, shoe_brands(name), shoe_models(name), shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_original_price, jewelry_offer_active, jewelry_offer_percent, jewelry_offer_expires_at",
         )
         .eq("store_id", store.id)
         .or(
@@ -573,6 +575,7 @@ export const getStorefront = createServerFn({ method: "GET" })
           purchaseEnabled: p.purchase_enabled !== false,
           quantityEnabled: p.quantity_enabled !== false,
           priceVisible: p.price_visible !== false,
+          showPriceFrom: p.show_price_from === true,
           quoteEnabled: Boolean(p.quote_enabled),
           image: resolve(p.image_url),
           images: (() => {

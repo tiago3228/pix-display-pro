@@ -216,6 +216,7 @@ type ProductRow = {
   purchase_enabled: boolean;
   quantity_enabled: boolean;
   price_visible: boolean;
+  show_price_from: boolean;
   quote_enabled: boolean;
   stock: number;
   track_stock: boolean;
@@ -278,6 +279,7 @@ const emptyForm = {
   purchase_enabled: true,
   quantity_enabled: true,
   price_visible: true,
+  show_price_from: false,
   quote_enabled: false,
   stock: "",
   track_stock: false,
@@ -609,7 +611,7 @@ function Products() {
       let query = supabase
         .from("products")
         .select(
-          "id, module, name, description, service_estimated_time, price, purchase_enabled, quantity_enabled, price_visible, quote_enabled, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_is_customized, sports_offer_active, sports_original_price, sports_offer_price, sports_offer_percent, meal_period, delivery_enabled, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at, product_variants(id, label, price, stock, sku, image_url), product_order_tiers(min_quantity, unit_price)",
+          "id, module, name, description, service_estimated_time, price, purchase_enabled, quantity_enabled, price_visible, show_price_from, quote_enabled, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_original_price, sports_offer_price, sports_offer_percent, sports_is_customized, sports_offer_active, meal_period, delivery_enabled, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at, product_variants(id, label, price, stock, sku, image_url), product_order_tiers(min_quantity, unit_price)",
         )
         .eq("store_id", store!.id);
       if (trainingOnly) query = query.eq("module", "roupas_treino");
@@ -712,6 +714,7 @@ function Products() {
       purchase_enabled: product.purchase_enabled ?? true,
       quantity_enabled: product.quantity_enabled ?? true,
       price_visible: product.price_visible ?? true,
+      show_price_from: product.show_price_from ?? false,
       quote_enabled: product.quote_enabled ?? false,
       stock: String(product.stock),
       track_stock: product.track_stock,
@@ -999,6 +1002,7 @@ function Products() {
       purchase_enabled: store.plan === "pro" ? Boolean(form.purchase_enabled) : true,
       quantity_enabled: store.plan === "pro" ? Boolean(form.quantity_enabled) : true,
       price_visible: store.plan === "pro" ? Boolean(form.price_visible) : true,
+      show_price_from: store.plan === "pro" ? Boolean(form.show_price_from) : false,
       quote_enabled: store.plan === "pro" ? Boolean(form.quote_enabled) : false,
       meal_period: form.module === "marmitaria" || marmitariaOnly ? form.meal_period : "both",
       delivery_enabled:
@@ -2171,6 +2175,16 @@ function Products() {
                     checked={form.price_visible}
                     onChange={(value) => setForm({ ...form, price_visible: value })}
                   />
+                  <ToggleRow
+                    label='🏷️ Exibir "A partir de" antes do preço'
+                    checked={form.show_price_from}
+                    onChange={(value) => setForm({ ...form, show_price_from: value })}
+                  />
+                  {form.show_price_from ? (
+                    <p className="text-xs text-muted-foreground">
+                      O cliente verá, por exemplo, “A partir de R$ 150,00”.
+                    </p>
+                  ) : null}
                   <ToggleRow
                     label="💬 Permitir Fazer orçamento"
                     checked={form.quote_enabled}
