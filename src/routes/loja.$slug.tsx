@@ -759,7 +759,7 @@ export function StorePage() {
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Buscar produto, clube, esporte ou tipo..."
+          placeholder="Buscar produto, serviço ou categoria..."
           aria-label="Buscar na loja"
         />
       </div>
@@ -863,13 +863,7 @@ export function StorePage() {
                     <img
                       src={category.image}
                       alt=""
-                      className="mb-1 size-10 rounded-lg object-cover"
-                    />
-                  ) : null}
-                  {category.image ? (
-                    <img
-                      src={category.image}
-                      alt=""
+                      loading="lazy"
                       className="mb-1 size-10 rounded-lg object-cover"
                     />
                   ) : null}
@@ -1121,8 +1115,20 @@ export function StorePage() {
             }}
           />
         ) : products.length === 0 ? (
-          <div className="surface p-8 text-center text-sm text-muted-foreground">
-            Nenhum produto por aqui ainda.
+          <div className="surface space-y-3 p-8 text-center">
+            <div className="text-sm font-semibold">
+              {search.trim() ? "Não encontramos resultados para sua busca." : "Nenhum produto ou serviço disponível no momento."}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {search.trim()
+                ? "Tente outro termo ou limpe a busca para ver todos os itens."
+                : "Volte em breve para conferir as novidades desta loja."}
+            </p>
+            {search.trim() ? (
+              <Button type="button" variant="outline" size="sm" onClick={() => setSearch("")}>
+                Limpar busca
+              </Button>
+            ) : null}
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2">
