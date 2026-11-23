@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getStorefront } from "@/lib/storefront.functions";
+import { getStorefrontSeoMetadata } from "@/lib/technology-storefront";
 import { StorePage, EmptyState } from "./loja.$slug";
 
 export const Route = createFileRoute("/s/$slug")({
@@ -11,9 +12,7 @@ export const Route = createFileRoute("/s/$slug")({
       };
     }
     const { store } = loaderData;
-    const title = `${store.name} | Loja Online`;
-    const description =
-      store.description || `Veja os produtos de ${store.name} e peça pelo WhatsApp.`;
+    const { title, description } = getStorefrontSeoMetadata(store);
     const shareImage =
       store.banner || store.logo || "https://vitrini-br.lovable.app/og-default.png";
     const shareUrl = `https://vitrini-br.lovable.app/s/${store.slug}`;

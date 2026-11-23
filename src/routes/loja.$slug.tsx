@@ -45,6 +45,11 @@ import { BackButton } from "@/components/BackButton";
 import { PizzeriaBuilder } from "@/components/PizzeriaBuilder";
 import { quoteDelivery } from "@/lib/delivery.functions";
 import { deliveryTotal } from "@/lib/delivery";
+import { getStorefrontSeoMetadata, isTechnologyStorefront } from "@/lib/technology-storefront";
+import {
+  TechnologyStorefrontBottom,
+  TechnologyStorefrontTop,
+} from "@/components/storefront/TechnologyStorefront";
 
 function instagramHref(value: string | null | undefined) {
   const raw = value?.trim();
@@ -76,9 +81,7 @@ export const Route = createFileRoute("/loja/$slug")({
       };
     }
     const { store } = loaderData;
-    const title = `${store.name} | Loja Online`;
-    const description =
-      store.description || `Veja os produtos de ${store.name} e peça pelo WhatsApp.`;
+    const { title, description } = getStorefrontSeoMetadata(store);
     const shareImage =
       store.banner || store.logo || "https://vitrini-br.lovable.app/og-default.png";
     const shareUrl = `https://vitrini-br.lovable.app/s/${store.slug}`;
@@ -270,10 +273,12 @@ export function StorePage() {
     const term = search.trim().toLocaleLowerCase("pt-BR");
     const searched = term
       ? metadataFiltered.filter((product) => {
-          const nodeNames = data.sports.nodes
-            .filter((node) => product.sportsNodeIds.includes(node.id))
-            .map((node) => node.name)
-            .join(" ");
+          const nodeNames = [
+            ...data.sports.nodes
+              .filter((node) => product.sportsNodeIds.includes(node.id))
+              .map((node) => node.name),
+            data.categories.find((category) => category.id === product.category_id)?.name ?? "",
+          ].join(" ");
           return `${product.name} ${product.description} ${nodeNames} ${product.sportsProductType ?? ""} ${product.sportsCollectionNames.join(" ")}`
             .toLocaleLowerCase("pt-BR")
             .includes(term);
@@ -378,6 +383,7 @@ export function StorePage() {
   }
 
   const { store } = data;
+  const isTechnology = isTechnologyStorefront(store.slug);
   const isMarmitaria = String(store.category ?? "")
     .toLowerCase()
     .includes("marmit");
@@ -639,10 +645,18 @@ export function StorePage() {
         color: store.text_color,
       }}
     >
-      <div className="mx-auto max-w-3xl px-4 pt-3">
+      {isTechnology ? (
+        <TechnologyStorefrontTop
+          store={store}
+          products={data.products}
+          categories={data.categories}
+          onSelectProduct={setSelected}
+        />
+      ) : null}
+      <div className={cn("mx-auto max-w-3xl px-4 pt-3", isTechnology && "hidden")}>
         <BackButton fallbackTo="/" label="Voltar" variant="outline" className="bg-background/90" />
       </div>
-      <header className="relative">
+      <header className={cn("relative", isTechnology && "hidden")}>
         <div
           className="min-h-[180px] aspect-[2.4/1] w-full sm:min-h-[260px] lg:min-h-[340px]"
           style={{
@@ -755,7 +769,7 @@ export function StorePage() {
         </div>
       </header>
 
-      <div className="mx-auto mt-4 max-w-3xl px-4">
+      <div className={cn("mx-auto mt-4 px-4", isTechnology ? "max-w-6xl" : "max-w-3xl")}>
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -787,7 +801,7 @@ export function StorePage() {
         </section>
       ) : null}
 
-      <main className="mx-auto mt-5 max-w-3xl space-y-5 px-4">
+      <main className={cn("mx-auto mt-5 space-y-5 px-4", isTechnology ? "max-w-6xl" : "max-w-3xl")}>
         {data.pizzeria ? (
           <PizzeriaBuilder
             menu={data.pizzeria}
@@ -882,7 +896,12 @@ export function StorePage() {
           borderColor: store.theme_palette?.["borders"] ?? "#e2e8f0",
         }}
       >
-        <div className="mx-auto flex max-w-3xl gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
+        <div
+          className={cn(
+            "mx-auto flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]",
+            isTechnology ? "max-w-6xl" : "max-w-3xl",
+          )}
+        >
           {(
             [
               "roupas",
@@ -1092,7 +1111,18 @@ export function StorePage() {
         </div>
       </div>
 
-      <main className="mx-auto mt-5 max-w-3xl px-4">
+      <main className={cn("mx-auto mt-5 px-4", isTechnology ? "max-w-6xl" : "max-w-3xl")}>
+        {isTechnology ? (
+          <section id="catalogo" className="mb-5 scroll-mt-24">
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              Catálogo da loja
+            </p>
+            <h2 className="mt-1 text-2xl font-bold">Serviços e itens cadastrados</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Consulte os cadastros publicados, use as categorias ou refine sua busca.
+            </p>
+          </section>
+        ) : null}
         {selected ? (
           <ProductDetail
             product={selected}
@@ -1117,7 +1147,11 @@ export function StorePage() {
         ) : products.length === 0 ? (
           <div className="surface space-y-3 p-8 text-center">
             <div className="text-sm font-semibold">
-              {search.trim() ? "Não encontramos resultados para sua busca." : "Nenhum produto ou serviço disponível no momento."}
+              {search.trim()
+                ? isTechnology
+                  ? "Não encontramos serviços ou itens para essa busca."
+                  : "Não encontramos resultados para sua busca."
+                : "Nenhum produto ou serviço disponível no momento."}
             </div>
             <p className="text-sm text-muted-foreground">
               {search.trim()
@@ -1131,7 +1165,7 @@ export function StorePage() {
             ) : null}
           </div>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className={cn("grid gap-3 sm:grid-cols-2", isTechnology && "lg:grid-cols-3")}>
             {products.map((product) => {
               const status = statusOf(product);
               return (
@@ -1369,7 +1403,12 @@ export function StorePage() {
             })}
           </div>
         )}
-        <div className="mx-auto mt-8 flex max-w-sm flex-col items-center gap-2 rounded-2xl border border-border bg-card/60 p-3 text-center shadow-sm">
+        <div
+          className={cn(
+            "mx-auto mt-8 flex max-w-sm flex-col items-center gap-2 rounded-2xl border border-border bg-card/60 p-3 text-center shadow-sm",
+            isTechnology && "hidden",
+          )}
+        >
           <p className="text-xs font-medium text-muted-foreground">
             Quer ter uma lojinha online como esta?
           </p>
@@ -1414,10 +1453,14 @@ export function StorePage() {
           </div>
         </div>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
+        <p
+          className={cn("mt-6 text-center text-xs text-muted-foreground", isTechnology && "hidden")}
+        >
           Pagamento realizado diretamente para o vendedor via Pix.
         </p>
       </main>
+
+      {isTechnology && <TechnologyStorefrontBottom store={store} hasCart={cart.count > 0} />}
 
       {cart.count > 0 ? (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-3 backdrop-blur">

@@ -123,6 +123,7 @@ export type Storefront = {
       subtitle: string;
       cta_label: string;
       cta_href: string;
+      content_visible: boolean;
       image_url: string | null;
     } | null;
     welcome_message: string;
@@ -519,7 +520,8 @@ export const getStorefront = createServerFn({ method: "GET" })
 
         max_installments: store.max_installments,
         min_installment_amount: Number(store.min_installment_amount),
-        is_premium: Boolean(store.is_premium),
+        // A migration pública adiciona a flag antes da atualização dos tipos gerados.
+        is_premium: Boolean((store as typeof store & { is_premium?: boolean }).is_premium),
       },
       categories: visibleCategories.map((c) => {
         const category = c as unknown as {
