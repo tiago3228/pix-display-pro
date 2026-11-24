@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { Storefront, StorefrontProduct } from "@/lib/storefront.functions";
+import type { DigitalProductView } from "@/lib/digital-products.functions";
 import { whatsappLink } from "@/lib/format";
 import {
   buildTechnologyQuoteMessage,
@@ -410,10 +411,21 @@ export function TechnologyStorefrontTop({
   );
 }
 
-export function TechnologyStorefrontBottom({ store, hasCart }: { store: Store; hasCart: boolean }) {
+export function TechnologyStorefrontBottom({
+  store,
+  hasCart,
+  digitalProducts,
+}: {
+  store: Store;
+  hasCart: boolean;
+  digitalProducts: DigitalProductView[];
+}) {
   const generalMessage = buildTechnologyQuoteMessage("assistência técnica ou solução digital");
   const contactHref = whatsappLink(store.whatsapp, generalMessage);
   const instagram = instagramHref(store.instagram);
+  const portfolioProducts = digitalProducts.filter((product) =>
+    ["software", "app", "saas", "tool"].includes(product.product_type),
+  );
   const differentiators = [
     "Atendimento personalizado",
     "Soluções adequadas à necessidade",
@@ -542,18 +554,86 @@ export function TechnologyStorefrontBottom({ store, hasCart }: { store: Store; h
               Portfólio
             </p>
             <h2 id="portfolio-title" className="mt-2 text-xl font-bold">
-              Projetos e trabalhos realizados
+              Softwares e soluções digitais
             </h2>
-            <div className="mt-5 rounded-xl border border-dashed bg-background/70 p-6 text-center">
-              <MonitorCog className="mx-auto size-8 text-muted-foreground" aria-hidden="true" />
-              <p className="mt-3 font-semibold">
-                Nenhum projeto foi cadastrado nesta vitrine ainda.
-              </p>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-                Quando trabalhos reais forem adicionados, este espaço poderá apresentá-los sem
-                recorrer a exemplos fictícios.
-              </p>
-            </div>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Conheça os softwares e aplicativos publicados no catálogo da Vitrini.
+            </p>
+            {portfolioProducts.length ? (
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                {portfolioProducts.map((product) => {
+                  const image = product.main_image_url || product.logo_image_url;
+                  return (
+                    <article
+                      key={product.id}
+                      className="overflow-hidden rounded-xl border bg-background"
+                    >
+                      <a
+                        href={`/softwares/${product.slug}`}
+                        aria-label={`Ver detalhes de ${product.name}`}
+                        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      >
+                        {image ? (
+                          <img
+                            src={image}
+                            alt={`Imagem de ${product.name}`}
+                            loading="lazy"
+                            className="aspect-[16/10] w-full bg-muted object-contain p-3"
+                          />
+                        ) : (
+                          <div className="flex aspect-[16/10] items-center justify-center bg-muted">
+                            <MonitorCog
+                              className="size-10 text-muted-foreground"
+                              aria-hidden="true"
+                            />
+                          </div>
+                        )}
+                      </a>
+                      <div className="p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          {product.product_type_label}
+                        </p>
+                        <h3 className="mt-1 font-bold">
+                          <a href={`/softwares/${product.slug}`} className="hover:underline">
+                            {product.name}
+                          </a>
+                        </h3>
+                        {product.short_description ? (
+                          <p className="mt-2 text-sm leading-5 text-muted-foreground">
+                            {product.short_description}
+                          </p>
+                        ) : null}
+                        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold">
+                          <a
+                            href={`/softwares/${product.slug}`}
+                            className="inline-flex items-center gap-1 hover:underline"
+                          >
+                            Saiba mais <ArrowRight className="size-4" aria-hidden="true" />
+                          </a>
+                          <a
+                            href={product.url}
+                            target={product.open_new_tab ? "_blank" : undefined}
+                            rel={product.open_new_tab ? "noopener noreferrer" : undefined}
+                            className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground hover:underline"
+                          >
+                            {product.cta_label}{" "}
+                            <ExternalLink className="size-3.5" aria-hidden="true" />
+                          </a>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="mt-5 rounded-xl border border-dashed bg-background/70 p-6 text-center">
+                <MonitorCog className="mx-auto size-8 text-muted-foreground" aria-hidden="true" />
+                <p className="mt-3 font-semibold">Nenhum software publicado no catálogo ainda.</p>
+                <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+                  Os softwares e aplicativos ativos no catálogo aparecerão aqui automaticamente.
+                </p>
+              </div>
+            )}
           </section>
         </div>
       </section>

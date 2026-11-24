@@ -26,6 +26,10 @@ import {
   uploadOrderReceipt,
   type StorefrontProduct,
 } from "@/lib/storefront.functions";
+import {
+  listPublicDigitalProducts,
+  type DigitalProductView,
+} from "@/lib/digital-products.functions";
 import { useCart, buildOrderMessage, type CartItem } from "@/lib/cart";
 import {
   brl,
@@ -62,6 +66,10 @@ import {
 } from "@/components/storefront/TechnologyStorefront";
 import { PremiumStorefrontNav } from "@/components/storefront/PremiumStorefrontNav";
 
+type StorePageLoaderData = NonNullable<Awaited<ReturnType<typeof getStorefront>>> & {
+  digitalProducts: DigitalProductView[];
+};
+
 function instagramHref(value: string | null | undefined) {
   const raw = value?.trim();
   if (!raw) return null;
@@ -84,7 +92,21 @@ function instagramHref(value: string | null | undefined) {
 }
 
 export const Route = createFileRoute("/loja/$slug")({
-  loader: ({ params }) => getStorefront({ data: { slug: params.slug } }),
+  loader: async ({ params }) => {
+    const storefront = await getStorefront({ data: { slug: params.slug } });
+    if (!storefront) return null;
+
+    let digitalProducts: DigitalProductView[] = [];
+    if (isTechnologyStorefront(storefront.store.slug)) {
+      try {
+        digitalProducts = await listPublicDigitalProducts({ data: {} });
+      } catch (error) {
+        console.error("Não foi possível carregar os softwares do portfólio.", error);
+      }
+    }
+
+    return { ...storefront, digitalProducts };
+  },
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
@@ -160,7 +182,7 @@ function sportsBranchIds(
 }
 
 export function StorePage() {
-  const data = useLoaderData({ strict: false }) as Awaited<ReturnType<typeof getStorefront>>;
+  const data = useLoaderData({ strict: false }) as StorePageLoaderData | null;
   const params = useParams({ strict: false }) as { slug: string };
   const cart = useCart(params.slug);
   const track = useServerFn(trackStoreEvent);
@@ -1479,7 +1501,13 @@ export function StorePage() {
         </p>
       </main>
 
-      {isTechnology && <TechnologyStorefrontBottom store={store} hasCart={cart.count > 0} />}
+      {isTechnology ? (
+        <TechnologyStorefrontBottom
+          store={store}
+          hasCart={cart.count > 0}
+          digitalProducts={data.digitalProducts}
+        />
+      ) : null}
 
       {cart.count > 0 ? (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-3 backdrop-blur">
