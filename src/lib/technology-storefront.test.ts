@@ -104,6 +104,10 @@ test("cada serviço das duas áreas apresenta um benefício descritivo", () => {
     technologyServices.filter((service) => service.group === "solucoes-digitais").length,
     6,
   );
+  assert.equal(
+    technologyServices.find((service) => service.id === "backup-suporte")?.name,
+    "Backup e recuperação",
+  );
   assert.ok(technologyServices.every((service) => service.benefit.trim().length > 0));
 });
 

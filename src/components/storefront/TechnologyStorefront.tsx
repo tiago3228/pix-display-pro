@@ -26,6 +26,7 @@ import {
   findTechnologyServiceProduct,
   technologyServicePriceLabel,
   technologyServices,
+  TECHNOLOGY_STOREFRONT_DESCRIPTION,
 } from "@/lib/technology-storefront";
 import { Button } from "@/components/ui/button";
 
@@ -119,16 +120,6 @@ export function TechnologyStorefrontTop({
       services: technologyServices.filter((service) => service.group === "solucoes-digitais"),
     },
   ];
-  const serviceMatches = technologyServices.map((service) => ({
-    service,
-    product: findTechnologyServiceProduct(service, products, categories),
-  }));
-  const featuredMatches = serviceMatches.filter(({ product }) => product?.is_featured);
-  const highlightedServices = (featuredMatches.length ? featuredMatches : serviceMatches).slice(
-    0,
-    4,
-  );
-
   return (
     <>
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 pt-5 sm:pt-6">
@@ -325,9 +316,8 @@ export function TechnologyStorefrontTop({
             Soluções para sua rotina e para o seu negócio
           </h2>
           <p className="mt-3 text-base leading-7 text-muted-foreground">
-            Da assistência técnica ao desenvolvimento digital, conheça as áreas de atuação e peça
-            uma proposta alinhada à sua necessidade. Valores só são exibidos quando há preço real
-            cadastrado.
+            Conheça as áreas de atuação e use o catálogo abaixo como a fonte principal para
+            consultar serviços, valores publicados e disponibilidade.
           </p>
         </div>
         <div className="space-y-8">
@@ -415,73 +405,6 @@ export function TechnologyStorefrontTop({
           Os preços exibidos correspondem a serviços cadastrados na vitrine. Serviços sem valor
           publicado são orçados após entender a necessidade.
         </p>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 pb-8 pt-2 sm:pb-10">
-        <div className="mb-5 max-w-3xl">
-          <p
-            className="text-sm font-semibold uppercase tracking-[0.14em]"
-            style={{ color: store.primary_color }}
-          >
-            Serviços em destaque
-          </p>
-          <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-            Comece pela solução que você precisa
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Conheça alguns serviços prioritários e fale diretamente sobre o que precisa resolver.
-          </p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {highlightedServices.map(({ service, product }) => {
-            const Icon = serviceIcons[service.id] ?? MonitorCog;
-            return (
-              <article
-                key={`highlight-${service.id}`}
-                className="group flex h-full flex-col rounded-2xl border bg-card p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--store-accent)] hover:shadow-lg"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <span
-                    className="rounded-xl border bg-background p-3 transition group-hover:scale-105"
-                    style={{ borderColor: `${store.accent_color}66` }}
-                  >
-                    <Icon
-                      className="size-6"
-                      style={{ color: store.primary_color }}
-                      aria-hidden="true"
-                    />
-                  </span>
-                  <span
-                    className="text-right text-xs font-semibold leading-5"
-                    style={{
-                      color:
-                        product && product.priceVisible && product.price > 0
-                          ? store.primary_color
-                          : undefined,
-                    }}
-                  >
-                    {technologyServicePriceLabel(product)}
-                  </span>
-                </div>
-                <h3 className="mt-5 text-base font-bold">{service.name}</h3>
-                <p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">
-                  {service.benefit}
-                </p>
-                <QuoteLink
-                  store={store}
-                  serviceName={service.name}
-                  className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:opacity-95"
-                />
-              </article>
-            );
-          })}
-        </div>
-        <a
-          href="#catalogo"
-          className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border bg-card px-4 text-sm font-semibold transition hover:bg-muted"
-        >
-          Ver todos os serviços cadastrados <ArrowRight className="size-4" aria-hidden="true" />
-        </a>
       </section>
     </>
   );
@@ -735,7 +658,7 @@ export function TechnologyStorefrontBottom({ store, hasCart }: { store: Store; h
             <div>
               <p className="font-bold">{store.name}</p>
               <p className="mt-1 max-w-xl text-sm leading-6 text-white/75">
-                {store.description || "Tecnologia, informática e soluções digitais."}
+                {TECHNOLOGY_STOREFRONT_DESCRIPTION}
               </p>
             </div>
           </div>

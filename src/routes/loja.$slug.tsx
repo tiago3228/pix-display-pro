@@ -51,7 +51,11 @@ import { BackButton } from "@/components/BackButton";
 import { PizzeriaBuilder } from "@/components/PizzeriaBuilder";
 import { quoteDelivery } from "@/lib/delivery.functions";
 import { deliveryTotal } from "@/lib/delivery";
-import { getStorefrontSeoMetadata, isTechnologyStorefront } from "@/lib/technology-storefront";
+import {
+  getStorefrontSeoMetadata,
+  isTechnologyStorefront,
+  TECHNOLOGY_STOREFRONT_DESCRIPTION,
+} from "@/lib/technology-storefront";
 import {
   TechnologyStorefrontBottom,
   TechnologyStorefrontTop,
@@ -728,9 +732,10 @@ export function StorePage() {
                   !expandedStoreDescription && "line-clamp-3",
                 )}
               >
-                {store.description}
+                {isTechnology ? TECHNOLOGY_STOREFRONT_DESCRIPTION : store.description}
               </p>
-              {store.description.length > 260 ? (
+              {(isTechnology ? TECHNOLOGY_STOREFRONT_DESCRIPTION : store.description).length >
+              260 ? (
                 <button
                   type="button"
                   className="mt-0.5 w-fit text-xs font-semibold text-[var(--store-links)] hover:underline"

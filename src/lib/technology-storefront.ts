@@ -2,6 +2,8 @@ import type { StorefrontProduct } from "@/lib/storefront.functions";
 import { storefrontPrice } from "./format.ts";
 
 export const TECHNOLOGY_STOREFRONT_SLUG = "ti";
+export const TECHNOLOGY_STOREFRONT_DESCRIPTION =
+  "Assistência técnica, desenvolvimento de sites, sistemas e soluções digitais para pessoas e empresas.";
 
 export type TechnologyServiceGroup = "informatica" | "solucoes-digitais";
 
@@ -50,10 +52,10 @@ export const technologyServices: TechnologyService[] = [
   {
     id: "backup-suporte",
     group: "informatica",
-    name: "Backup e suporte técnico",
+    name: "Backup e recuperação",
     description:
-      "Orientação para backup, recuperação de dados quando tecnicamente possível e suporte.",
-    benefit: "Receba orientação antes de escolher como proteger ou recuperar arquivos.",
+      "Backup e recuperação de arquivos quando tecnicamente possível, com orientação para proteção dos dados.",
+    benefit: "Proteja arquivos importantes e entenda as opções de recuperação disponíveis.",
     keywords: ["backup", "recuperação", "recuperacao", "suporte"],
   },
   {
@@ -170,8 +172,7 @@ export function getStorefrontSeoMetadata(store: {
   if (isTechnologyStorefront(store.slug)) {
     return {
       title: `${store.name} | Assistência Técnica, Sites e Sistemas`,
-      description:
-        "Assistência técnica, manutenção de computadores, criação de sites, sistemas personalizados e soluções digitais. Solicite seu orçamento.",
+      description: TECHNOLOGY_STOREFRONT_DESCRIPTION,
     };
   }
   return {
