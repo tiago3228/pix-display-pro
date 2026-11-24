@@ -1,10 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getStorefront } from "@/lib/storefront.functions";
+import { listPublicDigitalProducts } from "@/lib/digital-products.functions";
+import { createPublicStorefrontLoader } from "@/lib/storefront-page-loader";
 import { getStorefrontSeoMetadata } from "@/lib/technology-storefront";
 import { StorePage, EmptyState } from "./loja.$slug";
 
+const loadPublicStorefront = createPublicStorefrontLoader({
+  getStorefront: (slug) => getStorefront({ data: { slug } }),
+  listPublicDigitalProducts: () => listPublicDigitalProducts({ data: {} }),
+});
+
 export const Route = createFileRoute("/s/$slug")({
-  loader: ({ params }) => getStorefront({ data: { slug: params.slug } }),
+  loader: ({ params }) => loadPublicStorefront(params.slug),
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {

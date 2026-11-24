@@ -414,11 +414,11 @@ export function TechnologyStorefrontTop({
 export function TechnologyStorefrontBottom({
   store,
   hasCart,
-  digitalProducts,
+  digitalProducts = [],
 }: {
   store: Store;
   hasCart: boolean;
-  digitalProducts: DigitalProductView[];
+  digitalProducts?: DigitalProductView[];
 }) {
   const generalMessage = buildTechnologyQuoteMessage("assistência técnica ou solução digital");
   const contactHref = whatsappLink(store.whatsapp, generalMessage);
