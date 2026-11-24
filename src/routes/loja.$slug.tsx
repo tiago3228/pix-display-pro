@@ -26,6 +26,10 @@ import {
   uploadOrderReceipt,
   type StorefrontProduct,
 } from "@/lib/storefront.functions";
+import {
+  listPublicDigitalProducts,
+  type DigitalProductView,
+} from "@/lib/digital-products.functions";
 import { useCart, buildOrderMessage, type CartItem } from "@/lib/cart";
 import { brl, whatsappLink, installmentOptions, PIX_KEY_TYPES } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -50,6 +54,11 @@ import {
   TechnologyStorefrontBottom,
   TechnologyStorefrontTop,
 } from "@/components/storefront/TechnologyStorefront";
+import { PremiumStorefrontNav } from "@/components/storefront/PremiumStorefrontNav";
+
+type StorePageLoaderData = NonNullable<Awaited<ReturnType<typeof getStorefront>>> & {
+  digitalProducts: DigitalProductView[];
+};
 
 function instagramHref(value: string | null | undefined) {
   const raw = value?.trim();
@@ -73,7 +82,21 @@ function instagramHref(value: string | null | undefined) {
 }
 
 export const Route = createFileRoute("/loja/$slug")({
-  loader: ({ params }) => getStorefront({ data: { slug: params.slug } }),
+  loader: async ({ params }) => {
+    const storefront = await getStorefront({ data: { slug: params.slug } });
+    if (!storefront) return null;
+
+    let digitalProducts: DigitalProductView[] = [];
+    if (isTechnologyStorefront(storefront.store.slug)) {
+      try {
+        digitalProducts = await listPublicDigitalProducts({ data: {} });
+      } catch (error) {
+        console.error("Não foi possível carregar os softwares do portfólio.", error);
+      }
+    }
+
+    return { ...storefront, digitalProducts };
+  },
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
@@ -149,7 +172,7 @@ function sportsBranchIds(
 }
 
 export function StorePage() {
-  const data = useLoaderData({ strict: false }) as Awaited<ReturnType<typeof getStorefront>>;
+  const data = useLoaderData({ strict: false }) as StorePageLoaderData | null;
   const params = useParams({ strict: false }) as { slug: string };
   const cart = useCart(params.slug);
   const track = useServerFn(trackStoreEvent);
@@ -653,10 +676,11 @@ export function StorePage() {
           onSelectProduct={setSelected}
         />
       ) : null}
+      {isPremium && !isTechnology ? <PremiumStorefrontNav store={store} /> : null}
       <div className={cn("mx-auto max-w-3xl px-4 pt-3", isTechnology && "hidden")}>
         <BackButton fallbackTo="/" label="Voltar" variant="outline" className="bg-background/90" />
       </div>
-      <header className={cn("relative", isTechnology && "hidden")}>
+      <header id="inicio" className={cn("relative", isTechnology && "hidden")}>
         <div
           className="min-h-[180px] aspect-[2.4/1] w-full sm:min-h-[260px] lg:min-h-[340px]"
           style={{
@@ -695,7 +719,7 @@ export function StorePage() {
           ) : null}
         </div>
         <div className="mx-auto max-w-3xl px-4">
-          <div className="surface vitrini-glow mt-4 flex items-start gap-4 p-4 sm:p-5">
+          <div id="contato" className="surface vitrini-glow mt-4 flex items-start gap-4 p-4 sm:p-5">
             <div
               className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-2xl font-bold text-white sm:size-20"
               style={{
@@ -813,14 +837,15 @@ export function StorePage() {
             }}
           />
         ) : null}
-        {data.products.some((product) => product.is_featured) ? (
+        {!isPremium && data.products.some((product) => product.is_featured) ? (
           <StorefrontShelf
             title="⭐ Destaques"
             products={data.products.filter((product) => product.is_featured).slice(0, 6)}
             onSelect={setSelected}
           />
         ) : null}
-        {data.products.some((product) =>
+        {!isPremium &&
+        data.products.some((product) =>
           product.module === "joias" ? product.jewelryIsNewRelease : product.sportsIsNewRelease,
         ) ? (
           <StorefrontShelf
@@ -835,7 +860,8 @@ export function StorePage() {
             onSelect={setSelected}
           />
         ) : null}
-        {data.products.some((product) =>
+        {!isPremium &&
+        data.products.some((product) =>
           product.module === "joias"
             ? isJewelryOfferCurrent(product.jewelryOfferActive, product.jewelryOfferExpiresAt)
             : product.sportsOfferActive,
@@ -855,7 +881,7 @@ export function StorePage() {
         {data.categories.length ? (
           <section>
             <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-sm font-bold">📂 Categorias</h2>
+              <h2 className="text-sm font-bold">{isPremium ? "Categorias" : "📂 Categorias"}</h2>
               <span className="text-xs text-muted-foreground">
                 {data.categories.length} disponíveis
               </span>
@@ -1111,7 +1137,10 @@ export function StorePage() {
         </div>
       </div>
 
-      <main className={cn("mx-auto mt-5 px-4", isTechnology ? "max-w-6xl" : "max-w-3xl")}>
+      <main
+        id="catalogo"
+        className={cn("mx-auto mt-5 px-4", isTechnology ? "max-w-6xl" : "max-w-3xl")}
+      >
         {isTechnology ? (
           <section id="catalogo" className="mb-5 scroll-mt-24">
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
@@ -1460,7 +1489,13 @@ export function StorePage() {
         </p>
       </main>
 
-      {isTechnology && <TechnologyStorefrontBottom store={store} hasCart={cart.count > 0} />}
+      {isTechnology ? (
+        <TechnologyStorefrontBottom
+          store={store}
+          hasCart={cart.count > 0}
+          digitalProducts={data.digitalProducts}
+        />
+      ) : null}
 
       {cart.count > 0 ? (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-3 backdrop-blur">
