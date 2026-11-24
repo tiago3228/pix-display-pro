@@ -497,6 +497,90 @@ function ComoFunciona() {
           />
         </section>
 
+        <section className="surface border-amber-300/60 bg-amber-50/40 p-5 sm:p-7 dark:border-amber-900/60 dark:bg-amber-950/20">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-300">
+              <Sparkles className="size-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-700 dark:text-amber-300">
+                Guia rápido Premium
+              </p>
+              <h2 className="mt-1 text-xl font-bold sm:text-2xl">
+                Configure uma vitrine profissional em seis passos
+              </h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                Os recursos abaixo ficam disponíveis somente para lojas no plano PRO. Configure a
+                identidade primeiro, organize o catálogo depois e revise a experiência pública antes
+                de divulgar.
+              </p>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              {
+                number: "1",
+                title: "Ative ou confirme o plano PRO",
+                text: "Confira o plano, o trial e os recursos Premium liberados para a loja.",
+                to: "/assinatura" as const,
+                action: "Ver assinatura",
+              },
+              {
+                number: "2",
+                title: "Escolha o segmento Premium",
+                text: "Ative o módulo mais próximo do seu negócio e mantenha os dados centralizados.",
+                to: "/lojas-premium" as const,
+                action: "Explorar módulos",
+              },
+              {
+                number: "3",
+                title: "Monte a identidade da vitrine",
+                text: "Adicione logo, banner, descrição, cores, WhatsApp e Instagram.",
+                to: "/minha-loja" as const,
+                action: "Configurar Minha Loja",
+              },
+              {
+                number: "4",
+                title: "Use a página do seu segmento",
+                text: "Na Informática, aproveite as sugestões de serviços, imagens, preços e prazos.",
+                to: "/informatica" as const,
+                action: "Abrir Informática",
+              },
+              {
+                number: "5",
+                title: "Cadastre e revise os produtos",
+                text: "Informe descrição, imagem, preço e disponibilidade antes de publicar.",
+                to: "/produtos" as const,
+                action: "Gerenciar catálogo",
+              },
+              {
+                number: "6",
+                title: "Configure a apresentação por produto",
+                text: "No PRO, controle Comprar, quantidade, preço, A partir de e orçamento via WhatsApp.",
+                to: "/produtos" as const,
+                action: "Ajustar controles Premium",
+              },
+            ].map((step) => (
+              <div
+                key={step.number}
+                className="rounded-xl border border-border bg-background/80 p-4"
+              >
+                <p className="text-sm font-bold text-amber-700 dark:text-amber-300">
+                  {step.number}
+                </p>
+                <h3 className="mt-2 font-semibold">{step.title}</h3>
+                <p className="mt-1 text-sm leading-5 text-muted-foreground">{step.text}</p>
+                <Link
+                  to={step.to}
+                  className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline"
+                >
+                  {step.action} <ArrowRight className="size-3.5" />
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className="surface border-primary/30 p-5 sm:p-7">
           <div className="flex items-start gap-3">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -510,10 +594,10 @@ function ComoFunciona() {
                 Onde encontrar os links do Vitrini, Agendou e Aura
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                No menu lateral, abra <strong className="text-foreground">Meus Softwares</strong> e
-                clique em <strong className="text-foreground">Abrir vitrine</strong>. Esse é o
-                catálogo público para compartilhar. Para divulgar um aplicativo específico, envie
-                diretamente o endereço da página dele.
+                Para configurar serviços de tecnologia, abra{" "}
+                <strong className="text-foreground">Informática</strong> no menu lateral. Para
+                divulgar aplicativos, use o catálogo público de softwares e envie diretamente o
+                endereço da página do aplicativo.
               </p>
               <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
                 <li>
@@ -557,10 +641,10 @@ function ComoFunciona() {
                   Abrir catálogo público <ArrowRight className="size-4" />
                 </Link>
                 <Link
-                  to="/admin/softwares"
+                  to="/informatica"
                   className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-border px-4 text-sm font-semibold transition hover:bg-accent"
                 >
-                  Ir para Meus Softwares
+                  Ir para Informática
                 </Link>
               </div>
             </div>

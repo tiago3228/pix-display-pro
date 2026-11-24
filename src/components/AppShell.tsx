@@ -20,7 +20,7 @@ import {
   MessageSquarePlus,
   Package,
   QrCode,
-  Rocket,
+  Computer,
   Settings,
   ShieldCheck,
   ShoppingCart,
@@ -433,15 +433,15 @@ export function AppShell({
                     <ShieldCheck className="size-4" /> Administração
                   </Link>
                   <Link
-                    to="/admin/softwares"
+                    to="/informatica"
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition",
-                      pathname.startsWith("/admin/softwares")
+                      pathname === "/informatica"
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
                         : "text-muted-foreground hover:bg-sidebar-accent/60",
                     )}
                   >
-                    <Rocket className="size-4" /> Meus Softwares
+                    <Computer className="size-4" /> Informática
                   </Link>
                 </>
               ) : null}
@@ -659,16 +659,16 @@ export function AppShell({
                         <ShieldCheck className="size-4" /> Administração
                       </Link>
                       <Link
-                        to="/admin/softwares"
+                        to="/informatica"
                         onClick={() => setMoreOpen(false)}
                         className={cn(
                           "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition",
-                          pathname.startsWith("/admin/softwares")
+                          pathname === "/informatica"
                             ? "bg-accent text-accent-foreground"
                             : "text-muted-foreground hover:bg-accent/60",
                         )}
                       >
-                        <Rocket className="size-4" /> Meus Softwares
+                        <Computer className="size-4" /> Informática
                       </Link>
                     </>
                   ) : null}
