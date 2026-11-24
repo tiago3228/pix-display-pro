@@ -1871,6 +1871,7 @@ export type Database = {
           position: number
           price: number
           price_visible: boolean
+          show_price_from: boolean
           purchase_enabled: boolean
           quantity_enabled: boolean
           quote_enabled: boolean
@@ -1939,6 +1940,7 @@ export type Database = {
           original_price?: number | null
           position?: number
           price?: number
+          show_price_from?: boolean
           shoe_authenticity?: string
           shoe_brand_id?: string | null
           shoe_brand_manual?: string | null
@@ -2008,6 +2010,7 @@ export type Database = {
           original_price?: number | null
           position?: number
           price?: number
+          show_price_from?: boolean
           shoe_authenticity?: string
           shoe_brand_id?: string | null
           shoe_brand_manual?: string | null

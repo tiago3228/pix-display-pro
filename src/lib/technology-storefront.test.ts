@@ -41,6 +41,7 @@ function product(overrides: Partial<StorefrontProduct> = {}): StorefrontProduct 
     purchaseEnabled: true,
     quantityEnabled: true,
     priceVisible: true,
+    showPriceFrom: false,
     quoteEnabled: false,
     sportsNodeIds: [],
     sportsProductType: null,
@@ -83,6 +84,11 @@ test("associa cards aos serviços cadastrados sem criar valores", () => {
   assert.equal(findTechnologyServiceProduct(upgrade, [registered])?.id, registered.id);
   assert.ok(technologyServicePriceLabel(registered).includes("150,00"));
 
+  assert.equal(
+    technologyServicePriceLabel(product({ showPriceFrom: true })),
+    "A partir de R$ 150,00",
+  );
+
   const hiddenPrice = product({ priceVisible: false });
   assert.equal(technologyServicePriceLabel(hiddenPrice), "Solicite um orçamento personalizado");
   assert.equal(technologyServicePriceLabel(null), "Solicite um orçamento personalizado");
@@ -90,6 +96,19 @@ test("associa cards aos serviços cadastrados sem criar valores", () => {
     findTechnologyServiceProduct(upgrade, [product({ name: "Cabo HDMI", description: "1,5 m" })]),
     null,
   );
+});
+
+test("cada serviço das duas áreas apresenta um benefício descritivo", () => {
+  assert.equal(technologyServices.filter((service) => service.group === "informatica").length, 6);
+  assert.equal(
+    technologyServices.filter((service) => service.group === "solucoes-digitais").length,
+    6,
+  );
+  assert.equal(
+    technologyServices.find((service) => service.id === "backup-suporte")?.name,
+    "Backup e recuperação",
+  );
+  assert.ok(technologyServices.every((service) => service.benefit.trim().length > 0));
 });
 
 test("mensagem de orçamento inclui o serviço solicitado", () => {

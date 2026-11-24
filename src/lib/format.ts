@@ -1,6 +1,9 @@
 export const brl = (value: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value || 0);
 
+export const storefrontPrice = (value: number, showFrom = false) =>
+  `${showFrom ? "A partir de " : ""}${brl(value).replace(/\u00a0/g, " ")}`;
+
 export const formatDate = (iso: string) =>
   new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(
     new Date(iso),

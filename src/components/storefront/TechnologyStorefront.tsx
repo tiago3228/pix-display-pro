@@ -27,6 +27,7 @@ import {
   findTechnologyServiceProduct,
   technologyServicePriceLabel,
   technologyServices,
+  TECHNOLOGY_STOREFRONT_DESCRIPTION,
 } from "@/lib/technology-storefront";
 import { Button } from "@/components/ui/button";
 
@@ -120,10 +121,9 @@ export function TechnologyStorefrontTop({
       services: technologyServices.filter((service) => service.group === "solucoes-digitais"),
     },
   ];
-
   return (
     <>
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 pt-5">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 pt-5 sm:pt-6">
         <a href="#inicio" className="flex min-w-0 items-center gap-3" aria-label={store.name}>
           <span
             className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-xl border bg-card"
@@ -148,7 +148,7 @@ export function TechnologyStorefrontTop({
         </a>
         <nav
           aria-label="Navegação da vitrine"
-          className="hidden items-center gap-5 text-sm md:flex"
+          className="hidden items-center gap-5 text-sm lg:flex"
         >
           <a className="transition hover:text-[var(--store-links)]" href="#servicos">
             Serviços
@@ -173,21 +173,33 @@ export function TechnologyStorefrontTop({
         </a>
       </div>
 
-      <section id="inicio" className="mx-auto max-w-6xl px-4 pb-5 pt-6 sm:pb-8 sm:pt-10">
-        <div className="grid items-center gap-7 overflow-hidden rounded-3xl border bg-card p-5 shadow-sm sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:p-10">
-          <div className="space-y-5">
+      <section
+        id="inicio"
+        className="mx-auto max-w-7xl scroll-mt-6 px-4 pb-8 pt-6 sm:pb-12 sm:pt-10"
+      >
+        <div
+          className="relative isolate grid items-center gap-8 overflow-hidden rounded-[2rem] border p-5 shadow-sm sm:gap-10 sm:p-8 lg:grid-cols-[1.05fr_0.95fr] lg:p-12"
+          style={{
+            borderColor: `${store.accent_color}55`,
+            background: `linear-gradient(125deg, ${store.primary_color}0a 0%, transparent 48%), linear-gradient(315deg, ${store.secondary_color}0d 0%, transparent 52%), var(--store-cards, #fff)`,
+          }}
+        >
+          <div className="relative z-10 space-y-6">
             <div
-              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold"
+              className="inline-flex items-center gap-2 rounded-full border bg-background/80 px-3 py-1.5 text-xs font-semibold shadow-sm"
               style={{ borderColor: `${store.accent_color}66`, color: store.primary_color }}
             >
               <Cpu className="size-4" aria-hidden="true" />
               Tecnologia, informática e soluções digitais
             </div>
             <div className="space-y-3">
-              <h1 className="max-w-2xl text-3xl font-bold leading-tight tracking-tight sm:text-4xl lg:text-5xl">
-                Tecnologia que resolve. Soluções que fazem sua empresa evoluir.
+              <h1 className="max-w-2xl text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
+                Tecnologia que resolve.
+                <span className="mt-1 block" style={{ color: store.primary_color }}>
+                  Soluções que fazem sua empresa evoluir.
+                </span>
               </h1>
-              <p className="max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
+              <p className="max-w-xl text-base leading-7 text-muted-foreground sm:text-lg sm:leading-8">
                 Assistência técnica, desenvolvimento de sites e sistemas personalizados para pessoas
                 e empresas.
               </p>
@@ -197,11 +209,11 @@ export function TechnologyStorefrontTop({
                 href={contactHref}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 text-sm font-semibold text-white shadow-md transition duration-200 hover:-translate-y-0.5 hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                 style={{ backgroundColor: store.button_color }}
               >
                 <MessageCircle className="size-4" aria-hidden="true" />
-                Solicitar atendimento
+                Solicitar orçamento
               </a>
               <a
                 href="#servicos"
@@ -237,17 +249,17 @@ export function TechnologyStorefrontTop({
           </div>
           <div className="relative">
             {store.banner ? (
-              <div className="overflow-hidden rounded-2xl border bg-slate-950 shadow-md">
+              <div className="overflow-hidden rounded-2xl border bg-muted shadow-xl">
                 <img
                   src={store.banner}
-                  alt={`Banner da vitrine ${store.name}`}
+                  alt={`Imagem de apresentação da empresa ${store.name}`}
                   fetchPriority="high"
-                  className="aspect-[16/10] w-full object-contain"
+                  className="aspect-[16/11] w-full object-cover"
                 />
               </div>
             ) : (
               <div
-                className="flex aspect-[16/10] flex-col items-center justify-center gap-4 rounded-2xl border bg-gradient-to-br from-card to-muted p-6 text-center"
+                className="flex aspect-[16/11] flex-col items-center justify-center gap-4 rounded-2xl border bg-gradient-to-br from-card to-muted p-6 text-center shadow-xl"
                 style={{ borderColor: `${store.accent_color}66` }}
               >
                 <div className="flex gap-3">
@@ -293,30 +305,35 @@ export function TechnologyStorefrontTop({
         </div>
       </section>
 
-      <section id="servicos" className="mx-auto max-w-6xl scroll-mt-6 px-4 py-7 sm:py-10">
-        <div className="mb-6 max-w-2xl">
+      <section id="servicos" className="mx-auto max-w-7xl scroll-mt-6 px-4 py-8 sm:py-12">
+        <div className="mb-8 max-w-3xl">
           <p
             className="text-sm font-semibold uppercase tracking-[0.14em]"
             style={{ color: store.primary_color }}
           >
             Serviços
           </p>
-          <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-            Tecnologia para resolver desafios do dia a dia
+          <h2 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+            Soluções para sua rotina e para o seu negócio
           </h2>
-          <p className="mt-3 leading-6 text-muted-foreground">
-            Escolha uma área para conversar sobre o que você precisa. O valor aparece somente quando
-            há um preço cadastrado para um serviço correspondente.
+          <p className="mt-3 text-base leading-7 text-muted-foreground">
+            Conheça as áreas de atuação e use o catálogo abaixo como a fonte principal para
+            consultar serviços, valores publicados e disponibilidade.
           </p>
         </div>
         <div className="space-y-8">
           {groups.map((group) => (
             <section key={group.id} id={group.id} className="scroll-mt-8">
-              <div className="mb-4">
-                <h3 className="text-xl font-bold">{group.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{group.description}</p>
+              <div className="mb-5 flex flex-col justify-between gap-2 border-b pb-4 sm:flex-row sm:items-end">
+                <div>
+                  <h3 className="text-xl font-bold sm:text-2xl">{group.title}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{group.description}</p>
+                </div>
+                <span className="w-fit rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+                  {group.services.length} serviços
+                </span>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {group.services.map((service) => {
                   const Icon = serviceIcons[service.id] ?? MonitorCog;
                   const product = findTechnologyServiceProduct(service, products, categories);
@@ -324,18 +341,21 @@ export function TechnologyStorefrontTop({
                   return (
                     <article
                       key={service.id}
-                      className="flex h-full flex-col rounded-2xl border bg-card p-4 transition hover:-translate-y-0.5 hover:shadow-md sm:p-5"
+                      className="group flex h-full flex-col rounded-2xl border bg-card p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--store-accent)] hover:shadow-lg sm:p-6"
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <span className="rounded-xl border bg-background p-2.5">
+                        <span
+                          className="rounded-xl border bg-background p-3 transition group-hover:scale-105"
+                          style={{ borderColor: `${store.accent_color}66` }}
+                        >
                           <Icon
-                            className="size-5"
+                            className="size-6"
                             style={{ color: store.primary_color }}
                             aria-hidden="true"
                           />
                         </span>
                         <span
-                          className="text-right text-xs font-semibold"
+                          className="max-w-[60%] text-right text-xs font-semibold leading-5 sm:text-sm"
                           style={{
                             color:
                               product && product.priceVisible && product.price > 0
@@ -346,15 +366,22 @@ export function TechnologyStorefrontTop({
                           {priceLabel}
                         </span>
                       </div>
-                      <h4 className="mt-4 text-base font-bold">{service.name}</h4>
+                      <h4 className="mt-5 text-lg font-bold">{service.name}</h4>
                       <p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">
                         {service.description}
                       </p>
-                      <div className="mt-4 flex flex-wrap gap-2">
+                      <div
+                        className="mt-4 rounded-lg border bg-background/70 px-3 py-2.5 text-xs leading-5"
+                        style={{ borderColor: `${store.accent_color}44` }}
+                      >
+                        <span className="font-semibold">Como pode ajudar: </span>
+                        <span className="text-muted-foreground">{service.benefit}</span>
+                      </div>
+                      <div className="mt-5 flex flex-wrap gap-2">
                         <QuoteLink
                           store={store}
                           serviceName={service.name}
-                          className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-white transition hover:opacity-90"
+                          className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:opacity-95"
                         />
                         {product ? (
                           <Button
@@ -379,35 +406,6 @@ export function TechnologyStorefrontTop({
           Os preços exibidos correspondem a serviços cadastrados na vitrine. Serviços sem valor
           publicado são orçados após entender a necessidade.
         </p>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-4 pb-8 pt-2 sm:pb-10">
-        <div
-          className="flex flex-col justify-between gap-4 rounded-2xl border p-5 sm:flex-row sm:items-center sm:p-6"
-          style={{
-            borderColor: `${store.accent_color}66`,
-            background: `linear-gradient(120deg, ${store.primary_color}0d, transparent 75%)`,
-          }}
-        >
-          <div>
-            <p
-              className="text-xs font-semibold uppercase tracking-[0.14em]"
-              style={{ color: store.primary_color }}
-            >
-              Serviços em destaque
-            </p>
-            <h2 className="mt-1 text-lg font-bold">Veja os cadastros e valores disponíveis</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Consulte os serviços publicados ou use a busca para encontrar uma categoria.
-            </p>
-          </div>
-          <a
-            href="#catalogo"
-            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl border bg-card px-4 text-sm font-semibold transition hover:bg-muted"
-          >
-            Ver serviços cadastrados <ArrowRight className="size-4" aria-hidden="true" />
-          </a>
-        </div>
       </section>
     </>
   );
@@ -438,7 +436,8 @@ export function TechnologyStorefrontBottom({
     "Conte o que você precisa pelo WhatsApp.",
     "A necessidade é entendida e, quando aplicável, avaliada tecnicamente.",
     "Você recebe as informações e a proposta para o serviço.",
-    "Com a proposta aprovada, o serviço pode ser iniciado.",
+    "Aprove a proposta quando estiver de acordo com a solução.",
+    "A execução é iniciada e você acompanha os próximos passos.",
   ];
   const faqs = [
     {
@@ -739,11 +738,29 @@ export function TechnologyStorefrontBottom({
             <div>
               <p className="font-bold">{store.name}</p>
               <p className="mt-1 max-w-xl text-sm leading-6 text-white/75">
-                {store.description || "Tecnologia, informática e soluções digitais."}
+                {TECHNOLOGY_STOREFRONT_DESCRIPTION}
               </p>
             </div>
           </div>
           <div className="flex flex-wrap gap-3 text-sm">
+            <a
+              href="#servicos"
+              className="inline-flex items-center rounded-lg border border-white/20 px-3 py-2 transition hover:bg-white/10"
+            >
+              Serviços
+            </a>
+            <a
+              href="#assistencia-tecnica"
+              className="inline-flex items-center rounded-lg border border-white/20 px-3 py-2 transition hover:bg-white/10"
+            >
+              Informática
+            </a>
+            <a
+              href="#solucoes-digitais"
+              className="inline-flex items-center rounded-lg border border-white/20 px-3 py-2 transition hover:bg-white/10"
+            >
+              Soluções digitais
+            </a>
             <a
               href={contactHref}
               target="_blank"

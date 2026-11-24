@@ -31,7 +31,13 @@ import {
   type DigitalProductView,
 } from "@/lib/digital-products.functions";
 import { useCart, buildOrderMessage, type CartItem } from "@/lib/cart";
-import { brl, whatsappLink, installmentOptions, PIX_KEY_TYPES } from "@/lib/format";
+import {
+  brl,
+  storefrontPrice,
+  whatsappLink,
+  installmentOptions,
+  PIX_KEY_TYPES,
+} from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,7 +55,11 @@ import { BackButton } from "@/components/BackButton";
 import { PizzeriaBuilder } from "@/components/PizzeriaBuilder";
 import { quoteDelivery } from "@/lib/delivery.functions";
 import { deliveryTotal } from "@/lib/delivery";
-import { getStorefrontSeoMetadata, isTechnologyStorefront } from "@/lib/technology-storefront";
+import {
+  getStorefrontSeoMetadata,
+  isTechnologyStorefront,
+  TECHNOLOGY_STOREFRONT_DESCRIPTION,
+} from "@/lib/technology-storefront";
 import {
   TechnologyStorefrontBottom,
   TechnologyStorefrontTop,
@@ -746,9 +756,10 @@ export function StorePage() {
                   !expandedStoreDescription && "line-clamp-3",
                 )}
               >
-                {store.description}
+                {isTechnology ? TECHNOLOGY_STOREFRONT_DESCRIPTION : store.description}
               </p>
-              {store.description.length > 260 ? (
+              {(isTechnology ? TECHNOLOGY_STOREFRONT_DESCRIPTION : store.description).length >
+              260 ? (
                 <button
                   type="button"
                   className="mt-0.5 w-fit text-xs font-semibold text-[var(--store-links)] hover:underline"
@@ -1276,10 +1287,11 @@ export function StorePage() {
                               color: store.theme_palette?.["prices"] ?? store.primary_color,
                             }}
                           >
-                            {brl(
+                            {storefrontPrice(
                               product.module === "joias"
                                 ? (product.jewelryOfferPrice ?? product.price)
                                 : (product.sportsOfferPrice ?? product.price),
+                              product.showPriceFrom,
                             )}
                           </span>
                         </>
@@ -1288,7 +1300,7 @@ export function StorePage() {
                           className="text-base font-bold"
                           style={{ color: store.theme_palette?.["prices"] ?? store.primary_color }}
                         >
-                          {brl(product.price)}
+                          {storefrontPrice(product.price, product.showPriceFrom)}
                         </span>
                       )}
                       {(
@@ -2088,7 +2100,7 @@ function StorefrontShelf({
               ) : null}
               <p className="mt-1 text-sm font-bold">
                 {product.priceVisible
-                  ? brl(
+                  ? storefrontPrice(
                       product.module === "joias" &&
                         isJewelryOfferCurrent(
                           product.jewelryOfferActive,
@@ -2097,6 +2109,7 @@ function StorefrontShelf({
                         product.jewelryOfferPrice !== null
                         ? product.jewelryOfferPrice
                         : product.price,
+                      product.showPriceFrom,
                     )
                   : "Consulte o preço"}
               </p>
@@ -2274,7 +2287,7 @@ function ProductDetail({
                   <span className="text-2xl font-bold">
                     {isPremium && !product.priceVisible
                       ? "Consulte o preço"
-                      : brl(product.jewelryOfferPrice)}
+                      : storefrontPrice(product.jewelryOfferPrice, product.showPriceFrom)}
                   </span>
                   <span className="text-sm text-muted-foreground line-through">
                     {brl(product.jewelryOriginalPrice ?? product.price)}
@@ -2296,7 +2309,7 @@ function ProductDetail({
                   <span className="text-2xl font-bold">
                     {isPremium && !product.priceVisible
                       ? "Consulte o preço"
-                      : brl(product.sportsOfferPrice)}
+                      : storefrontPrice(product.sportsOfferPrice, product.showPriceFrom)}
                   </span>
                   <span className="text-sm text-muted-foreground line-through">
                     {brl(product.sportsOriginalPrice ?? product.price)}
@@ -2304,7 +2317,9 @@ function ProductDetail({
                 </>
               ) : (
                 <span className="text-2xl font-bold">
-                  {isPremium && !product.priceVisible ? "Consulte o preço" : brl(unitPrice)}
+                  {isPremium && !product.priceVisible
+                    ? "Consulte o preço"
+                    : storefrontPrice(unitPrice, product.showPriceFrom)}
                 </span>
               )}
             </div>
@@ -2532,7 +2547,9 @@ function VariantDialog({
             ) : null}
             <div className="flex items-center justify-between border-t pt-3">
               <span className="text-lg font-bold">
-                {product.priceVisible ? brl(variant?.price ?? product.price) : "Consulte o preço"}
+                {product.priceVisible
+                  ? storefrontPrice(variant?.price ?? product.price, product.showPriceFrom)
+                  : "Consulte o preço"}
               </span>
               {complete ? (
                 outOfStock ? (
