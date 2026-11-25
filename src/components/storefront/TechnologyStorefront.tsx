@@ -546,7 +546,7 @@ export function TechnologyStorefrontBottom({
                         {image ? (
                           <img
                             src={image}
-                            alt={`Imagem de ${product.name}`}
+                            alt={`Imagem ilustrativa de ${product.name}`}
                             loading="lazy"
                             className="aspect-[16/10] w-full bg-muted object-contain p-3"
                           />
@@ -559,6 +559,11 @@ export function TechnologyStorefrontBottom({
                           </div>
                         )}
                       </a>
+                      {image ? (
+                        <p className="px-4 pt-2 text-xs text-muted-foreground">
+                          Imagem ilustrativa
+                        </p>
+                      ) : null}
                       <div className="p-4">
                         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                           {product.product_type_label}

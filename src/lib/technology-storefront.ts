@@ -79,6 +79,10 @@ function normalizeSearchText(value: string): string {
     .trim();
 }
 
+export function getTechnologyProductDisplayName(name: string): string {
+  return normalizeSearchText(name) === "formatacao" ? "Formatação e otimização" : name;
+}
+
 function classifyTechnologyProduct(
   product: StorefrontProduct,
   categories: { id: string; name: string }[],
@@ -113,10 +117,12 @@ export function groupTechnologyStorefrontProducts(
     grouped.get(groupId)?.push(product);
   }
 
-  return productGroupDefinitions.map((group) => ({
-    ...group,
-    products: grouped.get(group.id) ?? [],
-  }));
+  return productGroupDefinitions
+    .map((group) => ({
+      ...group,
+      products: grouped.get(group.id) ?? [],
+    }))
+    .filter((group) => group.products.length > 0);
 }
 
 export function getTechnologyStorefrontCategories(

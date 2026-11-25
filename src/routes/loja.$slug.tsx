@@ -58,6 +58,7 @@ import { quoteDelivery } from "@/lib/delivery.functions";
 import { deliveryTotal } from "@/lib/delivery";
 import {
   buildTechnologyQuoteMessage,
+  getTechnologyProductDisplayName,
   getTechnologyStorefrontCategories,
   getStorefrontSeoMetadata,
   isTechnologyStorefront,
@@ -242,6 +243,13 @@ export function StorePage() {
       isTechnology && data ? getTechnologyStorefrontCategories(data.categories, data.products) : [],
     [data, isTechnology],
   );
+  const technologyProducts = useMemo(() => {
+    if (!data || !isTechnology) return data?.products ?? [];
+    return data.products.map((product) => {
+      const name = getTechnologyProductDisplayName(product.name);
+      return name === product.name ? product : { ...product, name };
+    });
+  }, [data, isTechnology]);
 
   useEffect(() => {
     if (!gallery || gallery.images.length < 2) return;
@@ -265,8 +273,8 @@ export function StorePage() {
       : [activeCategory];
     const moduleProducts =
       moduleFilter === "all"
-        ? data.products
-        : data.products.filter((product) => product.module === moduleFilter);
+        ? technologyProducts
+        : technologyProducts.filter((product) => product.module === moduleFilter);
     const mealProducts =
       mealFilter === "all" ||
       (!moduleProducts.some((product) => product.module === "marmitaria") &&
@@ -339,6 +347,7 @@ export function StorePage() {
     });
   }, [
     data,
+    technologyProducts,
     isTechnology,
     technologyCategories,
     activeCategory,
@@ -689,7 +698,7 @@ export function StorePage() {
       {isTechnology ? (
         <TechnologyStorefrontTop
           store={store}
-          products={data.products}
+          products={technologyProducts}
           categories={data.categories}
           onSelectProduct={(product) => {
             setSelected(product);
