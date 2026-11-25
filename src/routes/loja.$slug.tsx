@@ -26,10 +26,11 @@ import {
   uploadOrderReceipt,
   type StorefrontProduct,
 } from "@/lib/storefront.functions";
+import { listPublicDigitalProducts } from "@/lib/digital-products.functions";
 import {
-  listPublicDigitalProducts,
-  type DigitalProductView,
-} from "@/lib/digital-products.functions";
+  createPublicStorefrontLoader,
+  type PublicStorefrontPageData,
+} from "@/lib/storefront-page-loader";
 import { useCart, buildOrderMessage, type CartItem } from "@/lib/cart";
 import {
   brl,
@@ -66,9 +67,7 @@ import {
 } from "@/components/storefront/TechnologyStorefront";
 import { PremiumStorefrontNav } from "@/components/storefront/PremiumStorefrontNav";
 
-type StorePageLoaderData = NonNullable<Awaited<ReturnType<typeof getStorefront>>> & {
-  digitalProducts: DigitalProductView[];
-};
+type StorePageLoaderData = PublicStorefrontPageData;
 
 function instagramHref(value: string | null | undefined) {
   const raw = value?.trim();
@@ -91,22 +90,13 @@ function instagramHref(value: string | null | undefined) {
   return username ? `https://www.instagram.com/${encodeURIComponent(username)}/` : null;
 }
 
+const loadPublicStorefront = createPublicStorefrontLoader({
+  getStorefront: (slug) => getStorefront({ data: { slug } }),
+  listPublicDigitalProducts: () => listPublicDigitalProducts({ data: {} }),
+});
+
 export const Route = createFileRoute("/loja/$slug")({
-  loader: async ({ params }) => {
-    const storefront = await getStorefront({ data: { slug: params.slug } });
-    if (!storefront) return null;
-
-    let digitalProducts: DigitalProductView[] = [];
-    if (isTechnologyStorefront(storefront.store.slug)) {
-      try {
-        digitalProducts = await listPublicDigitalProducts({ data: {} });
-      } catch (error) {
-        console.error("Não foi possível carregar os softwares do portfólio.", error);
-      }
-    }
-
-    return { ...storefront, digitalProducts };
-  },
+  loader: ({ params }) => loadPublicStorefront(params.slug),
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
