@@ -6,6 +6,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizePhone } from "@/lib/format";
 import { isJewelryOfferCurrent } from "@/lib/jewelry";
 import { deliveryTotal } from "./delivery";
+import { filterCategoriesWithProducts } from "./storefront-visibility";
 
 export type StorefrontVariant = {
   id: string;
@@ -363,6 +364,11 @@ export const getStorefront = createServerFn({ method: "GET" })
       neutralCategories.find((category) => category.module === activeModule) ??
       neutralCategories[0];
     const visibleCategories = [...activeCategories, ...(defaultNeutral ? [defaultNeutral] : [])];
+    const populatedCategories = filterCategoriesWithProducts(
+      visibleCategories,
+      storefrontProducts,
+      (product) => legacyJewelryCategoryIds.get(product.id) ?? product.category_id,
+    );
     const { data: promoBanner } = await supabase
       .from("storefront_banners")
       .select("title, subtitle, cta_label, cta_href, image_url, content_visible")
@@ -525,7 +531,7 @@ export const getStorefront = createServerFn({ method: "GET" })
         // A migration pública adiciona a flag antes da atualização dos tipos gerados.
         is_premium: Boolean((store as typeof store & { is_premium?: boolean }).is_premium),
       },
-      categories: visibleCategories.map((c) => {
+      categories: populatedCategories.map((c) => {
         const category = c as unknown as {
           id: string;
           name: string;
