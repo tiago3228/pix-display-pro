@@ -14,6 +14,7 @@ import type { DigitalProductView } from "@/lib/digital-products.functions";
 import { whatsappLink } from "@/lib/format";
 import {
   buildTechnologyQuoteMessage,
+  buildTechnologyReviewMessage,
   groupTechnologyStorefrontProducts,
   technologyServicePriceLabel,
   TECHNOLOGY_STOREFRONT_DESCRIPTION,
@@ -100,7 +101,9 @@ export function TechnologyStorefrontTop({
             )}
           </span>
           <span className="min-w-0">
-            <span className="block truncate text-sm font-bold sm:text-base">{store.name}</span>
+            <span className="block whitespace-normal break-words text-sm font-bold leading-tight sm:text-base">
+              {store.name}
+            </span>
             <span className="block text-xs text-muted-foreground">
               Tecnologia e soluções digitais
             </span>
@@ -132,6 +135,30 @@ export function TechnologyStorefrontTop({
           <span className="sm:hidden">WhatsApp</span>
         </a>
       </div>
+
+      <nav
+        aria-label="Navegação da vitrine móvel"
+        className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 pb-1 pt-2 [scrollbar-width:none] lg:hidden"
+      >
+        <a
+          className="inline-flex min-h-10 shrink-0 items-center rounded-full border bg-card px-4 text-sm font-medium"
+          href="#servicos"
+        >
+          Serviços
+        </a>
+        <a
+          className="inline-flex min-h-10 shrink-0 items-center rounded-full border bg-card px-4 text-sm font-medium"
+          href="#catalogo"
+        >
+          Catálogo
+        </a>
+        <a
+          className="inline-flex min-h-10 shrink-0 items-center rounded-full border bg-card px-4 text-sm font-medium"
+          href="#contato"
+        >
+          Contato
+        </a>
+      </nav>
 
       <section
         id="inicio"
@@ -392,6 +419,8 @@ export function TechnologyStorefrontBottom({
 }) {
   const generalMessage = buildTechnologyQuoteMessage("assistência técnica ou solução digital");
   const contactHref = whatsappLink(store.whatsapp, generalMessage);
+  const reviewHref = whatsappLink(store.whatsapp, buildTechnologyReviewMessage());
+  const hasWhatsApp = store.whatsapp.replace(/\D/g, "").length >= 10;
   const instagram = instagramHref(store.instagram);
   const portfolioProducts = digitalProducts.filter((product) =>
     ["software", "app", "saas", "tool"].includes(product.product_type),
@@ -613,15 +642,30 @@ export function TechnologyStorefrontBottom({
         </div>
       </section>
 
-      <section aria-labelledby="reviews-title" className="mx-auto max-w-6xl px-4 py-8 sm:py-10">
-        <div className="rounded-2xl border bg-card px-5 py-6 text-center sm:px-8">
-          <h2 id="reviews-title" className="text-lg font-bold">
-            Avaliações de clientes
-          </h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Esta vitrine não disponibiliza avaliações cadastradas. Nenhum depoimento foi criado ou
-            atribuído a clientes.
-          </p>
+      <section aria-labelledby="reviews-title" className="mx-auto max-w-6xl px-4 py-4 sm:py-6">
+        <div className="flex flex-col gap-4 rounded-xl border border-dashed bg-card/70 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="min-w-0">
+            <h2 id="reviews-title" className="text-base font-bold">
+              Já recebeu atendimento?
+            </h2>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Se você já foi atendido, pode compartilhar sua avaliação pelo WhatsApp. A mensagem
+              será recebida pela loja e não será publicada automaticamente na vitrine.
+            </p>
+          </div>
+          {hasWhatsApp ? (
+            <a
+              href={reviewHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Compartilhar uma avaliação pelo WhatsApp"
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+              style={{ backgroundColor: store.button_color }}
+            >
+              <MessageCircle className="size-4" aria-hidden="true" />
+              Compartilhar avaliação
+            </a>
+          ) : null}
         </div>
       </section>
 

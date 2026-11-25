@@ -4,6 +4,7 @@ import { whatsappLink } from "./format.ts";
 import type { StorefrontProduct } from "./storefront.functions";
 import {
   buildTechnologyQuoteMessage,
+  buildTechnologyReviewMessage,
   getTechnologyProductDisplayName,
   getStorefrontSeoMetadata,
   getTechnologyStorefrontCategories,
@@ -127,6 +128,21 @@ test("omite grupos sem cadastros sem perder os serviços publicados", () => {
   );
 });
 
+test("classifica serviços de agendamento como soluções digitais", () => {
+  const groups = groupTechnologyStorefrontProducts([
+    product({ id: "booking", name: "Sistema de agendamento" }),
+  ]);
+
+  assert.deepEqual(
+    groups.find((group) => group.id === "solucoes-digitais")?.products.map((item) => item.id),
+    ["booking"],
+  );
+  assert.equal(
+    groups.some((group) => group.id === "outros-itens"),
+    false,
+  );
+});
+
 test("deduplica categorias equivalentes, ignora categorias vazias e preserva os IDs", () => {
   const categories = [
     { id: "geral-1", name: "Geral", module: "informatica", image: null },
@@ -168,6 +184,16 @@ test("mensagem de orçamento inclui o serviço solicitado e forma link de WhatsA
     "Olá! Acessei sua vitrine e gostaria de solicitar um orçamento para o serviço de Formatação e otimização. Poderia me passar mais informações?",
   );
   const url = new URL(whatsappLink("(31) 99999-8888", message));
+  assert.equal(url.host, "wa.me");
+  assert.equal(url.pathname, "/5531999998888");
+  assert.equal(url.searchParams.get("text"), message);
+});
+
+test("convite de avaliação usa o WhatsApp configurado sem alegar publicação automática", () => {
+  const message = buildTechnologyReviewMessage();
+  const url = new URL(whatsappLink("(31) 99999-8888", message));
+
+  assert.match(message, /avaliação/i);
   assert.equal(url.host, "wa.me");
   assert.equal(url.pathname, "/5531999998888");
   assert.equal(url.searchParams.get("text"), message);

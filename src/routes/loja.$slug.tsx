@@ -2125,7 +2125,9 @@ function StorefrontShelf({
               )}
             </div>
             <div className="p-2.5">
-              <p className="truncate text-xs font-semibold">{product.name}</p>
+              <p className="whitespace-normal break-words text-xs font-semibold leading-4">
+                {product.name}
+              </p>
               {product.module === "joias" &&
               isJewelryOfferCurrent(product.jewelryOfferActive, product.jewelryOfferExpiresAt) &&
               product.jewelryOfferPrice !== null ? (

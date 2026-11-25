@@ -54,6 +54,7 @@ const technologyKeywords = [
 const digitalKeywords = [
   "site",
   "sistema",
+  "agendamento",
   "planilha",
   "automacao",
   "consultoria",
@@ -169,6 +170,10 @@ export function technologyServicePriceLabel(
 
 export function buildTechnologyQuoteMessage(serviceName: string): string {
   return `Olá! Acessei sua vitrine e gostaria de solicitar um orçamento para o serviço de ${serviceName}. Poderia me passar mais informações?`;
+}
+
+export function buildTechnologyReviewMessage(): string {
+  return "Olá! Gostaria de compartilhar minha avaliação sobre o atendimento que recebi.";
 }
 
 export function getStorefrontSeoMetadata(store: {
