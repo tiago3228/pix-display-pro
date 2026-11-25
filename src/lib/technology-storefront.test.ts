@@ -4,11 +4,11 @@ import { whatsappLink } from "./format.ts";
 import type { StorefrontProduct } from "./storefront.functions";
 import {
   buildTechnologyQuoteMessage,
-  findTechnologyServiceProduct,
   getStorefrontSeoMetadata,
+  getTechnologyStorefrontCategories,
+  groupTechnologyStorefrontProducts,
   isTechnologyStorefront,
   technologyServicePriceLabel,
-  technologyServices,
 } from "./technology-storefront.ts";
 
 function product(overrides: Partial<StorefrontProduct> = {}): StorefrontProduct {
@@ -77,41 +77,71 @@ test("a página especializada é ativada apenas para o slug ti", () => {
   assert.equal(isTechnologyStorefront(null), false);
 });
 
-test("associa cards aos serviços cadastrados sem criar valores", () => {
-  const upgrade = technologyServices.find((service) => service.id === "upgrade");
-  assert.ok(upgrade);
-  const registered = product();
-  assert.equal(findTechnologyServiceProduct(upgrade, [registered])?.id, registered.id);
-  assert.ok(technologyServicePriceLabel(registered).includes("150,00"));
+test("agrupa os produtos cadastrados sem perder registros nem duplicá-los", () => {
+  const records = [
+    product({ id: "p1", name: "Formatação e otimização", category_id: "cat-ti" }),
+    product({
+      id: "p2",
+      name: "Vitrini",
+      description: "Plataforma para lojas virtuais",
+      category_id: "cat-digital",
+    }),
+    product({ id: "p3", name: "Cabo HDMI", category_id: "cat-geral" }),
+  ];
+  const groups = groupTechnologyStorefrontProducts(records, [
+    { id: "cat-ti", name: "Informática" },
+    { id: "cat-digital", name: "Soluções digitais" },
+    { id: "cat-geral", name: "Geral" },
+  ]);
+  const groupedIds = groups.flatMap((group) => group.products.map((item) => item.id));
 
+  assert.deepEqual([...groupedIds].sort(), ["p1", "p2", "p3"]);
+  assert.equal(new Set(groupedIds).size, records.length);
+  assert.deepEqual(
+    groups.find((group) => group.id === "assistencia-tecnica")?.products.map((item) => item.id),
+    ["p1"],
+  );
+  assert.deepEqual(
+    groups.find((group) => group.id === "solucoes-digitais")?.products.map((item) => item.id),
+    ["p2"],
+  );
+});
+
+test("deduplica categorias equivalentes, ignora categorias vazias e preserva os IDs", () => {
+  const categories = [
+    { id: "geral-1", name: "Geral", module: "informatica", image: null },
+    { id: "geral-2", name: " geral ", module: "informatica", image: "category.jpg" },
+    { id: "empty", name: "Sem produtos", module: "informatica", image: null },
+  ];
+  const products = [
+    product({ id: "item-1", category_id: "geral-1" }),
+    product({ id: "item-2", category_id: "geral-2" }),
+  ];
+  const result = getTechnologyStorefrontCategories(categories, products);
+
+  assert.equal(result.length, 1);
+  assert.deepEqual(result[0]?.categoryIds, ["geral-1", "geral-2"]);
+  assert.equal(result[0]?.image, "category.jpg");
+  assert.equal(result[0]?.name, "Geral");
+});
+
+test("usa rótulos de preço cadastrados sem esconder preço em lojas Básicas", () => {
+  const registered = product();
+  assert.equal(technologyServicePriceLabel(registered), "R$ 150,00");
   assert.equal(
     technologyServicePriceLabel(product({ showPriceFrom: true })),
     "A partir de R$ 150,00",
   );
-
-  const hiddenPrice = product({ priceVisible: false });
-  assert.equal(technologyServicePriceLabel(hiddenPrice), "Solicite um orçamento personalizado");
-  assert.equal(technologyServicePriceLabel(null), "Solicite um orçamento personalizado");
   assert.equal(
-    findTechnologyServiceProduct(upgrade, [product({ name: "Cabo HDMI", description: "1,5 m" })]),
-    null,
+    technologyServicePriceLabel(product({ priceVisible: false }), true),
+    "Solicitar orçamento",
   );
+  assert.equal(technologyServicePriceLabel(product({ priceVisible: false }), false), "R$ 150,00");
+  assert.equal(technologyServicePriceLabel(product({ price: 0 })), "Solicitar orçamento");
+  assert.equal(technologyServicePriceLabel(null), "Solicitar orçamento");
 });
 
-test("cada serviço das duas áreas apresenta um benefício descritivo", () => {
-  assert.equal(technologyServices.filter((service) => service.group === "informatica").length, 6);
-  assert.equal(
-    technologyServices.filter((service) => service.group === "solucoes-digitais").length,
-    6,
-  );
-  assert.equal(
-    technologyServices.find((service) => service.id === "backup-suporte")?.name,
-    "Backup e recuperação",
-  );
-  assert.ok(technologyServices.every((service) => service.benefit.trim().length > 0));
-});
-
-test("mensagem de orçamento inclui o serviço solicitado", () => {
+test("mensagem de orçamento inclui o serviço solicitado e forma link de WhatsApp válido", () => {
   const message = buildTechnologyQuoteMessage("Formatação e otimização");
   assert.equal(
     message,

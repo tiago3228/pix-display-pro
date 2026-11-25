@@ -57,6 +57,8 @@ import { PizzeriaBuilder } from "@/components/PizzeriaBuilder";
 import { quoteDelivery } from "@/lib/delivery.functions";
 import { deliveryTotal } from "@/lib/delivery";
 import {
+  buildTechnologyQuoteMessage,
+  getTechnologyStorefrontCategories,
   getStorefrontSeoMetadata,
   isTechnologyStorefront,
   TECHNOLOGY_STOREFRONT_DESCRIPTION,
@@ -234,6 +236,13 @@ export function StorePage() {
     setGalleryIndex(index);
   }
 
+  const isTechnology = isTechnologyStorefront(data?.store.slug);
+  const technologyCategories = useMemo(
+    () =>
+      isTechnology && data ? getTechnologyStorefrontCategories(data.categories, data.products) : [],
+    [data, isTechnology],
+  );
+
   useEffect(() => {
     if (!gallery || gallery.images.length < 2) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -249,6 +258,11 @@ export function StorePage() {
 
   const products = useMemo(() => {
     if (!data) return [];
+    const selectedCategoryIds = isTechnology
+      ? (technologyCategories.find((category) => category.id === activeCategory)?.categoryIds ?? [
+          activeCategory,
+        ])
+      : [activeCategory];
     const moduleProducts =
       moduleFilter === "all"
         ? data.products
@@ -278,7 +292,7 @@ export function StorePage() {
                 )
               : activeCategory === "retro"
                 ? mealProducts.filter((p) => p.sportsIsRetro)
-                : mealProducts.filter((p) => p.category_id === activeCategory);
+                : mealProducts.filter((p) => selectedCategoryIds.includes(p.category_id ?? ""));
     const sportsFiltered =
       activeSportsNode === "all"
         ? filtered
@@ -325,6 +339,8 @@ export function StorePage() {
     });
   }, [
     data,
+    isTechnology,
+    technologyCategories,
     activeCategory,
     moduleFilter,
     activeSportsNode,
@@ -406,7 +422,7 @@ export function StorePage() {
   }
 
   const { store } = data;
-  const isTechnology = isTechnologyStorefront(store.slug);
+  const categoryOptions = isTechnology ? technologyCategories : data.categories;
   const isMarmitaria = String(store.category ?? "")
     .toLowerCase()
     .includes("marmit");
@@ -421,7 +437,9 @@ export function StorePage() {
     const optionsText = selectedOptions.length
       ? ` Opções escolhidas: ${selectedOptions.join(", ")}.`
       : "";
-    const message = `Olá, gostaria de fazer um orçamento para ${product.name}.${optionsText} Gostaria de ver a disponibilidade para fazer este serviço!`;
+    const message = isTechnology
+      ? `${buildTechnologyQuoteMessage(product.name)}${optionsText}`
+      : `Olá, gostaria de fazer um orçamento para ${product.name}.${optionsText} Gostaria de ver a disponibilidade para fazer este serviço!`;
     window.open(whatsappLink(store.whatsapp, message), "_blank", "noopener");
   }
 
@@ -673,14 +691,23 @@ export function StorePage() {
           store={store}
           products={data.products}
           categories={data.categories}
-          onSelectProduct={setSelected}
+          onSelectProduct={(product) => {
+            setSelected(product);
+            document.getElementById("catalogo")?.scrollIntoView({
+              behavior: "smooth",
+              block: "start",
+            });
+          }}
         />
       ) : null}
       {isPremium && !isTechnology ? <PremiumStorefrontNav store={store} /> : null}
       <div className={cn("mx-auto max-w-3xl px-4 pt-3", isTechnology && "hidden")}>
         <BackButton fallbackTo="/" label="Voltar" variant="outline" className="bg-background/90" />
       </div>
-      <header id="inicio" className={cn("relative", isTechnology && "hidden")}>
+      <header
+        id={isTechnology ? undefined : "inicio"}
+        className={cn("relative", isTechnology && "hidden")}
+      >
         <div
           className="min-h-[180px] aspect-[2.4/1] w-full sm:min-h-[260px] lg:min-h-[340px]"
           style={{
@@ -719,7 +746,10 @@ export function StorePage() {
           ) : null}
         </div>
         <div className="mx-auto max-w-3xl px-4">
-          <div id="contato" className="surface vitrini-glow mt-4 flex items-start gap-4 p-4 sm:p-5">
+          <div
+            id={isTechnology ? undefined : "contato"}
+            className="surface vitrini-glow mt-4 flex items-start gap-4 p-4 sm:p-5"
+          >
             <div
               className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl text-2xl font-bold text-white sm:size-20"
               style={{
@@ -879,7 +909,7 @@ export function StorePage() {
             onSelect={setSelected}
           />
         ) : null}
-        {data.categories.length ? (
+        {data.categories.length > 0 && !isTechnology ? (
           <section>
             <div className="mb-2 flex items-center justify-between">
               <h2 className="text-sm font-bold">{isPremium ? "Categorias" : "📂 Categorias"}</h2>
@@ -1121,17 +1151,23 @@ export function StorePage() {
               color={data.sports.settings?.secondary_color ?? store.primary_color}
             />
           ) : null}
-          {data.categories
+          {categoryOptions
             .filter(
               (category) =>
-                moduleFilter === "all" || !category.module || category.module === moduleFilter,
+                isTechnology ||
+                moduleFilter === "all" ||
+                !category.module ||
+                category.module === moduleFilter,
             )
             .map((c) => (
               <CategoryChip
                 key={c.id}
                 label={c.name}
                 active={activeCategory === c.id}
-                onClick={() => setActiveCategory(c.id)}
+                onClick={() => {
+                  setModuleFilter("all");
+                  setActiveCategory(c.id);
+                }}
                 color={store.primary_color}
               />
             ))}
@@ -1143,7 +1179,7 @@ export function StorePage() {
         className={cn("mx-auto mt-5 px-4", isTechnology ? "max-w-6xl" : "max-w-3xl")}
       >
         {isTechnology ? (
-          <section id="catalogo" className="mb-5 scroll-mt-24">
+          <section className="mb-5 scroll-mt-24">
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               Catálogo da loja
             </p>
@@ -1337,7 +1373,8 @@ export function StorePage() {
                               className="w-full"
                               onClick={() => setSelected(product)}
                             >
-                              <MessageCircle className="mr-1 size-4" /> Fazer orçamento
+                              <MessageCircle className="mr-1 size-4" />{" "}
+                              {isTechnology ? "Fazer orçamento pelo WhatsApp" : "Fazer orçamento"}
                             </Button>
                           ) : null}
                           {product.orderEnabled ? (
@@ -1412,7 +1449,8 @@ export function StorePage() {
                               className="min-w-0 flex-1"
                               onClick={() => openQuote(product, {})}
                             >
-                              <MessageCircle className="mr-1 size-4" /> Orçamento
+                              <MessageCircle className="mr-1 size-4" />{" "}
+                              {isTechnology ? "Orçamento pelo WhatsApp" : "Orçamento"}
                             </Button>
                           ) : null}
                           {product.orderEnabled ? (
