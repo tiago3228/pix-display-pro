@@ -5,120 +5,70 @@ export const TECHNOLOGY_STOREFRONT_SLUG = "ti";
 export const TECHNOLOGY_STOREFRONT_DESCRIPTION =
   "Assistência técnica, desenvolvimento de sites, sistemas e soluções digitais para pessoas e empresas.";
 
-export type TechnologyServiceGroup = "informatica" | "solucoes-digitais";
-
-export type TechnologyService = {
+export type TechnologyProductGroupId = "informatica" | "solucoes-digitais" | "outros";
+export type TechnologyProductGroup = {
   id: string;
-  group: TechnologyServiceGroup;
-  name: string;
+  title: string;
   description: string;
-  benefit: string;
-  keywords: string[];
+  products: StorefrontProduct[];
+};
+export type TechnologyStorefrontCategory = {
+  id: string;
+  name: string;
+  module?: string;
+  image: string | null;
+  categoryIds: string[];
 };
 
-export const technologyServices: TechnologyService[] = [
+const productGroupDefinitions: Omit<TechnologyProductGroup, "products">[] = [
   {
-    id: "formatacao",
-    group: "informatica",
-    name: "Formatação e otimização",
-    description: "Reinstalação e ajustes de software conforme a necessidade do equipamento.",
-    benefit: "Um sistema preparado para o uso e as necessidades do seu computador.",
-    keywords: ["formatação", "formatacao", "otimização", "otimizacao"],
+    id: "assistencia-tecnica",
+    title: "Assistência técnica e informática",
+    description: "Serviços e itens publicados no catálogo para informática e suporte técnico.",
   },
   {
-    id: "manutencao",
-    group: "informatica",
-    name: "Manutenção de computadores",
-    description: "Avaliação do equipamento e orientação sobre o reparo indicado.",
-    benefit: "Entenda as opções de reparo adequadas ao equipamento.",
-    keywords: ["manutenção", "manutencao", "reparo", "conserto"],
+    id: "solucoes-digitais",
+    title: "Desenvolvimento e soluções digitais",
+    description: "Serviços digitais publicados no catálogo da loja.",
   },
   {
-    id: "upgrade",
-    group: "informatica",
-    name: "Upgrade de SSD e memória",
-    description: "Opções de armazenamento e memória avaliadas para o seu computador.",
-    benefit: "Escolha componentes compatíveis com a configuração do computador.",
-    keywords: ["upgrade", "ssd", "memória", "memoria", "montagem"],
-  },
-  {
-    id: "instalacao",
-    group: "informatica",
-    name: "Instalação e configuração",
-    description: "Instalação de programas e configuração de sistemas e dispositivos.",
-    benefit: "Deixe programas e dispositivos configurados para sua rotina.",
-    keywords: ["instalação", "instalacao", "configuração", "configuracao"],
-  },
-  {
-    id: "backup-suporte",
-    group: "informatica",
-    name: "Backup e recuperação",
-    description:
-      "Backup e recuperação de arquivos quando tecnicamente possível, com orientação para proteção dos dados.",
-    benefit: "Proteja arquivos importantes e entenda as opções de recuperação disponíveis.",
-    keywords: ["backup", "recuperação", "recuperacao", "suporte"],
-  },
-  {
-    id: "redes",
-    group: "informatica",
-    name: "Redes e conectividade",
-    description: "Configuração e suporte de redes para uso doméstico ou profissional.",
-    benefit: "Conectividade configurada conforme o ambiente e os dispositivos utilizados.",
-    keywords: ["rede", "redes", "conectividade", "infraestrutura"],
-  },
-  {
-    id: "sites",
-    group: "solucoes-digitais",
-    name: "Sites profissionais",
-    description: "Criação de sites alinhados às necessidades e aos objetivos do projeto.",
-    benefit: "Apresente sua atividade em uma página feita para os objetivos do projeto.",
-    keywords: ["site", "sites", "website", "web"],
-  },
-  {
-    id: "landing-pages",
-    group: "solucoes-digitais",
-    name: "Landing pages",
-    description: "Páginas digitais para apresentar um serviço, produto ou campanha.",
-    benefit: "Concentre as informações e o convite à ação em uma página dedicada.",
-    keywords: ["landing", "página de captura", "pagina de captura"],
-  },
-  {
-    id: "lojas-virtuais",
-    group: "solucoes-digitais",
-    name: "Lojas virtuais",
-    description: "Estrutura digital para apresentar produtos e receber pedidos online.",
-    benefit: "Organize produtos e pedidos em uma experiência de compra online.",
-    keywords: ["loja virtual", "e-commerce", "ecommerce"],
-  },
-  {
-    id: "sistemas",
-    group: "solucoes-digitais",
-    name: "Sistemas personalizados",
-    description: "Sistemas planejados de acordo com os fluxos e requisitos do projeto.",
-    benefit: "Planeje fluxos digitais de acordo com os requisitos do seu negócio.",
-    keywords: ["sistema", "sistemas", "personalizado"],
-  },
-  {
-    id: "plataformas-saas",
-    group: "solucoes-digitais",
-    name: "Plataformas e SaaS",
-    description: "Desenvolvimento de plataformas digitais sob demanda.",
-    benefit: "Estruture uma plataforma com escopo definido para sua operação.",
-    keywords: ["saas", "plataforma", "plataformas"],
-  },
-  {
-    id: "automacao-planilhas",
-    group: "solucoes-digitais",
-    name: "Automação e planilhas inteligentes",
-    description: "Planilhas e automações para organizar rotinas e informações.",
-    benefit: "Organize informações e tarefas repetitivas em fluxos digitais.",
-    keywords: ["automação", "automacao", "planilha", "planilhas"],
+    id: "outros-itens",
+    title: "Outros serviços e itens",
+    description: "Outros cadastros publicados no catálogo da loja.",
   },
 ];
 
-export function isTechnologyStorefront(slug: string | null | undefined): boolean {
-  return slug === TECHNOLOGY_STOREFRONT_SLUG;
-}
+const technologyKeywords = [
+  "formatacao",
+  "backup",
+  "instalacao",
+  "upgrade",
+  "manutencao",
+  "reparo",
+  "rede",
+  "conectividade",
+  "peca",
+  "acessorio",
+  "informatica",
+];
+const digitalKeywords = [
+  "site",
+  "sistema",
+  "planilha",
+  "automacao",
+  "consultoria",
+  "suporte",
+  "landing",
+  "loja virtual",
+  "ecommerce",
+  "plataforma",
+  "saas",
+  "digital",
+  "digitais",
+  "software",
+  "aplicativo",
+  "app",
+];
 
 function normalizeSearchText(value: string): string {
   return value
@@ -129,33 +79,84 @@ function normalizeSearchText(value: string): string {
     .trim();
 }
 
-export function findTechnologyServiceProduct(
-  service: TechnologyService,
+function classifyTechnologyProduct(
+  product: StorefrontProduct,
+  categories: { id: string; name: string }[],
+): TechnologyProductGroupId {
+  const categoryName =
+    categories.find((category) => category.id === product.category_id)?.name ?? "";
+  const searchable = normalizeSearchText(`${categoryName} ${product.name}`);
+  if (digitalKeywords.some((keyword) => searchable.includes(normalizeSearchText(keyword)))) {
+    return "solucoes-digitais";
+  }
+  if (technologyKeywords.some((keyword) => searchable.includes(normalizeSearchText(keyword)))) {
+    return "informatica";
+  }
+  return "outros";
+}
+
+export function groupTechnologyStorefrontProducts(
   products: StorefrontProduct[],
   categories: { id: string; name: string }[] = [],
-): StorefrontProduct | null {
-  const sortedProducts = [...products].sort(
-    (a, b) =>
-      Number(b.is_available) - Number(a.is_available) ||
-      Number(b.is_featured) - Number(a.is_featured),
+): TechnologyProductGroup[] {
+  const grouped = new Map<string, StorefrontProduct[]>(
+    productGroupDefinitions.map((group) => [group.id, []]),
   );
+  const definitionIdByGroup: Record<TechnologyProductGroupId, string> = {
+    informatica: "assistencia-tecnica",
+    "solucoes-digitais": "solucoes-digitais",
+    outros: "outros-itens",
+  };
 
-  for (const product of sortedProducts) {
-    const categoryName =
-      categories.find((category) => category.id === product.category_id)?.name ?? "";
-    const searchable = normalizeSearchText(`${product.name} ${categoryName}`);
-    if (service.keywords.some((keyword) => searchable.includes(normalizeSearchText(keyword)))) {
-      return product;
-    }
+  for (const product of products) {
+    const groupId = definitionIdByGroup[classifyTechnologyProduct(product, categories)];
+    grouped.get(groupId)?.push(product);
   }
-  return null;
+
+  return productGroupDefinitions.map((group) => ({
+    ...group,
+    products: grouped.get(group.id) ?? [],
+  }));
+}
+
+export function getTechnologyStorefrontCategories(
+  categories: { id: string; name: string; module?: string; image: string | null }[],
+  products: StorefrontProduct[],
+): TechnologyStorefrontCategory[] {
+  const grouped = new Map<string, TechnologyStorefrontCategory>();
+
+  for (const category of categories) {
+    if (!products.some((product) => product.category_id === category.id)) continue;
+
+    const key = normalizeSearchText(category.name);
+    const existing = grouped.get(key);
+    if (existing) {
+      if (!existing.categoryIds.includes(category.id)) existing.categoryIds.push(category.id);
+      if (!existing.image && category.image) existing.image = category.image;
+      continue;
+    }
+
+    grouped.set(key, { ...category, categoryIds: [category.id] });
+  }
+
+  return [...grouped.values()];
+}
+
+export function isTechnologyStorefront(slug: string | null | undefined): boolean {
+  return slug === TECHNOLOGY_STOREFRONT_SLUG;
 }
 
 export function technologyServicePriceLabel(
   product: Pick<StorefrontProduct, "price" | "priceVisible" | "showPriceFrom"> | null,
+  isPremium = true,
 ): string {
-  if (!product || !product.priceVisible || !Number.isFinite(product.price) || product.price <= 0) {
-    return "Solicite um orçamento personalizado";
+  if (
+    !product ||
+    (isPremium && !product.priceVisible) ||
+    !Number.isFinite(product.price) ||
+    product.price <= 0
+  ) {
+    return "Solicitar orçamento";
   }
   return storefrontPrice(product.price, product.showPriceFrom);
 }

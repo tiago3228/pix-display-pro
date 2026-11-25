@@ -2,53 +2,26 @@ import {
   ArrowRight,
   Code2,
   Cpu,
-  Database,
   ExternalLink,
-  Globe2,
-  HardDrive,
   Instagram,
   Laptop,
-  Layers,
   MessageCircle,
   MonitorCog,
-  Network,
-  PanelTop,
-  Settings2,
-  ShoppingCart,
-  Workflow,
   Wrench,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import type { Storefront, StorefrontProduct } from "@/lib/storefront.functions";
 import type { DigitalProductView } from "@/lib/digital-products.functions";
 import { whatsappLink } from "@/lib/format";
 import {
   buildTechnologyQuoteMessage,
-  findTechnologyServiceProduct,
+  groupTechnologyStorefrontProducts,
   technologyServicePriceLabel,
-  technologyServices,
   TECHNOLOGY_STOREFRONT_DESCRIPTION,
 } from "@/lib/technology-storefront";
 import { Button } from "@/components/ui/button";
 
 type Store = NonNullable<Storefront>["store"];
 type Category = NonNullable<Storefront>["categories"][number];
-
-const serviceIcons: Record<string, LucideIcon> = {
-  formatacao: MonitorCog,
-  manutencao: Wrench,
-  upgrade: HardDrive,
-  instalacao: Settings2,
-  "backup-suporte": Database,
-  redes: Network,
-  sites: Globe2,
-  "landing-pages": PanelTop,
-  "lojas-virtuais": ShoppingCart,
-  sistemas: Code2,
-  "plataformas-saas": Layers,
-  "automacao-planilhas": Workflow,
-};
-
 function instagramHref(value: string | null | undefined): string | null {
   const raw = value?.trim();
   if (!raw) return null;
@@ -89,7 +62,7 @@ function QuoteLink({
       aria-label={`Solicitar orçamento pelo WhatsApp para ${serviceName}`}
     >
       <MessageCircle className="size-4 shrink-0" aria-hidden="true" />
-      Solicitar orçamento
+      Solicitar orçamento pelo WhatsApp
     </a>
   );
 }
@@ -107,20 +80,7 @@ export function TechnologyStorefrontTop({
 }) {
   const generalMessage = buildTechnologyQuoteMessage("assistência técnica ou solução digital");
   const contactHref = whatsappLink(store.whatsapp, generalMessage);
-  const groups = [
-    {
-      id: "assistencia-tecnica",
-      title: "Assistência técnica e informática",
-      description: "Atendimento para computadores, sistemas, redes e suporte técnico.",
-      services: technologyServices.filter((service) => service.group === "informatica"),
-    },
-    {
-      id: "solucoes-digitais",
-      title: "Desenvolvimento e soluções digitais",
-      description: "Projetos digitais definidos conforme a necessidade de cada negócio.",
-      services: technologyServices.filter((service) => service.group === "solucoes-digitais"),
-    },
-  ];
+  const groups = groupTechnologyStorefrontProducts(products, categories);
   return (
     <>
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 pt-5 sm:pt-6">
@@ -213,7 +173,7 @@ export function TechnologyStorefrontTop({
                 style={{ backgroundColor: store.button_color }}
               >
                 <MessageCircle className="size-4" aria-hidden="true" />
-                Solicitar orçamento
+                Solicitar orçamento pelo WhatsApp
               </a>
               <a
                 href="#servicos"
@@ -317,8 +277,8 @@ export function TechnologyStorefrontTop({
             Soluções para sua rotina e para o seu negócio
           </h2>
           <p className="mt-3 text-base leading-7 text-muted-foreground">
-            Conheça as áreas de atuação e use o catálogo abaixo como a fonte principal para
-            consultar serviços, valores publicados e disponibilidade.
+            Os destaques abaixo usam os mesmos cadastros do catálogo. Descrições, imagens, preços e
+            solicitações de orçamento acompanham as informações registradas para cada item.
           </p>
         </div>
         <div className="space-y-8">
@@ -330,81 +290,91 @@ export function TechnologyStorefrontTop({
                   <p className="mt-1 text-sm text-muted-foreground">{group.description}</p>
                 </div>
                 <span className="w-fit rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-                  {group.services.length} serviços
+                  {group.products.length} cadastros
                 </span>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {group.services.map((service) => {
-                  const Icon = serviceIcons[service.id] ?? MonitorCog;
-                  const product = findTechnologyServiceProduct(service, products, categories);
-                  const priceLabel = technologyServicePriceLabel(product);
-                  return (
-                    <article
-                      key={service.id}
-                      className="group flex h-full flex-col rounded-2xl border bg-card p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--store-accent)] hover:shadow-lg sm:p-6"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <span
-                          className="rounded-xl border bg-background p-3 transition group-hover:scale-105"
-                          style={{ borderColor: `${store.accent_color}66` }}
-                        >
-                          <Icon
-                            className="size-6"
-                            style={{ color: store.primary_color }}
-                            aria-hidden="true"
-                          />
-                        </span>
-                        <span
-                          className="max-w-[60%] text-right text-xs font-semibold leading-5 sm:text-sm"
-                          style={{
-                            color:
-                              product && product.priceVisible && product.price > 0
-                                ? store.primary_color
-                                : undefined,
-                          }}
-                        >
-                          {priceLabel}
-                        </span>
-                      </div>
-                      <h4 className="mt-5 text-lg font-bold">{service.name}</h4>
-                      <p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">
-                        {service.description}
-                      </p>
-                      <div
-                        className="mt-4 rounded-lg border bg-background/70 px-3 py-2.5 text-xs leading-5"
-                        style={{ borderColor: `${store.accent_color}44` }}
+              {group.products.length ? (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {group.products.map((product) => {
+                    const priceLabel = technologyServicePriceLabel(product, store.is_premium);
+                    const hasPublicPrice =
+                      (!store.is_premium || product.priceVisible) &&
+                      Number.isFinite(product.price) &&
+                      product.price > 0;
+                    return (
+                      <article
+                        key={product.id}
+                        className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition duration-200 hover:-translate-y-1 hover:border-[var(--store-accent)] hover:shadow-lg"
                       >
-                        <span className="font-semibold">Como pode ajudar: </span>
-                        <span className="text-muted-foreground">{service.benefit}</span>
-                      </div>
-                      <div className="mt-5 flex flex-wrap gap-2">
-                        <QuoteLink
-                          store={store}
-                          serviceName={service.name}
-                          className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:opacity-95"
-                        />
-                        {product ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onSelectProduct(product)}
-                            aria-label={`Ver cadastro de ${product.name}`}
-                          >
-                            Ver detalhes
-                          </Button>
-                        ) : null}
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
+                        <div className="flex aspect-[16/10] items-center justify-center overflow-hidden bg-muted">
+                          {product.image ? (
+                            <img
+                              src={product.image}
+                              alt={`Imagem cadastrada de ${product.name}`}
+                              loading="lazy"
+                              className="size-full object-contain p-2"
+                            />
+                          ) : (
+                            <MonitorCog
+                              className="size-10 text-muted-foreground"
+                              aria-hidden="true"
+                            />
+                          )}
+                        </div>
+                        <div className="flex flex-1 flex-col p-5 sm:p-6">
+                          <div className="flex min-w-0 items-start justify-between gap-3">
+                            <h4 className="min-w-0 text-lg font-bold">{product.name}</h4>
+                            <span
+                              className="max-w-[55%] shrink-0 text-right text-xs font-semibold leading-5 sm:text-sm"
+                              style={{ color: hasPublicPrice ? store.primary_color : undefined }}
+                            >
+                              {priceLabel}
+                            </span>
+                          </div>
+                          {!product.is_available ? (
+                            <p className="mt-2 text-xs font-medium text-muted-foreground">
+                              Indisponível no momento
+                            </p>
+                          ) : null}
+                          {product.description.trim() ? (
+                            <p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">
+                              {product.description}
+                            </p>
+                          ) : null}
+                          <div className="mt-auto grid gap-2 pt-5 sm:grid-cols-[1fr_auto]">
+                            <QuoteLink
+                              store={store}
+                              serviceName={product.name}
+                              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 py-2 text-center text-xs font-semibold leading-5 text-white shadow-sm transition hover:-translate-y-0.5 hover:opacity-95 sm:text-sm"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="min-h-11"
+                              onClick={() => onSelectProduct(product)}
+                              aria-label={`Ver cadastro de ${product.name}`}
+                            >
+                              Ver detalhes
+                            </Button>
+                          </div>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="rounded-xl border border-dashed bg-card px-4 py-5 text-sm text-muted-foreground">
+                  Nenhum serviço ou item desta área foi publicado no catálogo.
+                </p>
+              )}
             </section>
           ))}
         </div>
         <p className="mt-5 text-xs text-muted-foreground">
-          Os preços exibidos correspondem a serviços cadastrados na vitrine. Serviços sem valor
-          publicado são orçados após entender a necessidade.
+          Valores e disponibilidade seguem os cadastros da loja. Quando o preço depender de
+          avaliação, ele pode variar conforme o equipamento, a complexidade ou a necessidade.
+          Solicite orçamento pelo WhatsApp.
         </p>
       </section>
     </>
@@ -469,7 +439,7 @@ export function TechnologyStorefrontBottom({
     {
       question: "Os serviços possuem preço fixo?",
       answer:
-        "Alguns serviços têm preço cadastrado e são exibidos na vitrine. Quando não houver valor publicado, o orçamento é feito após entender a necessidade.",
+        "Alguns serviços têm preço cadastrado e são exibidos na vitrine. Quando não houver valor publicado ou o serviço depender de avaliação, o orçamento considera o equipamento, a complexidade e a necessidade apresentada.",
     },
     {
       question: "Como entrar em contato?",
