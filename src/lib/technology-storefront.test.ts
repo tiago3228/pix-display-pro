@@ -4,6 +4,7 @@ import { whatsappLink } from "./format.ts";
 import type { StorefrontProduct } from "./storefront.functions";
 import {
   buildTechnologyQuoteMessage,
+  getTechnologyProductDisplayName,
   getStorefrontSeoMetadata,
   getTechnologyStorefrontCategories,
   groupTechnologyStorefrontProducts,
@@ -104,6 +105,25 @@ test("agrupa os produtos cadastrados sem perder registros nem duplicá-los", () 
   assert.deepEqual(
     groups.find((group) => group.id === "solucoes-digitais")?.products.map((item) => item.id),
     ["p2"],
+  );
+});
+
+test("padroniza somente o rótulo público de Formatação para o nome da categoria", () => {
+  assert.equal(getTechnologyProductDisplayName("Formatação"), "Formatação e otimização");
+  assert.equal(getTechnologyProductDisplayName("Sites e sistemas"), "Sites e sistemas");
+});
+
+test("omite grupos sem cadastros sem perder os serviços publicados", () => {
+  const records = [product({ id: "site", name: "Sites e sistemas" })];
+  const groups = groupTechnologyStorefrontProducts(records);
+
+  assert.deepEqual(
+    groups.map((group) => group.id),
+    ["solucoes-digitais"],
+  );
+  assert.deepEqual(
+    groups.flatMap((group) => group.products.map((item) => item.id)),
+    ["site"],
   );
 });
 
