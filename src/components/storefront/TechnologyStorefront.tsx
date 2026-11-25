@@ -73,11 +73,13 @@ export function TechnologyStorefrontTop({
   products,
   categories,
   onSelectProduct,
+  showCatalog,
 }: {
   store: Store;
   products: StorefrontProduct[];
   categories: Category[];
   onSelectProduct: (product: StorefrontProduct) => void;
+  showCatalog: boolean;
 }) {
   const generalMessage = buildTechnologyQuoteMessage("assistência técnica ou solução digital");
   const contactHref = whatsappLink(store.whatsapp, generalMessage);
@@ -116,9 +118,11 @@ export function TechnologyStorefrontTop({
           <a className="transition hover:text-[var(--store-links)]" href="#servicos">
             Serviços
           </a>
-          <a className="transition hover:text-[var(--store-links)]" href="#catalogo">
-            Catálogo
-          </a>
+          {showCatalog ? (
+            <a className="transition hover:text-[var(--store-links)]" href="#catalogo">
+              Catálogo
+            </a>
+          ) : null}
           <a className="transition hover:text-[var(--store-links)]" href="#contato">
             Contato
           </a>
@@ -146,12 +150,14 @@ export function TechnologyStorefrontTop({
         >
           Serviços
         </a>
-        <a
-          className="inline-flex min-h-10 shrink-0 items-center rounded-full border bg-card px-4 text-sm font-medium"
-          href="#catalogo"
-        >
-          Catálogo
-        </a>
+        {showCatalog ? (
+          <a
+            className="inline-flex min-h-10 shrink-0 items-center rounded-full border bg-card px-4 text-sm font-medium"
+            href="#catalogo"
+          >
+            Catálogo
+          </a>
+        ) : null}
         <a
           className="inline-flex min-h-10 shrink-0 items-center rounded-full border bg-card px-4 text-sm font-medium"
           href="#contato"
