@@ -62,6 +62,7 @@ import {
   getTechnologyStorefrontCategories,
   getStorefrontSeoMetadata,
   isTechnologyStorefront,
+  shouldShowTechnologyCatalog,
   TECHNOLOGY_STOREFRONT_DESCRIPTION,
 } from "@/lib/technology-storefront";
 import {
@@ -238,6 +239,10 @@ export function StorePage() {
   }
 
   const isTechnology = isTechnologyStorefront(data?.store.slug);
+  const showTechnologyCatalog = shouldShowTechnologyCatalog(
+    data?.store.slug,
+    data?.store.theme_palette,
+  );
   const technologyCategories = useMemo(
     () =>
       isTechnology && data ? getTechnologyStorefrontCategories(data.categories, data.products) : [],
@@ -250,6 +255,11 @@ export function StorePage() {
       return name === product.name ? product : { ...product, name };
     });
   }, [data, isTechnology]);
+
+  useEffect(() => {
+    if (!isTechnology || showTechnologyCatalog || !selected) return;
+    document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [isTechnology, selected, showTechnologyCatalog]);
 
   useEffect(() => {
     if (!gallery || gallery.images.length < 2) return;
@@ -700,6 +710,7 @@ export function StorePage() {
           store={store}
           products={technologyProducts}
           categories={data.categories}
+          showCatalog={showTechnologyCatalog}
           onSelectProduct={(product) => {
             setSelected(product);
             document.getElementById("catalogo")?.scrollIntoView({
@@ -833,7 +844,13 @@ export function StorePage() {
         </div>
       </header>
 
-      <div className={cn("mx-auto mt-4 px-4", isTechnology ? "max-w-6xl" : "max-w-3xl")}>
+      <div
+        className={cn(
+          "mx-auto mt-4 px-4",
+          isTechnology ? "max-w-6xl" : "max-w-3xl",
+          isTechnology && !showTechnologyCatalog && "hidden",
+        )}
+      >
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -956,7 +973,10 @@ export function StorePage() {
       </main>
 
       <div
-        className="sticky top-0 z-20 mt-4 border-y py-2 backdrop-blur"
+        className={cn(
+          "sticky top-0 z-20 mt-4 border-y py-2 backdrop-blur",
+          isTechnology && !showTechnologyCatalog && "hidden",
+        )}
         style={{
           backgroundColor: `${store.theme_palette?.["header"] ?? store.primary_color}eF`,
           borderColor: store.theme_palette?.["borders"] ?? "#e2e8f0",
@@ -1185,9 +1205,13 @@ export function StorePage() {
 
       <main
         id="catalogo"
-        className={cn("mx-auto mt-5 px-4", isTechnology ? "max-w-6xl" : "max-w-3xl")}
+        className={cn(
+          "mx-auto mt-5 px-4",
+          isTechnology ? "max-w-6xl" : "max-w-3xl",
+          isTechnology && !showTechnologyCatalog && !selected && "hidden",
+        )}
       >
-        {isTechnology ? (
+        {isTechnology && showTechnologyCatalog ? (
           <section className="mb-5 scroll-mt-24">
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
               Catálogo da loja

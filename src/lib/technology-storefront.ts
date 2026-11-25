@@ -153,6 +153,22 @@ export function isTechnologyStorefront(slug: string | null | undefined): boolean
   return slug === TECHNOLOGY_STOREFRONT_SLUG;
 }
 
+export const TECHNOLOGY_CATALOG_VISIBILITY_KEY = "technology_catalog_visible";
+
+export function isTechnologyCatalogVisible(
+  themePalette: Record<string, unknown> | null | undefined,
+) {
+  const setting = themePalette?.[TECHNOLOGY_CATALOG_VISIBILITY_KEY];
+  return setting !== false && setting !== "false";
+}
+
+export function shouldShowTechnologyCatalog(
+  slug: string | null | undefined,
+  themePalette: Record<string, unknown> | null | undefined,
+): boolean {
+  return !isTechnologyStorefront(slug) || isTechnologyCatalogVisible(themePalette);
+}
+
 export function technologyServicePriceLabel(
   product: Pick<StorefrontProduct, "price" | "priceVisible" | "showPriceFrom"> | null,
   isPremium = true,

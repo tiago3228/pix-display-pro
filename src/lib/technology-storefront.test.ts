@@ -9,8 +9,10 @@ import {
   getStorefrontSeoMetadata,
   getTechnologyStorefrontCategories,
   groupTechnologyStorefrontProducts,
+  shouldShowTechnologyCatalog,
   isTechnologyStorefront,
   technologyServicePriceLabel,
+  TECHNOLOGY_CATALOG_VISIBILITY_KEY,
 } from "./technology-storefront.ts";
 
 function product(overrides: Partial<StorefrontProduct> = {}): StorefrontProduct {
@@ -77,6 +79,26 @@ test("a página especializada é ativada apenas para o slug ti", () => {
   assert.equal(isTechnologyStorefront("TI"), false);
   assert.equal(isTechnologyStorefront("camisas"), false);
   assert.equal(isTechnologyStorefront(null), false);
+});
+
+test("o catálogo TI é visível por padrão, pode ser ocultado e não altera outras lojas", () => {
+  assert.equal(shouldShowTechnologyCatalog("ti", undefined), true);
+  assert.equal(
+    shouldShowTechnologyCatalog("ti", { [TECHNOLOGY_CATALOG_VISIBILITY_KEY]: "false" }),
+    false,
+  );
+  assert.equal(
+    shouldShowTechnologyCatalog("ti", { [TECHNOLOGY_CATALOG_VISIBILITY_KEY]: false }),
+    false,
+  );
+  assert.equal(
+    shouldShowTechnologyCatalog("ti", { [TECHNOLOGY_CATALOG_VISIBILITY_KEY]: "true" }),
+    true,
+  );
+  assert.equal(
+    shouldShowTechnologyCatalog("camisas", { [TECHNOLOGY_CATALOG_VISIBILITY_KEY]: "false" }),
+    true,
+  );
 });
 
 test("agrupa os produtos cadastrados sem perder registros nem duplicá-los", () => {

@@ -9,6 +9,11 @@ import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { uploadAsset } from "@/lib/images";
 import { PIX_KEY_TYPES, STORE_CATEGORIES, slugify } from "@/lib/format";
 import { getStoreNicheModule, isNeutralCategoryName } from "@/lib/store-niche";
+import {
+  isTechnologyCatalogVisible,
+  isTechnologyStorefront,
+  TECHNOLOGY_CATALOG_VISIBILITY_KEY,
+} from "@/lib/technology-storefront";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -332,6 +337,8 @@ function MyStore() {
     button_color: VITRINI_PALETTE.button_color,
     theme_palette: { ...ADVANCED_PALETTE, custom_colors: [] as { name: string; hex: string }[] },
   });
+  const [technologyCatalogVisible, setTechnologyCatalogVisible] = useState(true);
+  const [savingCatalogVisibility, setSavingCatalogVisibility] = useState(false);
   const banners = useQuery({
     queryKey: ["storefront-banners", store?.id],
     enabled: Boolean(store?.id),
@@ -349,6 +356,9 @@ function MyStore() {
 
   useEffect(() => {
     if (!store) return;
+    const savedThemePalette = (store as typeof store & { theme_palette?: Record<string, unknown> })
+      .theme_palette;
+    setTechnologyCatalogVisible(isTechnologyCatalogVisible(savedThemePalette));
     setForm({
       name: store.name,
       seller_name: store.seller_name,
@@ -477,6 +487,47 @@ function MyStore() {
     setFeedback({ type: "success", text: "Alterações salvas com sucesso." });
     toast.success("Loja atualizada!");
     queryClient.invalidateQueries({ queryKey: ["my-store"] });
+  }
+
+  async function saveCatalogVisibility() {
+    if (!store || !isTechnologyStorefront(store.slug)) return;
+    setSavingCatalogVisibility(true);
+    const savedThemePalette = (store as typeof store & { theme_palette?: Record<string, unknown> })
+      .theme_palette;
+    const visibilityValue = technologyCatalogVisible ? "true" : "false";
+
+    try {
+      const { error } = await supabase
+        .from("stores")
+        .update({
+          theme_palette: {
+            ...(savedThemePalette ?? {}),
+            [TECHNOLOGY_CATALOG_VISIBILITY_KEY]: visibilityValue,
+          },
+        } as never)
+        .eq("id", store.id);
+      if (error) {
+        toast.error("Não foi possível salvar a visibilidade do catálogo.");
+        return;
+      }
+
+      setForm((current) => ({
+        ...current,
+        theme_palette: {
+          ...current.theme_palette,
+          [TECHNOLOGY_CATALOG_VISIBILITY_KEY]: visibilityValue,
+        } as typeof current.theme_palette,
+      }));
+      toast.success(
+        technologyCatalogVisible
+          ? "Catálogo e filtros reexibidos na vitrine."
+          : "Catálogo e filtros ocultos na vitrine.",
+      );
+    } catch {
+      toast.error("Não foi possível salvar a visibilidade do catálogo.");
+    } finally {
+      setSavingCatalogVisibility(false);
+    }
   }
 
   async function restorePalette() {
@@ -1596,6 +1647,56 @@ function MyStore() {
             </div>
           </div>
         </CollapsibleSection>
+
+        {store && isTechnologyStorefront(store.slug) ? (
+          <CollapsibleSection
+            title="👁️ Visibilidade da vitrine"
+            description="Controle a exibição do catálogo, da busca e dos filtros na página pública"
+            defaultOpen
+          >
+            <div className="flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <Label htmlFor="technology-catalog-visible" className="text-sm font-semibold">
+                  Exibir catálogo, busca e filtros
+                </Label>
+                <p className="max-w-2xl text-xs leading-5 text-muted-foreground">
+                  Desative para ocultar a busca, as categorias e a lista do catálogo. Os serviços em
+                  destaque, o portfólio, as perguntas frequentes e o contato continuarão visíveis.
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-3">
+                <span className="text-xs font-medium text-muted-foreground">
+                  {technologyCatalogVisible ? "Visível" : "Oculto"}
+                </span>
+                <Switch
+                  id="technology-catalog-visible"
+                  checked={technologyCatalogVisible}
+                  disabled={savingCatalogVisibility}
+                  aria-label="Exibir catálogo, busca e filtros na vitrine TI"
+                  onCheckedChange={(checked) => {
+                    setTechnologyCatalogVisible(checked);
+                    setForm((current) => ({
+                      ...current,
+                      theme_palette: {
+                        ...current.theme_palette,
+                        [TECHNOLOGY_CATALOG_VISIBILITY_KEY]: checked ? "true" : "false",
+                      } as typeof current.theme_palette,
+                    }));
+                  }}
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <Button
+                type="button"
+                onClick={() => void saveCatalogVisibility()}
+                disabled={savingCatalogVisibility}
+              >
+                {savingCatalogVisibility ? "Salvando..." : "💾 Salvar visibilidade"}
+              </Button>
+            </div>
+          </CollapsibleSection>
+        ) : null}
 
         <CollapsibleSection title="🖼️ Banners" description="Sugestões por nicho e cópias editáveis">
           <p className="mb-3 text-sm text-muted-foreground">
