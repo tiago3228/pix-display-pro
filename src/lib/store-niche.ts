@@ -65,6 +65,32 @@ export function isConfectioneryStoreCategory(category: string | null | undefined
   return value.includes("bolo") || value.includes("doce") || value.includes("confeit");
 }
 
+/** Indica se o cadastro guiado de produtos está disponível para o segmento Premium atual. */
+export function isGuidedPremiumProductFlowEligible(
+  plan: string | null | undefined,
+  categoryOrModule: string | null | undefined,
+): boolean {
+  if (plan !== "pro") return false;
+
+  const value = normalized(categoryOrModule)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[_&/]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (
+    /informat|tecnolog|computador|pizzar|marmit|calcad/.test(value) ||
+    /\broupas? esportiv/.test(value)
+  ) {
+    return false;
+  }
+
+  const isGenericClothingSegment = /\broupas?\b/.test(value);
+  const isTrainingClothingSegment = /\b(treino|academia)\b/.test(value);
+  return !isGenericClothingSegment || isTrainingClothingSegment;
+}
+
 export function getStoreNicheLabel(category: string | null | undefined): string {
   const raw = category?.trim();
   if (!raw) return "🛍️ Loja";

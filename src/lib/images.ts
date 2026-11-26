@@ -4,11 +4,14 @@ export const ASSET_BUCKET = "store-assets";
 export const DIGITAL_PRODUCT_ASSET_BUCKET = "digital-product-assets";
 
 const cache = new Map<string, string>();
+const isBundledConfectioneryIllustration = (path: string) =>
+  /^\/assets\/confeitaria\/[a-z0-9-]+\.webp$/i.test(path);
 
 /** Storage paths are private; resolve them to temporary signed URLs. */
 export async function resolveAsset(path?: string | null): Promise<string | null> {
   if (!path) return null;
   if (path.startsWith("http")) return path;
+  if (isBundledConfectioneryIllustration(path)) return path;
   if (cache.has(path)) return cache.get(path)!;
   const { data, error } = await supabase.storage.from(ASSET_BUCKET).createSignedUrl(path, 60 * 60);
   if (error) {

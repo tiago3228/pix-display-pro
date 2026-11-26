@@ -33,6 +33,7 @@ import {
 import {
   getStoreModuleLabel,
   getStoreNicheModule,
+  isGuidedPremiumProductFlowEligible,
   isConfectioneryStoreCategory,
   isNeutralCategoryName,
   type StoreModule,
@@ -232,6 +233,7 @@ type ProductRow = {
   stock: number;
   track_stock: boolean;
   has_variants: boolean;
+  is_available: boolean;
   is_hidden: boolean;
   is_featured: boolean;
   image_url: string | null;
@@ -295,6 +297,7 @@ const emptyForm = {
   stock: "",
   track_stock: false,
   is_hidden: false,
+  is_available: true,
   is_featured: false,
   category_id: "none",
   order_enabled: false,
@@ -491,10 +494,21 @@ function Products() {
   const [jewelryOnly, setJewelryOnly] = useState(false);
   const [informaticaOnly, setInformaticaOnly] = useState(false);
   const [sportsOnly, setSportsOnly] = useState(false);
+  const [routeModule, setRouteModule] = useState<StoreModule | null>(null);
+  const [guidedProductOpen, setGuidedProductOpen] = useState(false);
+  const [guidedModule, setGuidedModule] = useState<StoreModule>("roupas");
+  const [guidedCategoryId, setGuidedCategoryId] = useState("");
+  const [guidedProductId, setGuidedProductId] = useState("");
+  const [guidedManualName, setGuidedManualName] = useState("");
   const sportsCatalogEnabled = ["roupas", "roupas_esportivas", "roupas_treino"].includes(
     form.module,
   );
   const isConfectioneryStore = isConfectioneryStoreCategory(store?.category);
+  const isPremiumConfectioneryStore = store?.plan === "pro" && isConfectioneryStore;
+  const guidedProductFlowEligible = isGuidedPremiumProductFlowEligible(
+    store?.plan,
+    routeModule ?? store?.category,
+  );
 
   function currentCategoryModule() {
     if (jewelryOnly) return "joias";
@@ -535,6 +549,23 @@ function Products() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
+    const requestedModule = params.get("module");
+    const knownModules: StoreModule[] = [
+      "roupas",
+      "roupas_esportivas",
+      "roupas_treino",
+      "calcados",
+      "cafeteria",
+      "marmitaria",
+      "joias",
+      "pizzaria",
+      "informatica",
+    ];
+    setRouteModule(
+      requestedModule && knownModules.includes(requestedModule as StoreModule)
+        ? (requestedModule as StoreModule)
+        : null,
+    );
     setSportsOnly(params.get("module") === "roupas_esportivas");
     setCafeteriaOnly(params.get("module") === "cafeteria");
     setMarmitariaOnly(params.get("module") === "marmitaria");
@@ -559,6 +590,8 @@ function Products() {
       sportsOnly,
       open,
       form.module,
+      guidedProductOpen,
+      guidedModule,
     ],
     enabled: Boolean(store?.id),
     queryFn: async () => {
@@ -568,8 +601,16 @@ function Products() {
         .eq("store_id", store!.id);
       const { data, error } = await query.order("position");
       if (error) throw error;
-      const module = open ? form.module : currentCategoryModule();
-      const moduleCategories = (data ?? []).filter((category) => category.module === module);
+      const module = open
+        ? form.module
+        : guidedProductOpen
+          ? guidedModule
+          : currentCategoryModule();
+      const moduleCategories = (data ?? []).filter(
+        (category) =>
+          category.module === module ||
+          (!category.module && module === getStoreNicheModule(store?.category)),
+      );
       const neutralCategory =
         moduleCategories.find(
           (category) => category.is_active !== false && isNeutralCategoryName(category.name),
@@ -630,13 +671,15 @@ function Products() {
       marmitariaOnly,
       jewelryOnly,
       informaticaOnly,
+      guidedProductOpen,
+      guidedModule,
     ],
     enabled: Boolean(store?.id),
     queryFn: async () => {
       let query = supabase
         .from("products")
         .select(
-          "id, module, name, description, service_estimated_time, price, purchase_enabled, quantity_enabled, price_visible, show_price_from, quote_enabled, stock, track_stock, has_variants, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_original_price, sports_offer_price, sports_offer_percent, sports_is_customized, sports_offer_active, meal_period, delivery_enabled, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at, product_variants(id, label, price, stock, sku, image_url), product_order_tiers(min_quantity, unit_price)",
+          "id, module, name, description, service_estimated_time, price, purchase_enabled, quantity_enabled, price_visible, show_price_from, quote_enabled, stock, track_stock, has_variants, is_available, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_original_price, sports_offer_price, sports_offer_percent, sports_is_customized, sports_offer_active, meal_period, delivery_enabled, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at, product_variants(id, label, price, stock, sku, image_url), product_order_tiers(min_quantity, unit_price)",
         )
         .eq("store_id", store!.id);
       if (trainingOnly) query = query.eq("module", "roupas_treino");
@@ -651,6 +694,19 @@ function Products() {
     },
   });
 
+  const guidedCategories = (categories ?? []).filter(
+    (category) =>
+      (category.module === guidedModule ||
+        (!category.module && guidedModule === getStoreNicheModule(store?.category))) &&
+      category.is_active !== false,
+  );
+  const guidedCategoryProducts = (products ?? []).filter(
+    (product) =>
+      product.module === guidedModule &&
+      product.category_id === guidedCategoryId &&
+      Boolean(guidedCategoryId),
+  );
+
   const existingConfectioneryProducts = (products ?? [])
     .filter((product) => product.module === "cafeteria")
     .map((product) => ({
@@ -663,11 +719,11 @@ function Products() {
       ? searchConfectionerySuggestions(form.name, existingConfectioneryProducts)
       : [];
   const missingConfectioneryProductCount =
-    isConfectioneryStore && store && products
+    isPremiumConfectioneryStore && store && products
       ? buildConfectioneryProductRows(
           store.id,
-          [],
-          products.map((product) => product.name),
+          categories ?? [],
+          products.map((product) => ({ name: product.name, category_id: product.category_id })),
         ).length
       : 0;
   const missingConfectioneryCategoryCount =
@@ -726,7 +782,7 @@ function Products() {
               .eq("module", "cafeteria");
             const { data: existingProducts, error: productsReadError } = await supabase
               .from("products")
-              .select("name")
+              .select("name, category_id")
               .eq("store_id", storeId);
             if (allCategoriesError || productsReadError) {
               throw allCategoriesError ?? productsReadError;
@@ -735,7 +791,7 @@ function Products() {
             const seedRows = buildConfectioneryProductRows(
               storeId,
               allCategories ?? [],
-              (existingProducts ?? []).map((product) => product.name),
+              existingProducts ?? [],
             );
             if (seedRows.length) {
               const { error } = await supabase.from("products").insert(seedRows as never);
@@ -771,12 +827,17 @@ function Products() {
   );
 
   useEffect(() => {
-    if (!store?.id || !isConfectioneryStore || attemptedConfectioneryStores.current.has(store.id)) {
+    if (
+      !store?.id ||
+      store.plan !== "pro" ||
+      !isConfectioneryStore ||
+      attemptedConfectioneryStores.current.has(store.id)
+    ) {
       return;
     }
     attemptedConfectioneryStores.current.add(store.id);
     void ensureConfectioneryCatalog(store.id);
-  }, [store?.id, isConfectioneryStore, ensureConfectioneryCatalog]);
+  }, [store?.id, store?.plan, isConfectioneryStore, ensureConfectioneryCatalog]);
 
   const { data: sportsNodes } = useQuery<SportsNode[]>({
     queryKey: ["sports-nodes", store?.id],
@@ -837,6 +898,68 @@ function Products() {
     setOpen(true);
   }
 
+  function startProductCreation() {
+    if (!guidedProductFlowEligible) {
+      openNew();
+      return;
+    }
+    if (limitReached) {
+      toast.error(
+        `O plano Básica permite até ${FREE_PLAN_PRODUCT_LIMIT} produtos. Assine o PRO para adicionar mais.`,
+      );
+      return;
+    }
+
+    setGuidedModule(routeModule ?? currentCategoryModule());
+    setGuidedCategoryId("");
+    setGuidedProductId("");
+    setGuidedManualName("");
+    setGuidedProductOpen(true);
+  }
+
+  function continueGuidedProductCreation() {
+    if (!store || !guidedCategoryId) return;
+    const selectedProduct = guidedCategoryProducts.find(
+      (product) => product.id === guidedProductId,
+    );
+    if (selectedProduct) {
+      setGuidedProductOpen(false);
+      openEdit(selectedProduct);
+      return;
+    }
+
+    const name = guidedManualName.trim();
+    if (!name) return;
+    const matchingProduct = guidedCategoryProducts.find(
+      (product) => normalizeCatalogName(product.name) === normalizeCatalogName(name),
+    );
+    if (matchingProduct) {
+      setGuidedProductOpen(false);
+      toast.info("Esse produto já está cadastrado nesta categoria. Abrimos o cadastro existente.");
+      openEdit(matchingProduct);
+      return;
+    }
+
+    setEditing(null);
+    setImportedDiscovery(null);
+    setConfectionerySuggestionsOpen(false);
+    setManualShoeBrand("");
+    setManualShoeModel("");
+    setForm({
+      ...emptyForm,
+      module: guidedModule,
+      name,
+      category_id: guidedCategoryId,
+    });
+    setVariants([]);
+    setOrderTiers([]);
+    setPhotos([]);
+    setSportsNodeId("none");
+    setSportsCollectionId("none");
+    setGuidedProductOpen(false);
+    setOpen(true);
+  }
+
   function openEdit(product: ProductRow) {
     setEditing(product);
     setImportedDiscovery(null);
@@ -874,6 +997,7 @@ function Products() {
       quote_enabled: product.quote_enabled ?? false,
       stock: String(product.stock),
       track_stock: product.track_stock,
+      is_available: product.is_available ?? true,
       is_hidden: product.is_hidden,
       is_featured: product.is_featured,
       category_id: product.category_id ?? "none",
@@ -1272,6 +1396,7 @@ function Products() {
       price: Number(String(form.price).replace(",", ".")) || 0,
       stock: Number(form.stock) || 0,
       track_stock: form.track_stock,
+      is_available: Boolean(form.is_available),
       is_hidden: form.is_hidden,
       is_featured: form.is_featured,
       has_variants: cleanVariants.length > 0,
@@ -1638,7 +1763,7 @@ function Products() {
       title="Produtos"
       description={`${products?.length ?? 0} produto(s) na sua vitrine`}
       action={
-        <div className="flex shrink-0 gap-1.5">
+        <div className="flex min-w-0 shrink-0 flex-wrap justify-end gap-1.5">
           <Button
             size="sm"
             variant="outline"
@@ -1658,9 +1783,21 @@ function Products() {
               <span className="hidden sm:inline">Cadastrar com IA</span>
             </Link>
           </Button>
-          <Button size="sm" onClick={openNew} aria-label="Cadastrar produto manualmente">
+          <Button
+            size="sm"
+            onClick={startProductCreation}
+            aria-label={
+              guidedProductFlowEligible ? "Adicionar produto" : "Cadastrar produto manualmente"
+            }
+          >
             <Plus className="size-4 sm:mr-1.5" />
-            <span className="hidden sm:inline">Manual</span>
+            <span className="whitespace-nowrap">
+              {guidedProductFlowEligible ? (
+                "Adicionar produto"
+              ) : (
+                <span className="hidden sm:inline">Manual</span>
+              )}
+            </span>
           </Button>
         </div>
       }
@@ -2024,6 +2161,127 @@ function Products() {
               ✍️ Cadastrar manualmente
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={guidedProductOpen} onOpenChange={setGuidedProductOpen}>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Adicionar produto à loja</DialogTitle>
+          </DialogHeader>
+          <ol className="grid grid-cols-3 gap-2 text-center text-xs">
+            {[
+              ["1", "Módulo"],
+              ["2", "Categoria"],
+              ["3", "Produto"],
+            ].map(([step, label]) => (
+              <li key={step} className="rounded-lg border bg-muted/40 px-2 py-2">
+                <span className="font-semibold">
+                  {step}. {label}
+                </span>
+              </li>
+            ))}
+          </ol>
+
+          <div className="space-y-1.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
+            <Label>Módulo da loja</Label>
+            <div className="rounded-md border bg-background px-3 py-2 text-sm font-medium">
+              {getStoreModuleLabel(store?.category, guidedModule)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Definido pela loja/módulo que você acessou. Para outro módulo, volte a Lojas Premium e
+              acesse-o primeiro.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>2. Escolha uma categoria existente</Label>
+            <Select
+              value={guidedCategoryId}
+              onValueChange={(value) => {
+                setGuidedCategoryId(value);
+                setGuidedProductId("");
+                setGuidedManualName("");
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                {guidedCategories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {!guidedCategories.length ? (
+              <p className="text-xs text-muted-foreground">
+                Não há categorias ativas neste módulo. Crie uma na seção Categorias e tente
+                novamente.
+              </p>
+            ) : null}
+          </div>
+
+          <div className="space-y-3 rounded-lg border p-3">
+            <div>
+              <Label>3. Escolha um produto ou digite o nome</Label>
+              <p className="mt-1 text-xs text-muted-foreground">
+                As sugestões abaixo vêm dos produtos desta categoria e desta loja. Você também pode
+                cadastrar qualquer outro nome manualmente.
+              </p>
+            </div>
+            <Select
+              value={guidedProductId}
+              disabled={!guidedCategoryId}
+              onValueChange={(value) => {
+                setGuidedProductId(value);
+                setGuidedManualName("");
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um produto cadastrado (opcional)" />
+              </SelectTrigger>
+              <SelectContent>
+                {guidedCategoryProducts.map((product) => (
+                  <SelectItem key={product.id} value={product.id}>
+                    {product.name}
+                    {product.is_hidden ? " · rascunho/oculto" : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {guidedCategoryId && !guidedCategoryProducts.length ? (
+              <p className="text-xs text-muted-foreground">
+                Ainda não há produtos nesta categoria. Digite o nome abaixo para começar.
+              </p>
+            ) : null}
+            <div className="space-y-1.5">
+              <Label htmlFor="guided-product-name">Ou digite manualmente</Label>
+              <Input
+                id="guided-product-name"
+                value={guidedManualName}
+                disabled={!guidedCategoryId}
+                placeholder="Nome do produto ou serviço"
+                onChange={(event) => {
+                  setGuidedManualName(event.target.value);
+                  if (event.target.value) setGuidedProductId("");
+                }}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setGuidedProductOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={!guidedCategoryId || (!guidedProductId && !guidedManualName.trim())}
+              onClick={continueGuidedProductCreation}
+            >
+              {guidedProductId ? "Abrir cadastro para editar" : "Continuar para os detalhes"}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -2915,7 +3173,7 @@ function Products() {
                 <div>
                   <p className="text-sm font-medium">Variações</p>
                   <p className="text-xs text-muted-foreground">
-                    Ex.: tamanhos, sabores ou cores com preço e estoque próprios.
+                    Ex.: tamanhos, volumes, sabores ou cores com preço e estoque próprios.
                   </p>
                 </div>
                 <Button
@@ -3144,6 +3402,11 @@ function Products() {
             </div>
 
             <ToggleRow
+              label="Disponível para venda"
+              checked={form.is_available}
+              onChange={(v) => setForm({ ...form, is_available: v })}
+            />
+            <ToggleRow
               label="Controlar estoque"
               checked={form.track_stock}
               onChange={(v) => setForm({ ...form, track_stock: v })}
@@ -3210,6 +3473,10 @@ function ProductCard({
       setImage(product.image_url);
       return;
     }
+    if (/^\/assets\/confeitaria\/[a-z0-9-]+\.webp$/i.test(product.image_url)) {
+      setImage(product.image_url);
+      return;
+    }
     void signAsset({ data: { path: product.image_url } })
       .then((result) => setImage(result.url))
       .catch(() => setImage(null));
@@ -3237,6 +3504,11 @@ function ProductCard({
         {product.is_hidden ? (
           <Badge variant="secondary" className="mt-1">
             Oculto
+          </Badge>
+        ) : null}
+        {!product.is_available ? (
+          <Badge variant="outline" className="mt-1 ml-1">
+            Indisponível
           </Badge>
         ) : null}
       </div>

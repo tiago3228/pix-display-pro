@@ -14,6 +14,43 @@ const categories = [
   { id: "cat-combos", name: "Combos" },
 ];
 
+const requiredNamesByGroup = {
+  "Bolos no pote clássicos": [
+    "Brigadeiro",
+    "Chocolate",
+    "Dois Amores",
+    "Beijinho",
+    "Prestígio",
+    "Cenoura com Chocolate",
+    "Doce de Leite",
+  ],
+  "Bolos no pote especiais": [
+    "Leite Ninho",
+    "Ninho com Nutella",
+    "Ninho com Morango",
+    "Oreo",
+    "Red Velvet",
+    "Churros",
+    "Paçoca",
+    "Sensação",
+  ],
+  "Bolos no pote de frutas": [
+    "Morango",
+    "Maracujá",
+    "Limão",
+    "Abacaxi com Coco",
+    "Abacaxi com Doce de Leite",
+    "Coco",
+  ],
+  "Outros doces": [
+    "Brigadeiro Gourmet",
+    "Beijinho",
+    "Brownie",
+    "Palha Italiana",
+    "Pudim Individual",
+  ],
+};
+
 test("sugere sabores por trecho do nome sem diferenciar acentos ou caixa", () => {
   assert.deepEqual(
     searchConfectioneryCatalog("NINHO").map((item) => item.name),
@@ -34,6 +71,26 @@ test("sugere sabores por trecho do nome sem diferenciar acentos ou caixa", () =>
   );
 });
 
+test("catálogo contém os sabores solicitados, organizados por grupo e categoria", () => {
+  for (const [group, names] of Object.entries(requiredNamesByGroup)) {
+    assert.deepEqual(
+      CONFECTIONERY_CATALOG.filter((item) => item.group === group).map((item) => item.name),
+      names,
+      group,
+    );
+  }
+
+  assert.deepEqual(CONFECTIONERY_CATEGORY_NAMES, ["Bolos no Pote", "Doces", "Combos"]);
+  assert.equal(
+    CONFECTIONERY_CATALOG.filter((item) => item.category === "Bolos no Pote").length,
+    21,
+  );
+  assert.equal(CONFECTIONERY_CATALOG.filter((item) => item.category === "Doces").length, 5);
+  assert.equal(CONFECTIONERY_CATALOG.filter((item) => item.category === "Combos").length, 2);
+  assert.equal(CONFECTIONERY_CATALOG.length, 28);
+  assert.ok(CONFECTIONERY_CATALOG.every((item) => !("price" in item)));
+});
+
 test("sugere primeiro produtos já cadastrados na loja sem repetir itens do catálogo", () => {
   const suggestions = searchConfectionerySuggestions("brig", [
     { name: "Brigadeiro", category: "Bolos no Pote", description: "Descrição salva" },
@@ -48,53 +105,66 @@ test("sugere primeiro produtos já cadastrados na loja sem repetir itens do cat�
   assert.equal(suggestions[0]?.category, "Bolos no Pote");
 });
 
-test("pré-cadastra 28 itens ocultos, indisponíveis e sem preço definido", () => {
+test("pré-cadastra 28 itens ocultos, indisponíveis e sem preço comercial ativo", () => {
   const rows = buildConfectioneryProductRows("store-1", categories, []);
-  const countsByCategory = Object.fromEntries(
-    CONFECTIONERY_CATEGORY_NAMES.map((category) => [
-      category,
-      CONFECTIONERY_CATALOG.filter((item) => item.category === category).length,
-    ]),
-  );
   const categoryIds = new Map(categories.map((category) => [category.name, category.id]));
-  const catalogByName = new Map(CONFECTIONERY_CATALOG.map((item) => [item.name, item]));
+  const catalogByNameAndCategory = new Map(
+    CONFECTIONERY_CATALOG.map((item) => [`${item.category}:${item.name}`, item]),
+  );
   const expectedFields = [
     "category_id",
     "description",
+    "image_url",
     "is_available",
     "is_hidden",
     "module",
     "name",
     "position",
     "price",
+    "price_visible",
+    "purchase_enabled",
+    "quantity_enabled",
+    "quote_enabled",
+    "show_price_from",
     "stock",
     "store_id",
     "track_stock",
   ].sort();
 
   assert.equal(rows.length, 28);
-  assert.deepEqual(countsByCategory, {
-    "Bolos no Pote": 21,
-    Doces: 5,
-    Combos: 2,
-  });
-  assert.deepEqual(CONFECTIONERY_CATEGORY_NAMES, ["Bolos no Pote", "Doces", "Combos"]);
   assert.ok(rows.every((row) => row.store_id === "store-1"));
   assert.ok(rows.every((row) => row.module === "cafeteria"));
   assert.ok(rows.every((row) => row.price === 0));
+  assert.ok(rows.every((row) => row.price_visible === false));
+  assert.ok(rows.every((row) => row.purchase_enabled === false));
+  assert.ok(rows.every((row) => row.quantity_enabled === false));
+  assert.ok(rows.every((row) => row.quote_enabled === false && row.show_price_from === false));
   assert.ok(rows.every((row) => row.is_hidden && !row.is_available));
   assert.ok(rows.every((row) => row.stock === 0 && !row.track_stock));
 
   for (const row of rows) {
-    const item = catalogByName.get(row.name);
+    const item = catalogByNameAndCategory.get(
+      `${row.category_id === "cat-bolos" ? "Bolos no Pote" : row.category_id === "cat-doces" ? "Doces" : "Combos"}:${row.name}`,
+    );
     assert.ok(item);
     assert.equal(row.description, item.description);
     assert.equal(row.category_id, categoryIds.get(item.category));
+    assert.equal(row.image_url, item.imageUrl);
     assert.deepEqual(Object.keys(row).sort(), expectedFields);
   }
 });
 
-test("não duplica produtos existentes na mesma loja e mantém catálogo independente por store_id", () => {
+test("as ilustrações do catálogo usam caminhos públicos seguros e nenhuma imagem é inventada por fallback", () => {
+  const imagePaths = CONFECTIONERY_CATALOG.map((item) => item.imageUrl).filter(
+    (path): path is string => path !== null,
+  );
+  assert.equal(imagePaths.length, 10);
+  assert.ok(imagePaths.every((path) => /^\/assets\/confeitaria\/[a-z0-9-]+\.webp$/i.test(path)));
+  assert.equal(new Set(imagePaths).size, imagePaths.length);
+  assert.ok(CONFECTIONERY_CATALOG.filter((item) => item.imageUrl === null).length > 0);
+});
+
+test("não duplica produtos existentes na loja e mantém a detecção legacy sem categoria", () => {
   const initialRows = buildConfectioneryProductRows("store-1", categories, []);
   const repeatRows = buildConfectioneryProductRows(
     "store-1",
@@ -115,6 +185,33 @@ test("não duplica produtos existentes na mesma loja e mantém catálogo indepen
   assert.ok(!rowsWithExistingNames.some((row) => row.name === "Paçoca"));
   assert.equal(otherStoreRows.length, CONFECTIONERY_CATALOG.length);
   assert.ok(otherStoreRows.every((row) => row.store_id === "store-2"));
+});
+
+test("deduplica Beijinho somente na categoria correspondente e reconhece o legado Gourmet", () => {
+  const existingCake = buildConfectioneryProductRows("store-1", categories, [
+    { name: "Beijinho", category_id: "cat-bolos" },
+  ]);
+  const existingSweet = buildConfectioneryProductRows("store-1", categories, [
+    { name: "Beijinho Gourmet", category_id: "cat-doces" },
+  ]);
+  const rows = buildConfectioneryProductRows("store-1", categories, [
+    { name: "Beijinho", category_id: "cat-bolos" },
+    { name: "Beijinho Gourmet", category_id: "cat-doces" },
+    { name: "Brownie", category_id: "cat-doces" },
+  ]);
+
+  assert.ok(
+    !existingCake.some((row) => row.name === "Beijinho" && row.category_id === "cat-bolos"),
+  );
+  assert.ok(existingCake.some((row) => row.name === "Beijinho" && row.category_id === "cat-doces"));
+  assert.ok(
+    existingSweet.some((row) => row.name === "Beijinho" && row.category_id === "cat-bolos"),
+  );
+  assert.ok(
+    !existingSweet.some((row) => row.name === "Beijinho" && row.category_id === "cat-doces"),
+  );
+  assert.ok(!rows.some((row) => row.name === "Brownie" && row.category_id === "cat-doces"));
+  assert.equal(rows.length, CONFECTIONERY_CATALOG.length - 3);
 });
 
 test("normaliza caixa e espaços ao associar categorias e detectar itens existentes", () => {
