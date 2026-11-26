@@ -1871,10 +1871,10 @@ export type Database = {
           position: number
           price: number
           price_visible: boolean
-          show_price_from: boolean
           purchase_enabled: boolean
           quantity_enabled: boolean
           quote_enabled: boolean
+          service_estimated_time: string | null
           shoe_authenticity: string
           shoe_brand_id: string | null
           shoe_brand_manual: string | null
@@ -1883,6 +1883,7 @@ export type Database = {
           shoe_model_id: string | null
           shoe_model_manual: string | null
           shoe_size: string | null
+          show_price_from: boolean
           sku: string | null
           sports_audience: string | null
           sports_is_customized: boolean
@@ -1895,7 +1896,6 @@ export type Database = {
           sports_product_type: string | null
           sports_sort_order: number
           stock: number
-          service_estimated_time: string | null
           store_id: string
           track_stock: boolean
           updated_at: string
@@ -1940,7 +1940,11 @@ export type Database = {
           original_price?: number | null
           position?: number
           price?: number
-          show_price_from?: boolean
+          price_visible?: boolean
+          purchase_enabled?: boolean
+          quantity_enabled?: boolean
+          quote_enabled?: boolean
+          service_estimated_time?: string | null
           shoe_authenticity?: string
           shoe_brand_id?: string | null
           shoe_brand_manual?: string | null
@@ -1949,6 +1953,7 @@ export type Database = {
           shoe_model_id?: string | null
           shoe_model_manual?: string | null
           shoe_size?: string | null
+          show_price_from?: boolean
           sku?: string | null
           sports_audience?: string | null
           sports_is_customized?: boolean
@@ -1961,11 +1966,6 @@ export type Database = {
           sports_product_type?: string | null
           sports_sort_order?: number
           stock?: number
-          service_estimated_time?: string | null
-          price_visible?: boolean
-          purchase_enabled?: boolean
-          quantity_enabled?: boolean
-          quote_enabled?: boolean
           store_id: string
           track_stock?: boolean
           updated_at?: string
@@ -2010,7 +2010,11 @@ export type Database = {
           original_price?: number | null
           position?: number
           price?: number
-          show_price_from?: boolean
+          price_visible?: boolean
+          purchase_enabled?: boolean
+          quantity_enabled?: boolean
+          quote_enabled?: boolean
+          service_estimated_time?: string | null
           shoe_authenticity?: string
           shoe_brand_id?: string | null
           shoe_brand_manual?: string | null
@@ -2019,6 +2023,7 @@ export type Database = {
           shoe_model_id?: string | null
           shoe_model_manual?: string | null
           shoe_size?: string | null
+          show_price_from?: boolean
           sku?: string | null
           sports_audience?: string | null
           sports_is_customized?: boolean
@@ -2031,11 +2036,6 @@ export type Database = {
           sports_product_type?: string | null
           sports_sort_order?: number
           stock?: number
-          service_estimated_time?: string | null
-          price_visible?: boolean
-          purchase_enabled?: boolean
-          quantity_enabled?: boolean
-          quote_enabled?: boolean
           store_id?: string
           track_stock?: boolean
           updated_at?: string
@@ -2591,10 +2591,10 @@ export type Database = {
       }
       storefront_banners: {
         Row: {
+          content_visible: boolean
           created_at: string
           cta_href: string
           cta_label: string
-          content_visible: boolean
           ends_at: string | null
           id: string
           image_url: string | null
@@ -2608,10 +2608,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          content_visible?: boolean
           created_at?: string
           cta_href?: string
           cta_label?: string
-          content_visible?: boolean
           ends_at?: string | null
           id?: string
           image_url?: string | null
@@ -2625,10 +2625,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          content_visible?: boolean
           created_at?: string
           cta_href?: string
           cta_label?: string
-          content_visible?: boolean
           ends_at?: string | null
           id?: string
           image_url?: string | null
