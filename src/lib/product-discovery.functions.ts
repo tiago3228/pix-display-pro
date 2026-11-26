@@ -18,7 +18,10 @@ export type DiscoveryResult = {
   priceReference: number | null;
 };
 
-const SearchInput = z.object({ query: z.string().trim().min(2).max(180) });
+const SearchInput = z.object({
+  query: z.string().trim().min(2).max(180),
+  storeId: z.string().uuid(),
+});
 const ProviderResult = z.object({
   id: z.string().optional(),
   name: z.string(),
@@ -67,16 +70,16 @@ export const searchProductDiscovery = createServerFn({ method: "POST" })
   .validator((data: unknown) => SearchInput.parse(data))
   .handler(async ({ data, context }): Promise<{ results: DiscoveryResult[]; provider: string }> => {
     const ctx = context as unknown as AuthContext;
-    const external = await configuredProvider(data.query);
-    if (external.length) return { results: external.slice(0, 8), provider: "provider-configurado" };
-    const store = await ctx.supabase
+    const { data: store } = await ctx.supabase
       .from("stores")
       .select("id")
+      .eq("id", data.storeId)
       .eq("owner_id", ctx.userId)
-      .order("created_at", { ascending: true })
-      .limit(1)
       .maybeSingle();
-    if (!store.data?.id) return { results: [], provider: "catalogo-local" };
+    if (!store) throw new Error("Loja não encontrada.");
+
+    const external = await configuredProvider(data.query);
+    if (external.length) return { results: external.slice(0, 8), provider: "provider-configurado" };
     const terms = data.query
       .split(/\s+/)
       .filter((term) => term.length > 2)
@@ -84,7 +87,7 @@ export const searchProductDiscovery = createServerFn({ method: "POST" })
     const models = await ctx.supabase
       .from("shoe_models")
       .select("id,name,brand_id,shoe_brands(name)")
-      .eq("store_id", store.data.id)
+      .eq("store_id", store.id)
       .eq("is_active", true)
       .limit(80);
     const normalized = data.query.toLocaleLowerCase("pt-BR");

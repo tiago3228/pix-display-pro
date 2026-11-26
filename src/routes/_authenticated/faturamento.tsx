@@ -43,26 +43,26 @@ function SellerRevenue() {
   const deleteSale = useServerFn(deleteManualSale);
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["seller-revenue", filter.range],
+    queryKey: ["seller-revenue", store?.id, filter.range],
     enabled: Boolean(store?.id && store.plan === "pro"),
-    queryFn: () => fetchRevenue({ data: filter.range }),
+    queryFn: () => fetchRevenue({ data: { ...filter.range, storeId: store!.id } }),
   });
 
   const addMutation = useMutation({
     mutationFn: addSale,
     onSuccess: () => {
       toast.success("Venda registrada no faturamento.");
-      queryClient.invalidateQueries({ queryKey: ["seller-revenue"] });
+      queryClient.invalidateQueries({ queryKey: ["seller-revenue", store?.id] });
     },
     onError: (error: unknown) =>
       toast.error(error instanceof Error ? error.message : "Não foi possível registrar a venda."),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteSale({ data: { id } }),
+    mutationFn: (id: string) => deleteSale({ data: { id, storeId: store!.id } }),
     onSuccess: () => {
       toast.success("Lançamento excluído.");
-      queryClient.invalidateQueries({ queryKey: ["seller-revenue"] });
+      queryClient.invalidateQueries({ queryKey: ["seller-revenue", store?.id] });
     },
     onError: () => toast.error("Não foi possível excluir o lançamento."),
   });
@@ -105,7 +105,7 @@ function SellerRevenue() {
         description="Inclua vendas feitas por Pix, dinheiro, cartão ou presencialmente."
         withCustomer
         saving={addMutation.isPending}
-        onSubmit={(input) => addMutation.mutate({ data: input })}
+        onSubmit={(input) => addMutation.mutate({ data: { ...input, storeId: store.id } })}
       />
       <RevenueList entries={data?.entries ?? []} onDelete={(id) => deleteMutation.mutate(id)} />
     </AppShell>

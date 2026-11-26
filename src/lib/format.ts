@@ -41,6 +41,7 @@ export const PIX_KEY_TYPES = [
 ] as const;
 
 export const STORE_CATEGORIES = [
+  "Bolos no Pote & Doces",
   "Doces",
   "Roupas",
   "Joias e Semijoias",

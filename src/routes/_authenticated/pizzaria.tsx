@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { validateDeliveryOrigin } from "@/lib/delivery.functions";
+import { seedPizzeriaCatalog } from "@/lib/pizzeria.functions";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ClipboardList } from "lucide-react";
@@ -85,10 +86,6 @@ type PizzeriaAddon = {
 
 const db = {
   from: supabase.from.bind(supabase) as (table: string) => ReturnType<typeof supabase.from>,
-  rpc: supabase.rpc.bind(supabase) as (
-    functionName: string,
-    params: Record<string, unknown>,
-  ) => ReturnType<typeof supabase.rpc>,
 };
 
 const emptySettings = (storeId: string): PizzeriaSettingsRow => ({
@@ -115,6 +112,7 @@ function PizzeriaSettings() {
   const { data: store } = useMyStore();
   const client = useQueryClient();
   const validateOrigin = useServerFn(validateDeliveryOrigin);
+  const seedCatalog = useServerFn(seedPizzeriaCatalog);
   const [savingSettings, setSavingSettings] = useState(false);
   const [form, setForm] = useState<PizzeriaSettingsRow | null>(null);
   const [editingSize, setEditingSize] = useState<string | null>(null);
@@ -156,10 +154,15 @@ function PizzeriaSettings() {
     enabled: Boolean(store?.id),
     queryFn: async () => {
       if (!store) throw new Error("Loja não encontrada.");
-      const seedResult = await db.rpc("seed_pizzeria_catalog", { target_store_id: store.id });
-      if (seedResult.error) throw seedResult.error;
+      await seedCatalog({ data: { storeId: store.id } });
       const [settings, sizes, flavors, addons, prices] = await Promise.all([
-        db.from("pizzeria_settings").select("*").eq("store_id", store.id).maybeSingle(),
+        db
+          .from("pizzeria_settings")
+          .select(
+            "store_id, display_name, address, whatsapp, order_instructions, allow_half_flavors, allow_quarter_flavors, require_size, require_flavors, require_border, require_drink, require_sauce, require_additional, delivery_enabled, delivery_origin_cep, delivery_radius_km, delivery_fee",
+          )
+          .eq("store_id", store.id)
+          .maybeSingle(),
         db
           .from("pizzeria_sizes")
           .select("id,name,diameter_cm,max_flavors,is_active")
@@ -205,26 +208,38 @@ function PizzeriaSettings() {
   }
 
   async function saveSettings() {
-    if (!form) return;
-    if (!Number.isFinite(form.delivery_radius_km) || form.delivery_radius_km <= 0 || !Number.isFinite(form.delivery_fee) || form.delivery_fee < 0) {
+    if (!store || !form) return;
+    if (
+      !Number.isFinite(form.delivery_radius_km) ||
+      form.delivery_radius_km <= 0 ||
+      !Number.isFinite(form.delivery_fee) ||
+      form.delivery_fee < 0
+    ) {
       toast.error("Informe um limite maior que zero e uma taxa de frete válida.");
       return;
     }
     setSavingSettings(true);
     try {
-    const cep = form.delivery_origin_cep.replace(/\D/g, "");
-    if (form.delivery_enabled) {
-      await validateOrigin({ data: { cep } });
-    }
-    const result = await db.from("pizzeria_settings").upsert({ ...form, delivery_origin_cep: cep }, { onConflict: "store_id" });
-    if (result.error) {
-      toast.error("Não foi possível salvar as configurações da pizzaria.");
-      return;
-    }
-    toast.success("Configurações da pizzaria salvas.");
-    await refresh();
+      const cep = form.delivery_origin_cep.replace(/\D/g, "");
+      if (form.delivery_enabled) {
+        await validateOrigin({ data: { cep } });
+      }
+      const result = await db
+        .from("pizzeria_settings")
+        .upsert(
+          { ...form, store_id: store.id, delivery_origin_cep: cep },
+          { onConflict: "store_id" },
+        );
+      if (result.error) {
+        toast.error("Não foi possível salvar as configurações da pizzaria.");
+        return;
+      }
+      toast.success("Configurações da pizzaria salvas.");
+      await refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível verificar o CEP da pizzaria.");
+      toast.error(
+        error instanceof Error ? error.message : "Não foi possível verificar o CEP da pizzaria.",
+      );
     } finally {
       setSavingSettings(false);
     }
@@ -288,6 +303,7 @@ function PizzeriaSettings() {
     await refresh();
   }
   async function saveSize(size: PizzeriaSize) {
+    if (!store) return;
     const name = sizeDraft.name.trim();
     const diameter = sizeDraft.diameter_cm.trim()
       ? Number(sizeDraft.diameter_cm.replace(",", "."))
@@ -304,7 +320,8 @@ function PizzeriaSettings() {
     const result = await db
       .from("pizzeria_sizes")
       .update({ name, diameter_cm: diameter, max_flavors: maxFlavors })
-      .eq("id", size.id);
+      .eq("id", size.id)
+      .eq("store_id", store.id);
     if (result.error) {
       toast.error("Não foi possível salvar o tamanho. Verifique se o nome já existe.");
       return;
@@ -388,6 +405,7 @@ function PizzeriaSettings() {
     });
   }
   async function saveAddon(addon: PizzeriaAddon) {
+    if (!store) return;
     const price = Number(addonDraft.price.replace(",", "."));
     if (!addonDraft.name.trim() || !Number.isFinite(price) || price < 0) {
       toast.error("Informe um nome e um preço válido (maior ou igual a zero).");
@@ -405,7 +423,8 @@ function PizzeriaSettings() {
           ? { image_credit: null, image_source_url: null }
           : {}),
       })
-      .eq("id", addon.id);
+      .eq("id", addon.id)
+      .eq("store_id", store.id);
     if (result.error) {
       toast.error("Não foi possível salvar o item. Verifique se já existe no grupo.");
       return;
@@ -415,28 +434,34 @@ function PizzeriaSettings() {
     await refresh();
   }
   async function toggleAddon(addon: PizzeriaAddon) {
+    if (!store) return;
     const result = await db
       .from("pizzeria_addons")
       .update({ is_active: !addon.is_active })
-      .eq("id", addon.id);
+      .eq("id", addon.id)
+      .eq("store_id", store.id);
     if (result.error) toast.error("Não foi possível atualizar o item.");
     else await refresh();
   }
 
   async function toggleSize(size: PizzeriaSize) {
+    if (!store) return;
     const result = await db
       .from("pizzeria_sizes")
       .update({ is_active: !size.is_active })
-      .eq("id", size.id);
+      .eq("id", size.id)
+      .eq("store_id", store.id);
     if (result.error) toast.error("Não foi possível atualizar o tamanho.");
     else await refresh();
   }
 
   async function toggleFlavor(flavor: PizzeriaFlavor) {
+    if (!store) return;
     const result = await db
       .from("pizzeria_flavors")
       .update({ is_active: !flavor.is_active })
-      .eq("id", flavor.id);
+      .eq("id", flavor.id)
+      .eq("store_id", store.id);
     if (result.error) toast.error("Não foi possível atualizar o sabor.");
     else await refresh();
   }
@@ -501,7 +526,12 @@ function PizzeriaSettings() {
   }
 
   async function deleteAddon(addon: PizzeriaAddon) {
-    const result = await db.from("pizzeria_addons").delete().eq("id", addon.id);
+    if (!store) return;
+    const result = await db
+      .from("pizzeria_addons")
+      .delete()
+      .eq("id", addon.id)
+      .eq("store_id", store.id);
     if (result.error) toast.error("Não foi possível remover o item.");
     else await refresh();
   }
@@ -538,14 +568,14 @@ function PizzeriaSettings() {
       description="Configure tamanhos, sabores, bordas, bebidas, molhos e adicionais da sua loja."
       action={
         <div className="flex gap-2">
-        <Button size="sm" variant="outline" asChild>
-          <Link to="/pizzaria/pedidos">
-            <ClipboardList className="mr-1.5 size-4" /> Pedidos
-          </Link>
-        </Button>
-        <Button size="sm" disabled={savingSettings} onClick={() => void saveSettings()}>
-          <Save className="mr-1.5 size-4" /> Salvar configurações
-        </Button>
+          <Button size="sm" variant="outline" asChild>
+            <Link to="/pizzaria/pedidos">
+              <ClipboardList className="mr-1.5 size-4" /> Pedidos
+            </Link>
+          </Button>
+          <Button size="sm" disabled={savingSettings} onClick={() => void saveSettings()}>
+            <Save className="mr-1.5 size-4" /> Salvar configurações
+          </Button>
         </div>
       }
     >
@@ -654,28 +684,62 @@ function PizzeriaSettings() {
         </div>
       </CollapsibleSection>
 
-      <CollapsibleSection title="Entrega e frete" description="Área atendida e taxa de entrega" className="mt-4">
+      <CollapsibleSection
+        title="Entrega e frete"
+        description="Área atendida e taxa de entrega"
+        className="mt-4"
+      >
         <label className="flex items-center justify-between gap-3 text-sm">
           <span>Habilitar entrega</span>
-          <Switch checked={form.delivery_enabled} onCheckedChange={(checked) => setForm({ ...form, delivery_enabled: checked })} />
+          <Switch
+            checked={form.delivery_enabled}
+            onCheckedChange={(checked) => setForm({ ...form, delivery_enabled: checked })}
+          />
         </label>
         {form.delivery_enabled ? (
           <div className="mt-4 grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
               <Label htmlFor="origin-cep">CEP da pizzaria</Label>
-              <Input id="origin-cep" inputMode="numeric" maxLength={9} value={form.delivery_origin_cep} onChange={(e) => setForm({ ...form, delivery_origin_cep: e.target.value })} />
+              <Input
+                id="origin-cep"
+                inputMode="numeric"
+                maxLength={9}
+                value={form.delivery_origin_cep}
+                onChange={(e) => setForm({ ...form, delivery_origin_cep: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="delivery-radius">Limite de distância (km)</Label>
-              <Input id="delivery-radius" type="number" min="0.1" step="0.1" value={form.delivery_radius_km} onChange={(e) => setForm({ ...form, delivery_radius_km: Number(e.target.value) })} />
+              <Input
+                id="delivery-radius"
+                type="number"
+                min="0.1"
+                step="0.1"
+                value={form.delivery_radius_km}
+                onChange={(e) => setForm({ ...form, delivery_radius_km: Number(e.target.value) })}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="delivery-fee">Frete (R$)</Label>
-              <Input id="delivery-fee" type="number" min="0" step="0.01" value={form.delivery_fee} onChange={(e) => setForm({ ...form, delivery_fee: Number(e.target.value) })} />
+              <Input
+                id="delivery-fee"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.delivery_fee}
+                onChange={(e) => setForm({ ...form, delivery_fee: Number(e.target.value) })}
+              />
             </div>
-            <p className="text-xs text-muted-foreground sm:col-span-3">Raio aproximado entre os CEPs, em linha reta. Não representa o trajeto pelas ruas. Use R$ 0 para entrega grátis.</p>
+            <p className="text-xs text-muted-foreground sm:col-span-3">
+              Raio aproximado entre os CEPs, em linha reta. Não representa o trajeto pelas ruas. Use
+              R$ 0 para entrega grátis.
+            </p>
           </div>
-        ) : <p className="mt-3 text-xs text-muted-foreground">Pedidos da pizzaria disponíveis para retirada.</p>}
+        ) : (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Pedidos da pizzaria disponíveis para retirada.
+          </p>
+        )}
       </CollapsibleSection>
 
       <CollapsibleSection

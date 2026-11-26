@@ -48,23 +48,30 @@ export type AnalyzeResult = {
 
 type AuthContext = { supabase: SupabaseClient; userId: string };
 
-async function storeOf(context: AuthContext) {
-  const { data } = await context.supabase
+async function storeOf(context: AuthContext, storeId?: string) {
+  const query = context.supabase
     .from("stores")
-    .select("id, plan, category")
-    .eq("owner_id", context.userId)
-    .order("created_at", { ascending: true })
-    .limit(1);
-  return (data?.[0] ?? null) as { id: string; plan: string; category: string } | null;
+    .select("id, category")
+    .eq("owner_id", context.userId);
+  if (storeId) {
+    const { data, error } = await query.eq("id", storeId).maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error("Loja não encontrada.");
+    return data as { id: string; category: string };
+  }
+  const { data, error } = await query.limit(2);
+  if (error) throw error;
+  if ((data ?? []).length > 1) throw new Error("Informe a loja ativa para importar produtos.");
+  return (data?.[0] ?? null) as { id: string; category: string } | null;
 }
 
-async function buildStatus(store: { id: string; plan: string } | null): Promise<AiImportStatus> {
+async function buildStatus(store: { id: string } | null): Promise<AiImportStatus> {
   const { countPagesUsed, currentPeriod, storeIsPro } = await import("./ai-import.server");
   const period = currentPeriod();
   if (!store) {
     return { hasStore: false, isPro: false, used: 0, limit: 0, remaining: 0, period };
   }
-  const isPro = await storeIsPro(store.id, store.plan);
+  const isPro = await storeIsPro(store.id);
   const used = await countPagesUsed(store.id, period);
   const limit = aiPageLimitFor(isPro);
   return {
@@ -80,11 +87,13 @@ async function buildStatus(store: { id: string; plan: string } | null): Promise<
 /** Consumo mensal de páginas de IA da loja do usuário. */
 export const getAiImportStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<AiImportStatus> => {
-    return buildStatus(await storeOf(context as never));
+  .validator((data: unknown) => z.object({ storeId: z.string().uuid().optional() }).parse(data))
+  .handler(async ({ data, context }): Promise<AiImportStatus> => {
+    return buildStatus(await storeOf(context as never, data.storeId));
   });
 
 const AnalyzeInput = z.object({
+  storeId: z.string().uuid().optional(),
   pages: z
     .array(
       z.object({
@@ -102,7 +111,7 @@ export const analyseCatalogPages = createServerFn({ method: "POST" })
   .validator((data: unknown) => AnalyzeInput.parse(data))
   .handler(async ({ data, context }): Promise<AnalyzeResult> => {
     const ctx = context as unknown as AuthContext;
-    const store = await storeOf(ctx);
+    const store = await storeOf(ctx, data.storeId);
     let status = await buildStatus(store);
     if (!store) {
       return {
@@ -228,7 +237,8 @@ export const analyseCatalogPages = createServerFn({ method: "POST" })
           status: analyzed === 0 ? "failed" : "analyzed",
           error_message: analyzed === 0 && failed > 0 ? "Falha do provedor de IA" : null,
         })
-        .eq("id", jobId);
+        .eq("id", jobId)
+        .eq("store_id", store.id);
     }
 
     status = await buildStatus(store);
@@ -243,6 +253,7 @@ export const analyseCatalogPages = createServerFn({ method: "POST" })
   });
 
 const CreateInput = z.object({
+  storeId: z.string().uuid().optional(),
   jobId: z.string().uuid().nullable().default(null),
   items: z
     .array(
@@ -273,7 +284,7 @@ export const createProductsFromAi = createServerFn({ method: "POST" })
   .validator((data: unknown) => CreateInput.parse(data))
   .handler(async ({ data, context }): Promise<CreateAiProductsResult> => {
     const ctx = context as unknown as AuthContext;
-    const store = await storeOf(ctx);
+    const store = await storeOf(ctx, data.storeId);
     if (!store) throw new Error("Crie sua loja antes de cadastrar produtos.");
 
     const defaultModule = getStoreNicheModule(store.category);
@@ -404,7 +415,11 @@ export const createProductsFromAi = createServerFn({ method: "POST" })
         }
 
         if (safePaths.length && productId) {
-          await ctx.supabase.from("product_images").delete().eq("product_id", productId);
+          await ctx.supabase
+            .from("product_images")
+            .delete()
+            .eq("product_id", productId)
+            .eq("store_id", store.id);
           await ctx.supabase.from("product_images").insert(
             safePaths.slice(0, MAX_PRODUCT_IMAGES).map((path, position) => ({
               product_id: productId,
@@ -443,9 +458,10 @@ export type AiImportHistoryRow = {
 /** Histórico de importações com IA da loja do usuário. */
 export const listAiImports = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<AiImportHistoryRow[]> => {
+  .validator((data: unknown) => z.object({ storeId: z.string().uuid().optional() }).parse(data))
+  .handler(async ({ data: input, context }): Promise<AiImportHistoryRow[]> => {
     const ctx = context as unknown as AuthContext;
-    const store = await storeOf(ctx);
+    const store = await storeOf(ctx, input.storeId);
     if (!store) return [];
     const { data } = await ctx.supabase
       .from("ai_import_jobs")

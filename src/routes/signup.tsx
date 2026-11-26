@@ -78,7 +78,7 @@ function SignupPage() {
         });
         if (profileError) console.warn("Não foi possível salvar o perfil inicial", profileError);
       }
-      navigate({ to: "/onboarding" });
+      navigate({ to: "/onboarding", search: { mode: "setup" } });
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Não foi possível criar a conta. Tente novamente.",
@@ -97,7 +97,7 @@ function SignupPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/onboarding" });
+    navigate({ to: "/onboarding", search: { mode: "setup" } });
   }
 
   return (

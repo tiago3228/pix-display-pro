@@ -26,13 +26,14 @@ export async function countPagesUsed(storeId: string, period = currentPeriod()) 
   return count ?? 0;
 }
 
-/** A loja tem PRO ativo (plano da assinatura ou liberação via Pix). */
-export async function storeIsPro(storeId: string, plan: string | null) {
-  if (plan === "pro") return true;
-  const { activeProTrial } = await import("./subscription.server");
-  if (await activeProTrial(storeId)) return true;
-  const { activePixGrant } = await import("./pro-pix.server");
-  return Boolean(await activePixGrant(storeId));
+/** Usa o entitlement central para que todas as lojas do proprietário tenham a mesma cota PRO. */
+export async function storeIsPro(storeId: string) {
+  const db = await admin();
+  const { data, error } = await db.rpc("store_has_pro_access", {
+    target_store_id: storeId,
+  });
+  if (error) throw new Error("Não foi possível verificar o acesso PRO da loja.");
+  return data === true;
 }
 
 export const AiProductSchema = z.object({

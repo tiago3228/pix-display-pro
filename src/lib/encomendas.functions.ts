@@ -186,13 +186,15 @@ export const submitEncomenda = createServerFn({ method: "POST" })
 
 export const getMyEncomendas = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .validator((data: unknown) => z.object({ storeId: z.string().uuid() }).parse(data))
+  .handler(async ({ data: input, context }) => {
     const { data: store } = await context.supabase
       .from("stores")
       .select("id")
+      .eq("id", input.storeId)
       .eq("owner_id", context.userId)
       .maybeSingle();
-    if (!store) return { encomendas: [] };
+    if (!store) throw new Error("Loja não encontrada.");
     const { data } = await context.supabase
       .from("encomendas")
       .select(
@@ -208,6 +210,7 @@ export const updateEncomenda = createServerFn({ method: "POST" })
   .validator((data: unknown) =>
     z
       .object({
+        storeId: z.string().uuid(),
         id: z.string().uuid(),
         status: planStatus,
         ownerNote: z.string().max(1000).optional(),
@@ -218,6 +221,7 @@ export const updateEncomenda = createServerFn({ method: "POST" })
     const { data: store } = await context.supabase
       .from("stores")
       .select("id")
+      .eq("id", data.storeId)
       .eq("owner_id", context.userId)
       .maybeSingle();
     if (!store) throw new Error("Loja não encontrada.");
