@@ -917,6 +917,8 @@ export const submitOrder = createServerFn({ method: "POST" })
     }
     let deliveryFee = 0;
     let deliveryDistance: number | null = null;
+    let deliverySettingsUpdatedAt: string | null = null;
+    let deliveryConfigSource: "legacy" | "generic" | null = null;
     const hasPizzeriaItems = data.items.some((i) => i.pizza || i.addonId);
     if (hasPizzeriaItems) {
       const admin = supabaseAdmin as unknown as AdminDb & LooseDb;
@@ -946,6 +948,12 @@ export const submitOrder = createServerFn({ method: "POST" })
         if (!result.allowed) throw new Error("Não atendemos entrega neste CEP.");
         deliveryFee = result.fee;
         deliveryDistance = result.distanceKm;
+        deliverySettingsUpdatedAt = result.settingsUpdatedAt;
+        const source = process.env["DELIVERY_CONFIG_SOURCE"] ?? "legacy";
+        if (source !== "legacy" && source !== "generic") {
+          throw new Error("Fonte de configuração de entrega inválida.");
+        }
+        deliveryConfigSource = source;
       }
     }
     const hasProAccess =
@@ -1136,6 +1144,10 @@ export const submitOrder = createServerFn({ method: "POST" })
           delivery_state: data.deliveryAddress?.state ?? null,
           delivery_fee: deliveryFee,
           delivery_distance_km: deliveryDistance,
+          fulfillment_type: data.deliveryAddress ? "delivery" : "pickup",
+          delivery_quote_required: hasPizzeriaItems && Boolean(data.deliveryAddress),
+          delivery_config_source: deliveryConfigSource,
+          delivery_settings_updated_at: deliverySettingsUpdatedAt,
           total,
           payment_declared: data.paymentDeclared,
           receipt_path: data.receiptPath ?? null,
