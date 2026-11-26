@@ -49,6 +49,7 @@ export function getStoreNicheModule(category: string | null | undefined): StoreM
     value.includes("cafeteria") ||
     value.includes("aliment") ||
     value.includes("doces") ||
+    value.includes("bolos no pote") ||
     value.includes("padaria") ||
     value.includes("confeitaria")
   )
@@ -59,10 +60,16 @@ export function getStoreNicheModule(category: string | null | undefined): StoreM
   return "roupas";
 }
 
+export function isConfectioneryStoreCategory(category: string | null | undefined): boolean {
+  const value = normalized(category);
+  return value.includes("bolos no pote") || value.includes("confeitaria");
+}
+
 export function getStoreNicheLabel(category: string | null | undefined): string {
   const raw = category?.trim();
   if (!raw) return "🛍️ Loja";
   const value = normalized(raw);
+  if (isConfectioneryStoreCategory(raw)) return "🍰 Bolos no Pote & Doces";
   if (value.includes("joia") || value.includes("acessório") || value.includes("acessorio"))
     return `💎 ${raw}`;
   if (

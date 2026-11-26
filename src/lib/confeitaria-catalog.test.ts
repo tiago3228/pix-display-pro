@@ -4,6 +4,7 @@ import {
   buildConfectioneryProductRows,
   CONFECTIONERY_CATALOG,
   CONFECTIONERY_CATEGORY_NAMES,
+  searchConfectioneryCatalog,
 } from "./confeitaria-catalog.ts";
 
 const categories = [
@@ -11,6 +12,19 @@ const categories = [
   { id: "cat-doces", name: "Doces" },
   { id: "cat-combos", name: "Combos" },
 ];
+
+test("sugere sabores por trecho do nome sem diferenciar acentos ou caixa", () => {
+  assert.deepEqual(
+    searchConfectioneryCatalog("NINHO").map((item) => item.name),
+    ["Leite Ninho", "Ninho com Nutella", "Ninho com Morango"],
+  );
+  assert.deepEqual(
+    searchConfectioneryCatalog("pacoca").map((item) => item.name),
+    ["Paçoca"],
+  );
+  assert.deepEqual(searchConfectioneryCatalog("sabor inexistente"), []);
+  assert.deepEqual(searchConfectioneryCatalog("  "), []);
+});
 
 test("pré-cadastra 28 itens ocultos, indisponíveis e sem preço definido", () => {
   const rows = buildConfectioneryProductRows("store-1", categories, []);
@@ -68,13 +82,15 @@ test("não duplica produtos existentes na mesma loja e mantém catálogo indepen
   const rowsWithExistingNames = buildConfectioneryProductRows("store-1", categories, [
     " brigadeiro ",
     "Brownie",
+    "Pacoca",
   ]);
   const otherStoreRows = buildConfectioneryProductRows("store-2", categories, []);
 
   assert.equal(repeatRows.length, 0);
-  assert.equal(rowsWithExistingNames.length, CONFECTIONERY_CATALOG.length - 2);
+  assert.equal(rowsWithExistingNames.length, CONFECTIONERY_CATALOG.length - 3);
   assert.ok(!rowsWithExistingNames.some((row) => row.name === "Brigadeiro"));
   assert.ok(!rowsWithExistingNames.some((row) => row.name === "Brownie"));
+  assert.ok(!rowsWithExistingNames.some((row) => row.name === "Paçoca"));
   assert.equal(otherStoreRows.length, CONFECTIONERY_CATALOG.length);
   assert.ok(otherStoreRows.every((row) => row.store_id === "store-2"));
 });

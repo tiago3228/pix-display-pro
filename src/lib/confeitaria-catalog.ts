@@ -135,35 +135,51 @@ export const CONFECTIONERY_CATALOG: ConfectioneryCatalogItem[] = [
 
 export const CONFECTIONERY_CATEGORY_NAMES = ["Bolos no Pote", "Doces", "Combos"] as const;
 
+function normalizeConfectioneryName(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLocaleLowerCase("pt-BR");
+}
+
+export function searchConfectioneryCatalog(query: string, limit = 8) {
+  const search = normalizeConfectioneryName(query);
+  if (!search) return [];
+  return CONFECTIONERY_CATALOG.filter((item) =>
+    normalizeConfectioneryName(item.name).includes(search),
+  ).slice(0, limit);
+}
+
 /**
  * Monta as linhas iniciais para uma loja. `existingNames` deve vir apenas da
- * mesma store_id; o nome é comparado sem diferença entre maiúsculas/minúsculas.
+ * mesma store_id; a comparação ignora caixa, acentos e espaços excedentes.
  */
 export function buildConfectioneryProductRows(
   storeId: string,
   categories: { id: string; name: string }[],
   existingNames: string[],
 ) {
-  const normalize = (value: string) => value.trim().replace(/\s+/g, " ").toLocaleLowerCase("pt-BR");
   const categoryIds = new Map(
-    categories.map((category) => [normalize(category.name), category.id]),
+    categories.map((category) => [normalizeConfectioneryName(category.name), category.id]),
   );
-  const existing = new Set(existingNames.map(normalize));
+  const existing = new Set(existingNames.map(normalizeConfectioneryName));
 
-  return CONFECTIONERY_CATALOG.filter((item) => !existing.has(normalize(item.name))).map(
-    (item, position) => ({
-      store_id: storeId,
-      module: "cafeteria",
-      name: item.name,
-      description: item.description,
-      // Placeholder técnico numérico; não representa preço definido para venda.
-      price: 0,
-      stock: 0,
-      track_stock: false,
-      is_available: false,
-      is_hidden: true,
-      category_id: categoryIds.get(normalize(item.category)) ?? null,
-      position,
-    }),
-  );
+  return CONFECTIONERY_CATALOG.filter(
+    (item) => !existing.has(normalizeConfectioneryName(item.name)),
+  ).map((item, position) => ({
+    store_id: storeId,
+    module: "cafeteria",
+    name: item.name,
+    description: item.description,
+    // Placeholder técnico numérico; não representa preço definido para venda.
+    price: 0,
+    stock: 0,
+    track_stock: false,
+    is_available: false,
+    is_hidden: true,
+    category_id: categoryIds.get(normalizeConfectioneryName(item.category)) ?? null,
+    position,
+  }));
 }

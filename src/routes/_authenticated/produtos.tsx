@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -25,7 +25,18 @@ import { resolveAsset, uploadAsset } from "@/lib/images";
 import { FREE_PLAN_PRODUCT_LIMIT, brl } from "@/lib/format";
 import { searchProductDiscovery, type DiscoveryResult } from "@/lib/product-discovery.functions";
 import { listSportsNodes, sportsDb, type SportsNode } from "@/lib/sports";
-import { getStoreNicheModule, isNeutralCategoryName, type StoreModule } from "@/lib/store-niche";
+import {
+  buildConfectioneryProductRows,
+  CONFECTIONERY_CATEGORY_NAMES,
+  searchConfectioneryCatalog,
+} from "@/lib/confeitaria-catalog";
+import {
+  getStoreModuleLabel,
+  getStoreNicheModule,
+  isConfectioneryStoreCategory,
+  isNeutralCategoryName,
+  type StoreModule,
+} from "@/lib/store-niche";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -321,6 +332,15 @@ const emptyForm = {
   jewelry_offer_expires_at: "",
 };
 
+function normalizeCatalogName(value: string) {
+  return value
+    .trim()
+    .replace(/\s+/g, " ")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR");
+}
+
 const guidedDescriptionDefaults: Record<string, Record<string, string>> = {
   informatica: {
     Formatação: "Formatação de computadores e notebooks, com instalação e configuração inicial.",
@@ -452,6 +472,9 @@ function Products() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [seedingConfectioneryCatalog, setSeedingConfectioneryCatalog] = useState(false);
+  const [failedConfectioneryStoreId, setFailedConfectioneryStoreId] = useState<string | null>(null);
+  const attemptedConfectioneryStores = useRef(new Set<string>());
   const [newCategory, setNewCategory] = useState("");
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState("");
@@ -470,6 +493,7 @@ function Products() {
   const sportsCatalogEnabled = ["roupas", "roupas_esportivas", "roupas_treino"].includes(
     form.module,
   );
+  const isConfectioneryStore = isConfectioneryStoreCategory(store?.category);
 
   function currentCategoryModule() {
     if (jewelryOnly) return "joias";
@@ -625,6 +649,126 @@ function Products() {
       return data as unknown as ProductRow[];
     },
   });
+
+  const confectionerySuggestions =
+    isConfectioneryStore && form.module === "cafeteria" && form.name.trim()
+      ? searchConfectioneryCatalog(form.name)
+      : [];
+  const missingConfectioneryProductCount =
+    isConfectioneryStore && store && products
+      ? buildConfectioneryProductRows(
+          store.id,
+          [],
+          products.map((product) => product.name),
+        ).length
+      : 0;
+  const missingConfectioneryCategoryCount =
+    isConfectioneryStore && categories && (!open || form.module === "cafeteria")
+      ? CONFECTIONERY_CATEGORY_NAMES.filter(
+          (name) =>
+            !(categories ?? []).some(
+              (category) =>
+                category.module === "cafeteria" &&
+                normalizeCatalogName(category.name) === normalizeCatalogName(name),
+            ),
+        ).length
+      : 0;
+
+  const ensureConfectioneryCatalog = useCallback(
+    async (storeId: string) => {
+      setSeedingConfectioneryCatalog(true);
+      setFailedConfectioneryStoreId(null);
+      try {
+        if (typeof navigator === "undefined" || !navigator.locks) {
+          throw new Error("Atualize o navegador para preparar o catálogo com segurança.");
+        }
+        const result = await navigator.locks.request(
+          `vitrini-confeitaria-catalog:${storeId}`,
+          async () => {
+            const { data: existingCategories, error: categoriesReadError } = await supabase
+              .from("categories")
+              .select("id, name")
+              .eq("store_id", storeId)
+              .eq("module", "cafeteria");
+            if (categoriesReadError) throw categoriesReadError;
+
+            const categoryRows = CONFECTIONERY_CATEGORY_NAMES.map((name, position) => ({
+              store_id: storeId,
+              name,
+              module: "cafeteria",
+              position,
+            }));
+            const knownCategories = new Set(
+              (existingCategories ?? []).map((category) => normalizeCatalogName(category.name)),
+            );
+            const missingCategories = categoryRows.filter(
+              (category) => !knownCategories.has(normalizeCatalogName(category.name)),
+            );
+            if (missingCategories.length) {
+              const { error } = await supabase
+                .from("categories")
+                .insert(missingCategories as never);
+              if (error) throw error;
+            }
+
+            const { data: allCategories, error: allCategoriesError } = await supabase
+              .from("categories")
+              .select("id, name")
+              .eq("store_id", storeId)
+              .eq("module", "cafeteria");
+            const { data: existingProducts, error: productsReadError } = await supabase
+              .from("products")
+              .select("name")
+              .eq("store_id", storeId);
+            if (allCategoriesError || productsReadError) {
+              throw allCategoriesError ?? productsReadError;
+            }
+
+            const seedRows = buildConfectioneryProductRows(
+              storeId,
+              allCategories ?? [],
+              (existingProducts ?? []).map((product) => product.name),
+            );
+            if (seedRows.length) {
+              const { error } = await supabase.from("products").insert(seedRows as never);
+              if (error) throw error;
+            }
+            return {
+              productCount: seedRows.length,
+              categoryCount: missingCategories.length,
+            };
+          },
+        );
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["categories", storeId] }),
+          queryClient.invalidateQueries({ queryKey: ["products", storeId] }),
+        ]);
+        if (result.productCount || result.categoryCount) {
+          toast.success(
+            result.productCount
+              ? `${result.productCount} produtos do catálogo inicial foram adicionados como rascunhos ocultos.`
+              : "Categorias do catálogo inicial preparadas.",
+          );
+        }
+      } catch (error) {
+        attemptedConfectioneryStores.current.delete(storeId);
+        setFailedConfectioneryStoreId(storeId);
+        const message = error instanceof Error ? error.message : "erro inesperado";
+        toast.error(`Não foi possível preparar o catálogo de confeitaria: ${message}`);
+      } finally {
+        setSeedingConfectioneryCatalog(false);
+      }
+    },
+    [queryClient],
+  );
+
+  useEffect(() => {
+    if (!store?.id || !isConfectioneryStore || attemptedConfectioneryStores.current.has(store.id)) {
+      return;
+    }
+    attemptedConfectioneryStores.current.add(store.id);
+    void ensureConfectioneryCatalog(store.id);
+  }, [store?.id, isConfectioneryStore, ensureConfectioneryCatalog]);
 
   const { data: sportsNodes } = useQuery<SportsNode[]>({
     queryKey: ["sports-nodes", store?.id],
@@ -1657,6 +1801,39 @@ function Products() {
         </div>
       </CollapsibleSection>
 
+      {isConfectioneryStore &&
+      (missingConfectioneryProductCount > 0 ||
+        missingConfectioneryCategoryCount > 0 ||
+        failedConfectioneryStoreId === store?.id ||
+        seedingConfectioneryCatalog) ? (
+        <div className="surface mb-3 flex flex-wrap items-center justify-between gap-3 p-4">
+          <div>
+            <p className="text-sm font-semibold">Catálogo inicial incompleto</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {missingConfectioneryProductCount > 0
+                ? `Faltam ${missingConfectioneryProductCount} sabores pré-cadastrados nesta loja. Eles serão adicionados como rascunhos ocultos, sem preço definido.`
+                : missingConfectioneryCategoryCount > 0
+                  ? `Faltam ${missingConfectioneryCategoryCount} categorias do catálogo nesta loja.`
+                  : "A preparação do catálogo não foi concluída. Tente novamente."}
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={seedingConfectioneryCatalog}
+            onClick={() => {
+              if (store) void ensureConfectioneryCatalog(store.id);
+            }}
+          >
+            {seedingConfectioneryCatalog
+              ? "Preparando catálogo..."
+              : failedConfectioneryStoreId === store?.id
+                ? "Tentar novamente"
+                : "Completar catálogo"}
+          </Button>
+        </div>
+      ) : null}
+
       <div className="space-y-3">
         {(products ?? []).map((product) => (
           <ProductCard
@@ -2114,7 +2291,7 @@ function Products() {
                         : marmitariaOnly
                           ? "🍱 Marmitaria"
                           : cafeteriaOnly
-                            ? "☕ Cafeteria"
+                            ? getStoreModuleLabel(store?.category, "cafeteria")
                             : trainingOnly
                               ? "🏋️ Roupas de Treino / Academia"
                               : "👟 Calçados"}
@@ -2142,7 +2319,9 @@ function Products() {
                       <SelectItem value="roupas_esportivas">⚽ Roupas Esportivas</SelectItem>
                       <SelectItem value="roupas_treino">🏋️ Roupas de Treino / Academia</SelectItem>
                       <SelectItem value="calcados">👟 Calçados</SelectItem>
-                      <SelectItem value="cafeteria">☕ Cafeteria</SelectItem>
+                      <SelectItem value="cafeteria">
+                        {getStoreModuleLabel(store?.category, "cafeteria")}
+                      </SelectItem>
                       <SelectItem value="marmitaria">🍱 Marmitaria</SelectItem>
                       {store?.plan === "pro" ? (
                         <>
@@ -2186,6 +2365,53 @@ function Products() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
+                {confectionerySuggestions.length ? (
+                  <div className="overflow-hidden rounded-md border bg-background">
+                    <p className="border-b px-3 py-2 text-xs font-medium text-muted-foreground">
+                      Sugestões de sabores
+                    </p>
+                    <div className="max-h-48 overflow-y-auto p-1">
+                      {confectionerySuggestions.map((suggestion) => {
+                        const existingProduct = (products ?? []).find(
+                          (item) =>
+                            item.module === "cafeteria" &&
+                            normalizeCatalogName(item.name) ===
+                              normalizeCatalogName(suggestion.name),
+                        );
+                        const matchingCategory = (categories ?? []).find(
+                          (category) =>
+                            category.module === "cafeteria" &&
+                            normalizeCatalogName(category.name) ===
+                              normalizeCatalogName(suggestion.category),
+                        );
+                        return (
+                          <button
+                            key={suggestion.name}
+                            type="button"
+                            className="flex w-full items-center justify-between gap-3 rounded px-2 py-2 text-left text-sm hover:bg-muted"
+                            onClick={() => {
+                              if (existingProduct) {
+                                openEdit(existingProduct);
+                                return;
+                              }
+                              setForm((current) => ({
+                                ...current,
+                                name: suggestion.name,
+                                description: suggestion.description,
+                                category_id: matchingCategory?.id ?? "none",
+                              }));
+                            }}
+                          >
+                            <span className="font-medium">{suggestion.name}</span>
+                            <span className="shrink-0 text-xs text-muted-foreground">
+                              {existingProduct ? "Já cadastrado · editar" : suggestion.category}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
