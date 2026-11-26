@@ -28,7 +28,7 @@ import { listSportsNodes, sportsDb, type SportsNode } from "@/lib/sports";
 import {
   buildConfectioneryProductRows,
   CONFECTIONERY_CATEGORY_NAMES,
-  searchConfectioneryCatalog,
+  searchConfectionerySuggestions,
 } from "@/lib/confeitaria-catalog";
 import {
   getStoreModuleLabel,
@@ -486,6 +486,7 @@ function Products() {
   const [trainingOnly, setTrainingOnly] = useState(false);
   const [shoesOnly, setShoesOnly] = useState(false);
   const [cafeteriaOnly, setCafeteriaOnly] = useState(false);
+  const [confectionerySuggestionsOpen, setConfectionerySuggestionsOpen] = useState(false);
   const [marmitariaOnly, setMarmitariaOnly] = useState(false);
   const [jewelryOnly, setJewelryOnly] = useState(false);
   const [informaticaOnly, setInformaticaOnly] = useState(false);
@@ -650,9 +651,16 @@ function Products() {
     },
   });
 
+  const existingConfectioneryProducts = (products ?? [])
+    .filter((product) => product.module === "cafeteria")
+    .map((product) => ({
+      name: product.name,
+      category: categories?.find((category) => category.id === product.category_id)?.name ?? null,
+      description: product.description,
+    }));
   const confectionerySuggestions =
-    isConfectioneryStore && form.module === "cafeteria" && form.name.trim()
-      ? searchConfectioneryCatalog(form.name)
+    isConfectioneryStore && form.module === "cafeteria" && confectionerySuggestionsOpen
+      ? searchConfectionerySuggestions(form.name, existingConfectioneryProducts)
       : [];
   const missingConfectioneryProductCount =
     isConfectioneryStore && store && products
@@ -804,6 +812,7 @@ function Products() {
     }
     setEditing(null);
     setImportedDiscovery(null);
+    setConfectionerySuggestionsOpen(false);
     setManualShoeBrand("");
     setManualShoeModel("");
     setForm({
@@ -831,6 +840,7 @@ function Products() {
   function openEdit(product: ProductRow) {
     setEditing(product);
     setImportedDiscovery(null);
+    setConfectionerySuggestionsOpen(false);
     setManualShoeBrand("");
     setManualShoeModel("");
     if (product.shoe_brand_id) {
@@ -2363,6 +2373,8 @@ function Products() {
                 <Label>Nome</Label>
                 <Input
                   value={form.name}
+                  placeholder={isConfectioneryStore ? "Digite ou escolha um sabor..." : undefined}
+                  onFocus={() => setConfectionerySuggestionsOpen(true)}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                 />
                 {confectionerySuggestions.length ? (
@@ -2378,12 +2390,14 @@ function Products() {
                             normalizeCatalogName(item.name) ===
                               normalizeCatalogName(suggestion.name),
                         );
-                        const matchingCategory = (categories ?? []).find(
-                          (category) =>
-                            category.module === "cafeteria" &&
-                            normalizeCatalogName(category.name) ===
-                              normalizeCatalogName(suggestion.category),
-                        );
+                        const matchingCategory = suggestion.category
+                          ? (categories ?? []).find(
+                              (category) =>
+                                category.module === "cafeteria" &&
+                                normalizeCatalogName(category.name) ===
+                                  normalizeCatalogName(suggestion.category!),
+                            )
+                          : undefined;
                         return (
                           <button
                             key={suggestion.name}
@@ -2400,11 +2414,14 @@ function Products() {
                                 description: suggestion.description,
                                 category_id: matchingCategory?.id ?? "none",
                               }));
+                              setConfectionerySuggestionsOpen(false);
                             }}
                           >
                             <span className="font-medium">{suggestion.name}</span>
                             <span className="shrink-0 text-xs text-muted-foreground">
-                              {existingProduct ? "Já cadastrado · editar" : suggestion.category}
+                              {existingProduct
+                                ? "Já cadastrado · editar"
+                                : (suggestion.category ?? "Sugestão do catálogo")}
                             </span>
                           </button>
                         );

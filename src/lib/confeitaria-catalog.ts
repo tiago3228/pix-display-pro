@@ -4,6 +4,12 @@ export type ConfectioneryCatalogItem = {
   description: string;
 };
 
+export type ConfectionerySuggestion = {
+  name: string;
+  category: string | null;
+  description: string;
+};
+
 /** Catálogo inicial: descrições informativas, sem especificar tamanho, volume ou preço. */
 export const CONFECTIONERY_CATALOG: ConfectioneryCatalogItem[] = [
   {
@@ -146,10 +152,29 @@ function normalizeConfectioneryName(value: string) {
 
 export function searchConfectioneryCatalog(query: string, limit = 8) {
   const search = normalizeConfectioneryName(query);
-  if (!search) return [];
-  return CONFECTIONERY_CATALOG.filter((item) =>
-    normalizeConfectioneryName(item.name).includes(search),
+  return CONFECTIONERY_CATALOG.filter(
+    (item) => !search || normalizeConfectioneryName(item.name).includes(search),
   ).slice(0, limit);
+}
+
+export function searchConfectionerySuggestions(
+  query: string,
+  existingProducts: ConfectionerySuggestion[] = [],
+  limit = 8,
+): ConfectionerySuggestion[] {
+  const search = normalizeConfectioneryName(query);
+  const existingMatches = existingProducts.filter(
+    (product) => !search || normalizeConfectioneryName(product.name).includes(search),
+  );
+  const catalogMatches = searchConfectioneryCatalog(query, CONFECTIONERY_CATALOG.length);
+  const unique = new Map<string, ConfectionerySuggestion>();
+
+  for (const suggestion of [...existingMatches, ...catalogMatches]) {
+    const key = normalizeConfectioneryName(suggestion.name);
+    if (!unique.has(key)) unique.set(key, suggestion);
+  }
+
+  return [...unique.values()].slice(0, limit);
 }
 
 /**

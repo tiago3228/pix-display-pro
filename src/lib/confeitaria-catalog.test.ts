@@ -5,6 +5,7 @@ import {
   CONFECTIONERY_CATALOG,
   CONFECTIONERY_CATEGORY_NAMES,
   searchConfectioneryCatalog,
+  searchConfectionerySuggestions,
 } from "./confeitaria-catalog.ts";
 
 const categories = [
@@ -22,8 +23,29 @@ test("sugere sabores por trecho do nome sem diferenciar acentos ou caixa", () =>
     searchConfectioneryCatalog("pacoca").map((item) => item.name),
     ["Paçoca"],
   );
+  assert.deepEqual(
+    searchConfectioneryCatalog("", 3).map((item) => item.name),
+    ["Brigadeiro", "Chocolate", "Dois Amores"],
+  );
   assert.deepEqual(searchConfectioneryCatalog("sabor inexistente"), []);
-  assert.deepEqual(searchConfectioneryCatalog("  "), []);
+  assert.deepEqual(
+    searchConfectioneryCatalog("  ", 2).map((item) => item.name),
+    ["Brigadeiro", "Chocolate"],
+  );
+});
+
+test("sugere primeiro produtos já cadastrados na loja sem repetir itens do catálogo", () => {
+  const suggestions = searchConfectionerySuggestions("brig", [
+    { name: "Brigadeiro", category: "Bolos no Pote", description: "Descrição salva" },
+    { name: "Brigadeiro de Café", category: "Doces", description: "Sabor da loja" },
+  ]);
+
+  assert.deepEqual(
+    suggestions.map((item) => item.name),
+    ["Brigadeiro", "Brigadeiro de Café", "Brigadeiro Gourmet"],
+  );
+  assert.equal(suggestions[0]?.description, "Descrição salva");
+  assert.equal(suggestions[0]?.category, "Bolos no Pote");
 });
 
 test("pré-cadastra 28 itens ocultos, indisponíveis e sem preço definido", () => {

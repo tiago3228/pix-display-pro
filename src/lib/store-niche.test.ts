@@ -10,6 +10,9 @@ import {
 test("Bolos no Pote & Doces usa o módulo cafeteria interno da loja", () => {
   assert.equal(getStoreNicheModule("Bolos no Pote & Doces"), "cafeteria");
   assert.equal(isConfectioneryStoreCategory("Bolos no Pote & Doces"), true);
+  assert.equal(getStoreNicheModule("Doces"), "cafeteria");
+  assert.equal(isConfectioneryStoreCategory("Doces"), true);
+  assert.equal(isConfectioneryStoreCategory("Doces artesanais"), true);
   assert.equal(isConfectioneryStoreCategory("Informática & Tecnologia"), false);
 });
 
@@ -18,6 +21,7 @@ test("o módulo cafeteria aparece com o rótulo Bolos no Pote & Doces na loja de
     getStoreModuleLabel("Bolos no Pote & Doces", "cafeteria"),
     "🍰 Bolos no Pote & Doces",
   );
+  assert.equal(getStoreModuleLabel("Doces", "cafeteria"), "🍰 Bolos no Pote & Doces");
   assert.equal(getStoreNicheLabel("Confeitaria"), "🍰 Bolos no Pote & Doces");
 });
 

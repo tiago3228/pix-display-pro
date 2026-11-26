@@ -62,7 +62,7 @@ export function getStoreNicheModule(category: string | null | undefined): StoreM
 
 export function isConfectioneryStoreCategory(category: string | null | undefined): boolean {
   const value = normalized(category);
-  return value.includes("bolos no pote") || value.includes("confeitaria");
+  return value.includes("bolo") || value.includes("doce") || value.includes("confeit");
 }
 
 export function getStoreNicheLabel(category: string | null | undefined): string {
