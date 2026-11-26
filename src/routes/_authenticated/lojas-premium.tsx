@@ -6,17 +6,26 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useMyStore } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { getPremiumStoreModuleKey } from "@/lib/premium-store-modules";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/lojas-premium")({
-  head: () => ({ meta: [
-    { title: "Lojas Premium | Vitrini" },
-    { name: "description", content: "Gerencie os segmentos especializados da sua loja no Vitrini." },
-    { property: "og:title", content: "Lojas Premium | Vitrini" },
-    { property: "og:description", content: "Gerencie os segmentos especializados da sua loja no Vitrini." },
-    { property: "og:type", content: "website" },
-    { name: "twitter:card", content: "summary_large_image" },
-  ] }),
+  head: () => ({
+    meta: [
+      { title: "Lojas Premium | Vitrini" },
+      {
+        name: "description",
+        content: "Gerencie os segmentos especializados da sua loja no Vitrini.",
+      },
+      { property: "og:title", content: "Lojas Premium | Vitrini" },
+      {
+        property: "og:description",
+        content: "Gerencie os segmentos especializados da sua loja no Vitrini.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: PremiumStores,
 });
 
@@ -66,10 +75,7 @@ function PremiumStores() {
   });
 
   function moduleKey(item: CatalogItem) {
-    if (item.slug === "roupas-esportivas") return "roupas_esportivas";
-    if (item.slug === "roupas-treino") return "roupas_treino";
-    if (item.slug === "joias-semijoias") return "joias";
-    return item.slug;
+    return getPremiumStoreModuleKey(item.slug);
   }
   async function toggle(item: CatalogItem, value: boolean) {
     if (!store || !isPro) return;
