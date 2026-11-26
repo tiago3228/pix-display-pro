@@ -912,6 +912,8 @@ export const submitOrder = createServerFn({ method: "POST" })
       .eq("id", data.storeId)
       .maybeSingle();
     if (!store || !store.is_active) throw new Error("Loja indisponível");
+    const admin = supabaseAdmin as unknown as AdminDb & LooseDb;
+    const hasProAccess = await hasStoreProAccess(admin, store.id);
     if (data.receiptPath && !data.receiptPath.startsWith(`receipts/${store.id}/`)) {
       throw new Error("O comprovante não pertence a esta loja.");
     }
@@ -921,7 +923,6 @@ export const submitOrder = createServerFn({ method: "POST" })
     let deliveryConfigSource: "legacy" | "generic" | null = null;
     const hasPizzeriaItems = data.items.some((i) => i.pizza || i.addonId);
     if (hasPizzeriaItems) {
-      const admin = supabaseAdmin as unknown as AdminDb & LooseDb;
       const { data: moduleRow, error: moduleError } = await admin
         .from("store_modules")
         .select("id")
@@ -929,7 +930,7 @@ export const submitOrder = createServerFn({ method: "POST" })
         .eq("module", "pizzaria")
         .eq("is_active", true)
         .maybeSingle();
-      if (moduleError || !moduleRow || !(await hasStoreProAccess(admin, store.id))) {
+      if (moduleError || !moduleRow || !hasProAccess) {
         throw new Error("O cardápio da pizzaria está indisponível.");
       }
       if (data.deliveryAddress) {
@@ -956,9 +957,6 @@ export const submitOrder = createServerFn({ method: "POST" })
         deliveryConfigSource = source;
       }
     }
-    const hasProAccess =
-      store.plan === "pro" ||
-      Boolean(store.pro_trial_ends_at && new Date(store.pro_trial_ends_at).getTime() > Date.now());
     const normalizedCustomerWhatsapp = data.customerWhatsapp
       ? normalizePhone(data.customerWhatsapp, store.default_ddd ?? "31").replace(/^55/, "")
       : "";
@@ -1078,11 +1076,7 @@ export const submitOrder = createServerFn({ method: "POST" })
 
     // O parcelamento é validado no servidor contra as regras reais do vendedor.
     const installmentsAllowed =
-      (store.plan === "pro" ||
-        (store.pro_trial_ends_at !== null &&
-          new Date(store.pro_trial_ends_at).getTime() > Date.now())) &&
-      store.allow_installments &&
-      data.paymentMethod === "parcelado";
+      hasProAccess && store.allow_installments && data.paymentMethod === "parcelado";
     let installmentCount = 1;
     if (installmentsAllowed) {
       const maxByRules = Math.min(store.max_installments, 12);

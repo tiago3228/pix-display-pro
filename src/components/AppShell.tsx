@@ -19,6 +19,7 @@ import {
   Camera,
   MessageSquarePlus,
   Package,
+  Plus,
   QrCode,
   Computer,
   Settings,
@@ -30,13 +31,26 @@ import {
   Wallet,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useIsAdmin, useMyStore } from "@/hooks/useAuth";
+import {
+  setActiveStoreId,
+  useIsAdmin,
+  useMyStore,
+  useMyStores,
+  type MyStore,
+} from "@/hooks/useAuth";
 import { useProPricing } from "@/hooks/usePricing";
 import { brl } from "@/lib/format";
 import { getPushPublicKey, savePushSubscription } from "@/lib/push.functions";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { BackButton } from "@/components/BackButton";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -102,6 +116,49 @@ const NAV = [
 const MOBILE_NAV = NAV.slice(0, 4);
 const MOBILE_MORE = NAV.slice(4);
 
+function StoreSelector({
+  stores,
+  activeStoreId,
+  onChange,
+}: {
+  stores: MyStore[];
+  activeStoreId: string;
+  onChange: (storeId: string) => void;
+}) {
+  if (stores.length === 0) return null;
+  return (
+    <div className="mt-1 flex min-w-0 items-center gap-1.5">
+      <Select value={activeStoreId} onValueChange={onChange}>
+        <SelectTrigger
+          className="h-8 min-w-0 max-w-56 flex-1 border-0 bg-muted/60 px-2 text-xs font-medium sm:max-w-64"
+          aria-label="Selecionar loja ativa"
+        >
+          <Store className="mr-1.5 size-3.5 shrink-0 text-muted-foreground" />
+          <SelectValue placeholder="Loja ativa" />
+        </SelectTrigger>
+        <SelectContent>
+          {stores.map((item) => (
+            <SelectItem key={item.id} value={item.id}>
+              {item.name} · {item.category}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button
+        asChild
+        variant="ghost"
+        size="icon"
+        className="size-8 shrink-0"
+        aria-label="Criar outra loja"
+      >
+        <Link to="/onboarding" search={{ mode: "new" }} title="Criar outra loja">
+          <Plus className="size-4" />
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
 // Usa o mesmo service worker do app (/sw.js, que importa /push-sw.js) para não haver
 // dois workers disputando o escopo "/". Aguarda até existir um worker ativo.
 async function getPushRegistration(): Promise<ServiceWorkerRegistration> {
@@ -150,6 +207,7 @@ export function AppShell({
   const queryClient = useQueryClient();
   const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
   const { data: store, isLoading: storeLoading } = useMyStore();
+  const { data: ownedStores = [] } = useMyStores();
   const { price: proPrice } = useProPricing();
   const [moreOpen, setMoreOpen] = useState(false);
   const [appInstalled, setAppInstalled] = useState(false);
@@ -377,7 +435,7 @@ export function AppShell({
     if (adminLoading || storeLoading) return;
     if (isAdmin) return;
     if (!store || !store.onboarding_done) {
-      navigate({ to: "/onboarding", replace: true });
+      navigate({ to: "/onboarding", search: { mode: "setup" }, replace: true });
     }
   }, [store, storeLoading, isAdmin, adminLoading, navigate]);
 
@@ -386,6 +444,12 @@ export function AppShell({
     queryClient.clear();
     await supabase.auth.signOut();
     navigate({ to: "/login", replace: true });
+  }
+
+  function switchStore(storeId: string) {
+    if (storeId === store?.id) return;
+    setActiveStoreId(storeId);
+    void queryClient.invalidateQueries();
   }
 
   return (
@@ -507,6 +571,13 @@ export function AppShell({
                 <h1 className="truncate text-lg font-bold">{title}</h1>
                 {description ? (
                   <p className="truncate text-xs text-muted-foreground">{description}</p>
+                ) : null}
+                {store ? (
+                  <StoreSelector
+                    stores={ownedStores}
+                    activeStoreId={store.id}
+                    onChange={switchStore}
+                  />
                 ) : null}
                 {store?.diamond_access ? (
                   <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400">

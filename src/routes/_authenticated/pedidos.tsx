@@ -66,7 +66,8 @@ function Orders() {
     const { error } = await supabase
       .from("orders")
       .update({ status: next, updated_at: new Date().toISOString() })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("store_id", store!.id);
     if (error) {
       toast.error("Não foi possível atualizar o pedido.");
       return;
@@ -101,11 +102,11 @@ function Orders() {
     )
       return;
     try {
-      await markTestCanceled({ data: { orderId: id } });
+      await markTestCanceled({ data: { orderId: id, storeId: store!.id } });
       toast.success("Pedido marcado como teste/cancelado e removido do faturamento.");
       queryClient.invalidateQueries({ queryKey: ["orders", store?.id] });
       queryClient.invalidateQueries({ queryKey: ["dashboard", store?.id] });
-      queryClient.invalidateQueries({ queryKey: ["seller-revenue"] });
+      queryClient.invalidateQueries({ queryKey: ["seller-revenue", store?.id] });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível marcar o pedido.");
     }

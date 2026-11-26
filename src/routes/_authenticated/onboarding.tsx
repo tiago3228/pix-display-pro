@@ -6,10 +6,14 @@ import { ArrowLeft, Check, Copy, ExternalLink, Share2, Store } from "lucide-reac
 import { supabase } from "@/integrations/supabase/client";
 import { BackButton } from "@/components/BackButton";
 
-import { useMyStore } from "@/hooks/useAuth";
+import { setActiveStoreId, useMyStore, useMyStores } from "@/hooks/useAuth";
 import { uploadAsset } from "@/lib/images";
 import { PIX_KEY_TYPES, STORE_CATEGORIES, slugify, whatsappLink } from "@/lib/format";
 import { getStoreNicheModule } from "@/lib/store-niche";
+import {
+  buildConfectioneryProductRows,
+  CONFECTIONERY_CATEGORY_NAMES,
+} from "@/lib/confeitaria-catalog";
 import { getStorePublicUrl } from "@/components/StoreWhatsAppShare";
 import { QrImage } from "@/components/QrCode";
 import { Button } from "@/components/ui/button";
@@ -25,13 +29,19 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/onboarding")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    mode: search["mode"] === "new" ? ("new" as const) : ("setup" as const),
+  }),
   component: Onboarding,
 });
 
 function Onboarding() {
+  const { mode } = Route.useSearch();
+  const createNewStore = mode === "new";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data: store, isLoading } = useMyStore();
+  const { data: ownedStores = [], isLoading: ownedStoresLoading } = useMyStores();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
   const [storeId, setStoreId] = useState<string | null>(null);
@@ -42,19 +52,19 @@ function Onboarding() {
     seller_name: "",
     description: "",
     whatsapp: "",
-    category: "Doces",
+    category: createNewStore ? "Bolos no Pote & Doces" : "Doces",
     logoFile: null as File | null,
   });
   const [pix, setPix] = useState({ pix_key_type: "email", pix_key: "" });
   const [product, setProduct] = useState({ name: "", price: "", description: "", stock: "" });
 
   useEffect(() => {
-    if (store?.onboarding_done) navigate({ to: "/dashboard" });
-    if (store && !store.onboarding_done) {
+    if (!createNewStore && store?.onboarding_done) navigate({ to: "/dashboard" });
+    if (!createNewStore && store && !store.onboarding_done) {
       setStoreId(store.id);
       setSlug(store.slug);
     }
-  }, [store, navigate]);
+  }, [createNewStore, store, navigate]);
 
   async function saveStore() {
     if (!form.name.trim() || !form.whatsapp.trim()) {
@@ -84,12 +94,19 @@ function Onboarding() {
       category: form.category,
       logo_url: logoPath,
     };
+    const isFirstStore = ownedStores.length === 0;
     const trialOnCreation = storeId
       ? {}
       : {
           plan: "basica",
-          pro_trial_ends_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-          pro_trial_used: true,
+          pro_trial_ends_at: isFirstStore
+            ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+            : null,
+          pro_trial_used:
+            isFirstStore ||
+            ownedStores.some(
+              (ownedStore) => ownedStore.pro_trial_used || ownedStore.pro_trial_ends_at !== null,
+            ),
         };
 
     let saved: { id: string; slug: string } | null = null;
@@ -124,6 +141,9 @@ function Onboarding() {
     }
     setStoreId(saved.id);
     setSlug(saved.slug);
+    setActiveStoreId(saved.id);
+    await queryClient.invalidateQueries({ queryKey: ["my-stores"] });
+    await queryClient.invalidateQueries({ queryKey: ["my-store"] });
     await supabase
       .from("profiles")
       .upsert({ id: user.id, name: form.seller_name || form.name, email: user.email ?? null });
@@ -151,17 +171,97 @@ function Onboarding() {
       return;
     }
     setSaving(true);
-    const { error } = await supabase.from("products").insert({
-      store_id: storeId!,
-      module: getStoreNicheModule(form.category),
-      name: product.name,
-      description: product.description,
-      price: Number(product.price.replace(",", ".")),
-      stock: product.stock ? Number(product.stock) : 0,
-      track_stock: Boolean(product.stock),
-    });
+    const productModule = getStoreNicheModule(form.category);
+    const { data: existingInitialProduct, error: existingProductError } = await supabase
+      .from("products")
+      .select("id")
+      .eq("store_id", storeId!)
+      .eq("module", productModule)
+      .eq("name", product.name.trim())
+      .limit(1)
+      .maybeSingle();
+    if (existingProductError) {
+      setSaving(false);
+      toast.error("Não foi possível verificar o produto inicial.");
+      return;
+    }
+    const { error } = existingInitialProduct
+      ? { error: null }
+      : await supabase.from("products").insert({
+          store_id: storeId!,
+          module: productModule,
+          name: product.name.trim(),
+          description: product.description,
+          price: Number(product.price.replace(",", ".")),
+          stock: product.stock ? Number(product.stock) : 0,
+          track_stock: Boolean(product.stock),
+        });
+    if (!error && form.category.toLocaleLowerCase("pt-BR").includes("bolos no pote")) {
+      const categoryRows = CONFECTIONERY_CATEGORY_NAMES.map((name, position) => ({
+        store_id: storeId!,
+        name,
+        module: "cafeteria",
+        position,
+      }));
+      const { data: existingCategories, error: categoriesReadError } = await supabase
+        .from("categories")
+        .select("id, name")
+        .eq("store_id", storeId!)
+        .eq("module", "cafeteria");
+      if (categoriesReadError) {
+        setSaving(false);
+        toast.error("Produto salvo, mas não foi possível preparar as categorias do catálogo.");
+        return;
+      }
+      const normalizeCategory = (name: string) =>
+        name.trim().replace(/\s+/g, " ").toLocaleLowerCase("pt-BR");
+      const knownCategories = new Set(
+        (existingCategories ?? []).map((item) => normalizeCategory(item.name)),
+      );
+      const missingCategories = categoryRows.filter(
+        (item) => !knownCategories.has(normalizeCategory(item.name)),
+      );
+      if (missingCategories.length) {
+        const { error: categoryInsertError } = await supabase
+          .from("categories")
+          .insert(missingCategories as never);
+        if (categoryInsertError) {
+          setSaving(false);
+          toast.error("Produto salvo, mas não foi possível criar as categorias do catálogo.");
+          return;
+        }
+      }
+      const { data: allCategories, error: allCategoriesError } = await supabase
+        .from("categories")
+        .select("id, name")
+        .eq("store_id", storeId!)
+        .eq("module", "cafeteria");
+      const { data: existingProducts, error: productsReadError } = await supabase
+        .from("products")
+        .select("name")
+        .eq("store_id", storeId!);
+      if (allCategoriesError || productsReadError) {
+        setSaving(false);
+        toast.error("Produto salvo, mas não foi possível verificar o catálogo pré-cadastrado.");
+        return;
+      }
+      const seedRows = buildConfectioneryProductRows(
+        storeId!,
+        allCategories ?? [],
+        (existingProducts ?? []).map((item) => item.name),
+      );
+      if (seedRows.length) {
+        const { error: seedError } = await supabase.from("products").insert(seedRows as never);
+        if (seedError) {
+          setSaving(false);
+          toast.error(`Produto salvo, mas o catálogo não foi concluído: ${seedError.message}`);
+          return;
+        }
+      }
+    }
     if (!error) {
       await supabase.from("stores").update({ onboarding_done: true }).eq("id", storeId!);
+      await queryClient.invalidateQueries({ queryKey: ["my-stores"] });
       await queryClient.invalidateQueries({ queryKey: ["my-store"] });
     }
     setSaving(false);
@@ -174,7 +274,7 @@ function Onboarding() {
 
   const storeUrl = getStorePublicUrl(slug);
 
-  if (isLoading) {
+  if (isLoading || (createNewStore && ownedStoresLoading)) {
     return <div className="p-10 text-center text-sm text-muted-foreground">Carregando...</div>;
   }
 

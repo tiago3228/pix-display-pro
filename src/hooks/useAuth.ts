@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
+const ACTIVE_STORE_ID_KEY = "vitrini:active-store-id";
+const ACTIVE_STORE_EVENT = "vitrini:active-store-changed";
 
 export function useSession() {
   const [session, setSession] = useState<Session | null>(null);
@@ -48,26 +51,100 @@ export type MyStore = {
   min_installment_amount: number;
 };
 
-export function useMyStore() {
-  return useQuery({
-    queryKey: ["my-store"],
-    queryFn: async (): Promise<MyStore | null> => {
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) return null;
+function readActiveStoreId() {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(ACTIVE_STORE_ID_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function subscribeActiveStore(listener: () => void) {
+  if (typeof window === "undefined") return () => undefined;
+  const onChange = () => listener();
+  window.addEventListener(ACTIVE_STORE_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(ACTIVE_STORE_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+export function useActiveStoreId() {
+  return useSyncExternalStore(subscribeActiveStore, readActiveStoreId, () => null);
+}
+
+export function setActiveStoreId(storeId: string | null) {
+  if (typeof window === "undefined") return;
+  try {
+    if (storeId) window.localStorage.setItem(ACTIVE_STORE_ID_KEY, storeId);
+    else window.localStorage.removeItem(ACTIVE_STORE_ID_KEY);
+  } catch {
+    // The active selection still changes in this tab when storage is unavailable.
+  }
+  window.dispatchEvent(new Event(ACTIVE_STORE_EVENT));
+}
+
+export function useMyStores() {
+  const { user, loading: sessionLoading } = useSession();
+  const query = useQuery({
+    queryKey: ["my-stores", user?.id],
+    enabled: !sessionLoading && Boolean(user?.id),
+    queryFn: async (): Promise<MyStore[]> => {
+      if (!user?.id) return [];
       const { data, error } = await supabase
         .from("stores")
         .select("*")
-        .eq("owner_id", userData.user.id)
+        .eq("owner_id", user.id)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as MyStore[];
+    },
+  });
+  return { ...query, isLoading: sessionLoading || query.isLoading };
+}
+
+export function useMyStore() {
+  const storesQuery = useMyStores();
+  const activeStoreId = useActiveStoreId();
+  const stores = storesQuery.data ?? [];
+  const selectedStore = stores.find((store) => store.id === activeStoreId) ?? stores[0] ?? null;
+  const selectedStoreId = selectedStore?.id ?? null;
+  const ownerId = selectedStore?.owner_id ?? null;
+
+  const storeQuery = useQuery({
+    queryKey: ["my-store", ownerId, selectedStoreId],
+    enabled: Boolean(ownerId && selectedStoreId),
+    queryFn: async (): Promise<MyStore | null> => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user || !selectedStoreId || userData.user.id !== ownerId) return null;
+      const { data, error } = await supabase
+        .from("stores")
+        .select("*")
+        .eq("id", selectedStoreId)
+        .eq("owner_id", ownerId)
         .maybeSingle();
       if (error) throw error;
       if (!data) return null;
-      const row = data as MyStore;
-      const trialActive = Boolean(
-        row.pro_trial_ends_at && new Date(row.pro_trial_ends_at).getTime() > Date.now(),
+
+      const { data: hasProAccess, error: accessError } = await supabase.rpc(
+        "store_has_pro_access",
+        {
+          target_store_id: selectedStoreId,
+        },
       );
-      return { ...row, plan: row.plan === "pro" || trialActive ? "pro" : "basica" };
+      if (accessError) throw accessError;
+      return { ...(data as MyStore), plan: hasProAccess ? "pro" : "basica" };
     },
   });
+
+  return {
+    ...storeQuery,
+    data: storeQuery.data ?? null,
+    isLoading: storesQuery.isLoading || (Boolean(selectedStoreId) && storeQuery.isLoading),
+    error: storesQuery.error ?? storeQuery.error,
+  };
 }
 
 export function useIsAdmin() {

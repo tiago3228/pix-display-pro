@@ -1,9 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { RevenueEntry } from "./periods";
 
 const rangeSchema = z.object({ from: z.string(), to: z.string() });
+const sellerRangeSchema = rangeSchema.extend({ storeId: z.string().uuid() });
 
 const saleSchema = z.object({
   amount: z.number().min(0).max(1000000),
@@ -14,6 +16,7 @@ const saleSchema = z.object({
   storeId: z.string().uuid().nullable().optional(),
   customerName: z.string().max(120).optional().default(""),
 });
+const sellerSaleSchema = saleSchema.extend({ storeId: z.string().uuid() });
 
 /** Faturamento da plataforma: assinaturas por cartão, PRO via Pix e lançamentos manuais. */
 export const getAdminRevenue = createServerFn({ method: "POST" })
@@ -130,17 +133,22 @@ export const deletePlatformSale = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-async function ownStore(context: { supabase: never; userId: string }) {
-  const supabase = context.supabase as unknown as {
-    from: (t: string) => {
-      select: (c: string) => {
+async function ownStore(context: { supabase: unknown; userId: string }, storeId: string) {
+  const supabase = context.supabase as {
+    from: (table: "stores") => {
+      select: (columns: string) => {
         eq: (
-          col: string,
-          v: string,
+          column: string,
+          value: string,
         ) => {
-          maybeSingle: () => Promise<{
-            data: { id: string; plan: string; pro_trial_ends_at: string | null } | null;
-          }>;
+          eq: (
+            column: string,
+            value: string,
+          ) => {
+            maybeSingle: () => Promise<{
+              data: { id: string; plan: string; pro_trial_ends_at: string | null } | null;
+            }>;
+          };
         };
       };
     };
@@ -148,18 +156,29 @@ async function ownStore(context: { supabase: never; userId: string }) {
   const { data } = await supabase
     .from("stores")
     .select("id, plan, pro_trial_ends_at")
+    .eq("id", storeId)
     .eq("owner_id", context.userId)
     .maybeSingle();
   if (!data) throw new Error("Crie sua loja antes de acessar o faturamento.");
   return data;
 }
 
+async function hasStoreProAccess(supabase: unknown, storeId: string) {
+  const client = supabase as SupabaseClient;
+  const { data, error } = await client.rpc("store_has_pro_access", {
+    target_store_id: storeId,
+  });
+  if (error) throw new Error("Não foi possível verificar o acesso PRO da loja.");
+  return data === true;
+}
+
 /** Faturamento do lojista: pedidos da vitrine + vendas registradas manualmente. */
 export const getSellerRevenue = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data: unknown) => rangeSchema.parse(data))
+  .validator((data: unknown) => sellerRangeSchema.parse(data))
   .handler(async ({ data, context }): Promise<{ entries: RevenueEntry[]; plan: string }> => {
-    const store = await ownStore(context as never);
+    const store = await ownStore(context as never, data.storeId);
+    const isPro = await hasStoreProAccess(context.supabase, store.id);
     const [orders, manual] = await Promise.all([
       context.supabase
         .from("orders")
@@ -197,23 +216,23 @@ export const getSellerRevenue = createServerFn({ method: "POST" })
       })),
     ].sort((a, b) => b.date.localeCompare(a.date));
 
-    const trialActive = Boolean(
-      store.pro_trial_ends_at && new Date(store.pro_trial_ends_at).getTime() > Date.now(),
-    );
-    return { entries, plan: store.plan === "pro" || trialActive ? "pro" : "basica" };
+    return { entries, plan: isPro ? "pro" : "basica" };
   });
 
 /** Mantém o pedido no histórico, mas remove seu valor do faturamento. */
 export const markOrderAsTestCanceled = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data: unknown) => z.object({ orderId: z.string().uuid() }).parse(data))
+  .validator((data: unknown) =>
+    z.object({ orderId: z.string().uuid(), storeId: z.string().uuid() }).parse(data),
+  )
   .handler(async ({ data, context }) => {
-    const store = await ownStore(context as never);
+    const store = await ownStore(context as never, data.storeId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: order } = await supabaseAdmin
       .from("orders")
       .select("id, store_id, customer_id, total, status")
       .eq("id", data.orderId)
+      .eq("store_id", store.id)
       .maybeSingle();
     if (!order || order.store_id !== store.id) throw new Error("Pedido não encontrado.");
     if (order.status === "teste_cancelado") return { ok: true };
@@ -230,6 +249,7 @@ export const markOrderAsTestCanceled = createServerFn({ method: "POST" })
         .from("customers")
         .select("orders_count, total_spent")
         .eq("id", order.customer_id)
+        .eq("store_id", store.id)
         .maybeSingle();
       if (customer) {
         await supabaseAdmin
@@ -238,7 +258,8 @@ export const markOrderAsTestCanceled = createServerFn({ method: "POST" })
             orders_count: Math.max(0, (customer.orders_count ?? 0) - 1),
             total_spent: Math.max(0, Number(customer.total_spent ?? 0) - Number(order.total ?? 0)),
           })
-          .eq("id", order.customer_id);
+          .eq("id", order.customer_id)
+          .eq("store_id", store.id);
       }
     }
 
@@ -255,13 +276,12 @@ export const markOrderAsTestCanceled = createServerFn({ method: "POST" })
 
 export const addManualSale = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data: unknown) => saleSchema.parse(data))
+  .validator((data: unknown) => sellerSaleSchema.parse(data))
   .handler(async ({ data, context }) => {
-    const store = await ownStore(context as never);
-    const trialActive = Boolean(
-      store.pro_trial_ends_at && new Date(store.pro_trial_ends_at).getTime() > Date.now(),
-    );
-    if (store.plan !== "pro" && !trialActive) throw new Error("Recurso disponível no plano PRO.");
+    const store = await ownStore(context as never, data.storeId);
+    if (!(await hasStoreProAccess(context.supabase, store.id))) {
+      throw new Error("Recurso disponível no plano PRO.");
+    }
     const { error } = await context.supabase.from("manual_sales").insert({
       store_id: store.id,
       amount: data.amount,
@@ -278,9 +298,11 @@ export const addManualSale = createServerFn({ method: "POST" })
 
 export const deleteManualSale = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .validator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .validator((data: unknown) =>
+    z.object({ id: z.string().uuid(), storeId: z.string().uuid() }).parse(data),
+  )
   .handler(async ({ data, context }) => {
-    const store = await ownStore(context as never);
+    const store = await ownStore(context as never, data.storeId);
     const { error } = await context.supabase
       .from("manual_sales")
       .delete()
@@ -294,15 +316,22 @@ export const deleteManualSale = createServerFn({ method: "POST" })
 export const restockOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .validator((data: unknown) =>
-    z.object({ orderId: z.string().uuid(), direction: z.enum(["return", "consume"]) }).parse(data),
+    z
+      .object({
+        orderId: z.string().uuid(),
+        storeId: z.string().uuid(),
+        direction: z.enum(["return", "consume"]),
+      })
+      .parse(data),
   )
   .handler(async ({ data, context }) => {
-    const store = await ownStore(context as never);
+    const store = await ownStore(context as never, data.storeId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: order } = await supabaseAdmin
       .from("orders")
       .select("id, store_id")
       .eq("id", data.orderId)
+      .eq("store_id", store.id)
       .maybeSingle();
     if (!order || order.store_id !== store.id) throw new Error("Pedido não encontrado.");
 
@@ -318,6 +347,7 @@ export const restockOrder = createServerFn({ method: "POST" })
         .from("products")
         .select("id, stock, track_stock, has_variants")
         .eq("id", item.product_id)
+        .eq("store_id", store.id)
         .maybeSingle();
       if (!product?.track_stock) continue;
       if (product.has_variants && item.variant_label) {
@@ -331,13 +361,15 @@ export const restockOrder = createServerFn({ method: "POST" })
           await supabaseAdmin
             .from("product_variants")
             .update({ stock: Math.max(0, variant.stock + sign * item.quantity) })
-            .eq("id", variant.id);
+            .eq("id", variant.id)
+            .eq("product_id", product.id);
         }
       } else {
         await supabaseAdmin
           .from("products")
           .update({ stock: Math.max(0, product.stock + sign * item.quantity) })
-          .eq("id", product.id);
+          .eq("id", product.id)
+          .eq("store_id", store.id);
       }
     }
     return { ok: true };

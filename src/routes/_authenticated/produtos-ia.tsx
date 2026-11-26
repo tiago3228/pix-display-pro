@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { brl, formatDate } from "@/lib/format";
 import { compressImage, uploadAiPage } from "@/lib/images";
+import { useMyStore } from "@/hooks/useAuth";
 import {
   AI_ACCEPTED_IMAGE_TYPES,
   AI_COMPRESS_MAX_SIDE,
@@ -73,6 +74,8 @@ function needsReview(draft: Draft) {
 function AiProductImport() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { data: store, isLoading: storeLoading } = useMyStore();
+  const storeId = store?.id;
   const analyse = useServerFn(analyseCatalogPages);
   const saveProducts = useServerFn(createProductsFromAi);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -87,13 +90,20 @@ function AiProductImport() {
   const [confirmAll, setConfirmAll] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    setDrafts(null);
+    setJobId(null);
+  }, [storeId]);
+
   const { data: status, refetch: refetchStatus } = useQuery({
-    queryKey: ["ai-import-status"],
-    queryFn: () => getAiImportStatus(),
+    queryKey: ["ai-import-status", storeId],
+    enabled: Boolean(storeId),
+    queryFn: () => getAiImportStatus({ data: { storeId: storeId! } }),
   });
   const { data: history, refetch: refetchHistory } = useQuery({
-    queryKey: ["ai-import-history"],
-    queryFn: () => listAiImports(),
+    queryKey: ["ai-import-history", storeId],
+    enabled: Boolean(storeId),
+    queryFn: () => listAiImports({ data: { storeId: storeId! } }),
   });
 
   const blocked = Boolean(status && status.hasStore && status.remaining <= 0);
@@ -127,7 +137,7 @@ function AiProductImport() {
   }
 
   async function runAnalysis() {
-    if (!pages.length || busy) return;
+    if (!storeId || !pages.length || busy) return;
     setBusy(true);
     setDrafts(null);
     try {
@@ -154,7 +164,7 @@ function AiProductImport() {
       }
 
       setProgress(`🤖 Analisando ${payload.length} página(s)...`);
-      const result = await analyse({ data: { pages: payload } });
+      const result = await analyse({ data: { storeId, pages: payload } });
       await refetchStatus();
 
       if (result.error === "no-store") {
@@ -201,6 +211,10 @@ function AiProductImport() {
   }
 
   async function saveSelected(list: Draft[]) {
+    if (!storeId) {
+      toast.error("Selecione uma loja antes de cadastrar produtos.");
+      return;
+    }
     if (!list.length) {
       toast.error("Selecione ao menos um produto.");
       return;
@@ -209,6 +223,7 @@ function AiProductImport() {
     try {
       const result = await saveProducts({
         data: {
+          storeId,
           jobId,
           items: list.map((d) => ({
             name: (d.name ?? "").trim(),
@@ -229,7 +244,7 @@ function AiProductImport() {
       const total = result.created + result.updated;
       toast.success(`🎉 ${total} produto(s) cadastrados com sucesso!`);
       if (result.failed) toast.error(`${result.failed} produto(s) não puderam ser salvos.`);
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["products", storeId] });
       refetchHistory();
       navigate({ to: "/produtos" });
     } catch {
@@ -245,7 +260,7 @@ function AiProductImport() {
       title="Cadastrar produtos com IA"
       description="Fotografe uma página e deixe a IA identificar os produtos"
     >
-      {status && !status.hasStore ? (
+      {!storeLoading && !store ? (
         <div className="surface p-4 text-sm">
           Crie sua loja antes de usar o cadastro com IA.{" "}
           <Link to="/minha-loja" className="font-semibold underline">
@@ -352,7 +367,11 @@ function AiProductImport() {
                     </div>
                   ))}
                 </div>
-                <Button className="h-12 w-full" disabled={busy} onClick={runAnalysis}>
+                <Button
+                  className="h-12 w-full"
+                  disabled={busy || storeLoading || !storeId || blocked}
+                  onClick={runAnalysis}
+                >
                   {busy ? (
                     <>
                       <Loader2 className="mr-2 size-4 animate-spin" /> {progress || "Analisando..."}
@@ -497,14 +516,14 @@ function AiProductImport() {
               <div className="surface sticky bottom-16 flex flex-wrap gap-2 p-3 md:bottom-4">
                 <Button
                   className="flex-1"
-                  disabled={saving || !ready.length}
+                  disabled={saving || !storeId || !ready.length}
                   onClick={() => saveSelected(ready)}
                 >
                   {saving ? "Salvando..." : `Cadastrar selecionados (${ready.length})`}
                 </Button>
                 <Button
                   variant="outline"
-                  disabled={saving || pending.length > 0 || !drafts.length}
+                  disabled={saving || !storeId || pending.length > 0 || !drafts.length}
                   onClick={() => setConfirmAll(true)}
                 >
                   Cadastrar todos
@@ -655,7 +674,7 @@ function AiProductImport() {
               Cancelar
             </Button>
             <Button
-              disabled={saving}
+              disabled={saving || !storeId}
               onClick={() => saveSelected((drafts ?? []).filter((d) => d.action !== "skip"))}
             >
               <Sparkles className="mr-2 size-4" /> Confirmar cadastro

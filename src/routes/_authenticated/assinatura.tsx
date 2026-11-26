@@ -96,6 +96,11 @@ function Subscription() {
     mutationFn: (plan: "basica" | "pro") =>
       start({ data: { origin: window.location.origin, plan } }),
     onSuccess: (result) => {
+      if (result.alreadyPending) {
+        toast.info("Sua assinatura PRO já está aguardando confirmação.");
+        queryClient.invalidateQueries({ queryKey: ["my-subscription"] });
+        return;
+      }
       if (result.alreadyActive) {
         toast.info("Sua assinatura já está ativa.");
         queryClient.invalidateQueries({ queryKey: ["my-subscription"] });
@@ -125,10 +130,14 @@ function Subscription() {
 
   const subscription = data?.subscription ?? null;
   const trialEndsAt = data?.trialEndsAt ?? store?.pro_trial_ends_at ?? null;
-  const isPro = Boolean(data?.hasProAccess || store?.plan === "pro");
+  const isPro = Boolean(data?.hasProAccess);
 
   return (
     <AppShell title="Assinatura" description="Escolha seu plano Vitrini">
+      <p className="mb-4 text-sm text-muted-foreground">
+        PRO é compartilhado por todas as lojas do mesmo proprietário; os dados continuam separados
+        por loja.
+      </p>
       {data?.environment === "test" ? (
         <div className="mb-4 space-y-1 rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
           <p>Ambiente de testes do Mercado Pago. Nenhuma cobrança real é feita.</p>
@@ -147,7 +156,7 @@ function Subscription() {
         </div>
       ) : null}
 
-      {isPro && trialEndsAt && !subscription ? (
+      {isPro && data?.proSource === "trial" && trialEndsAt && !subscription ? (
         <div className="mb-4 rounded-lg border border-primary/40 bg-primary/5 p-4 text-sm">
           <p className="font-semibold">Você está nos {PRO_TRIAL_DAYS} dias grátis do PRO</p>
           <p className="mt-1 text-muted-foreground">

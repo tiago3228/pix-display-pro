@@ -694,6 +694,7 @@ function Products() {
         .from("shoe_brands")
         .select("name")
         .eq("id", product.shoe_brand_id)
+        .eq("store_id", store!.id)
         .maybeSingle()
         .then(({ data }) => setManualShoeBrand(data?.name ?? ""));
     }
@@ -702,6 +703,7 @@ function Products() {
         .from("shoe_models")
         .select("name")
         .eq("id", product.shoe_model_id)
+        .eq("store_id", store!.id)
         .maybeSingle()
         .then(({ data }) => setManualShoeModel(data?.name ?? ""));
     }
@@ -799,6 +801,7 @@ function Products() {
       .from("product_images")
       .select("image_url, position")
       .eq("product_id", product.id)
+      .eq("store_id", store!.id)
       .order("position")
       .then(({ data }) => {
         const list = (data ?? []).map((row) => row.image_url as string);
@@ -982,6 +985,74 @@ function Products() {
       }
     }
 
+    if (shoeBrandId) {
+      const { data: brand } = await supabase
+        .from("shoe_brands")
+        .select("id")
+        .eq("id", shoeBrandId)
+        .eq("store_id", store.id)
+        .maybeSingle();
+      if (!brand) {
+        setSaving(false);
+        toast.error("A marca selecionada não pertence a esta loja.");
+        return;
+      }
+    }
+    if (shoeModelId) {
+      const { data: model } = await supabase
+        .from("shoe_models")
+        .select("id")
+        .eq("id", shoeModelId)
+        .eq("store_id", store.id)
+        .maybeSingle();
+      if (!model) {
+        setSaving(false);
+        toast.error("O modelo selecionado não pertence a esta loja.");
+        return;
+      }
+    }
+    let selectedCategoryId: string | null = null;
+    if (form.category_id !== "none") {
+      const { data: category } = await supabase
+        .from("categories")
+        .select("id")
+        .eq("id", form.category_id)
+        .eq("store_id", store.id)
+        .maybeSingle();
+      if (!category) {
+        setSaving(false);
+        toast.error("A categoria selecionada não pertence a esta loja.");
+        return;
+      }
+      selectedCategoryId = category.id;
+    }
+    if (sportsNodeId !== "none" && store.plan === "pro") {
+      const { data: node } = await sportsDb
+        .from("sports_nodes")
+        .select("id")
+        .eq("id", sportsNodeId)
+        .eq("store_id", store.id)
+        .maybeSingle();
+      if (!node) {
+        setSaving(false);
+        toast.error("A classificação esportiva não pertence a esta loja.");
+        return;
+      }
+    }
+    if (sportsCollectionId !== "none" && store.plan === "pro") {
+      const { data: collection } = await sportsDb
+        .from("sports_collections")
+        .select("id")
+        .eq("id", sportsCollectionId)
+        .eq("store_id", store.id)
+        .maybeSingle();
+      if (!collection) {
+        setSaving(false);
+        toast.error("A coleção esportiva não pertence a esta loja.");
+        return;
+      }
+    }
+
     const cleanVariants = variants.filter((v) => v.label.trim());
     const payload = {
       store_id: store.id,
@@ -1050,7 +1121,7 @@ function Products() {
       is_hidden: form.is_hidden,
       is_featured: form.is_featured,
       has_variants: cleanVariants.length > 0,
-      category_id: form.category_id === "none" ? null : form.category_id,
+      category_id: selectedCategoryId,
       ...(photos.length || editing ? { image_url: imagePath } : {}),
       updated_at: new Date().toISOString(),
       order_enabled: form.order_enabled,
@@ -1114,6 +1185,7 @@ function Products() {
           .from("products")
           .update(payload as never)
           .eq("id", editing.id)
+          .eq("store_id", store.id)
           .select("id")
           .single()
       : await supabase
@@ -1131,7 +1203,8 @@ function Products() {
     const { error: deleteImagesError } = await supabase
       .from("product_images")
       .delete()
-      .eq("product_id", saved.id);
+      .eq("product_id", saved.id)
+      .eq("store_id", store.id);
     if (deleteImagesError) {
       setSaving(false);
       toast.error(`Não foi possível atualizar as fotos: ${deleteImagesError.message}`);
@@ -1228,8 +1301,13 @@ function Products() {
   }
 
   async function remove(product: ProductRow) {
+    if (!store) return;
     if (!confirm(`Excluir "${product.name}"?`)) return;
-    const { error } = await supabase.from("products").delete().eq("id", product.id);
+    const { error } = await supabase
+      .from("products")
+      .delete()
+      .eq("id", product.id)
+      .eq("store_id", store.id);
     if (!error) {
       toast.success("Produto excluído.");
       queryClient.invalidateQueries({ queryKey: ["products", store?.id] });
@@ -1241,7 +1319,8 @@ function Products() {
     const { error: archiveError } = await supabase
       .from("products")
       .update({ is_hidden: true } as never)
-      .eq("id", product.id);
+      .eq("id", product.id)
+      .eq("store_id", store.id);
     if (archiveError) {
       toast.error(`Não foi possível excluir o produto: ${archiveError.message}`);
       return;
@@ -1253,10 +1332,12 @@ function Products() {
   }
 
   async function toggle(product: ProductRow, field: "is_hidden" | "is_featured") {
+    if (!store) return;
     await supabase
       .from("products")
       .update({ [field]: !product[field] } as never)
-      .eq("id", product.id);
+      .eq("id", product.id)
+      .eq("store_id", store.id);
     queryClient.invalidateQueries({ queryKey: ["products", store?.id] });
   }
 
@@ -1780,11 +1861,13 @@ function Products() {
               </p>
             </div>
             <Button
-              disabled={internetSearching || internetQuery.trim().length < 2}
+              disabled={internetSearching || internetQuery.trim().length < 2 || !store?.id}
               onClick={async () => {
                 setInternetSearching(true);
                 try {
-                  const result = await discover({ data: { query: internetQuery } });
+                  const result = await discover({
+                    data: { query: internetQuery, storeId: store!.id },
+                  });
                   setInternetResults(result.results);
                   if (!result.results.length)
                     toast.info(

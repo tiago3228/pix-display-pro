@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { brl, formatDate, whatsappLink } from "@/lib/format";
 import { getMyEncomendas, updateEncomenda, type EncomendaStatus } from "@/lib/encomendas.functions";
+import { useMyStore } from "@/hooks/useAuth";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -30,17 +31,23 @@ const STATUS: Record<EncomendaStatus, string> = {
 };
 
 function Encomendas() {
+  const { data: store } = useMyStore();
   const queryClient = useQueryClient();
   const fetch = useServerFn(getMyEncomendas);
   const update = useServerFn(updateEncomenda);
   const [term, setTerm] = useState("");
   const [status, setStatus] = useState("all");
-  const { data, isLoading } = useQuery({ queryKey: ["encomendas"], queryFn: () => fetch() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["encomendas", store?.id],
+    enabled: Boolean(store?.id),
+    queryFn: () => fetch({ data: { storeId: store!.id } }),
+  });
   const mutation = useMutation({
-    mutationFn: (input: { id: string; status: EncomendaStatus }) => update({ data: input }),
+    mutationFn: (input: { id: string; status: EncomendaStatus }) =>
+      update({ data: { ...input, storeId: store!.id } }),
     onSuccess: () => {
       toast.success("Status atualizado.");
-      queryClient.invalidateQueries({ queryKey: ["encomendas"] });
+      queryClient.invalidateQueries({ queryKey: ["encomendas", store?.id] });
     },
     onError: () => toast.error("Não foi possível atualizar a encomenda."),
   });
