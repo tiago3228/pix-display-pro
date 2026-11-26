@@ -8,1046 +8,1046 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root";
-import { Route as IndexRouteImport } from "./routes/index";
-import { Route as AuthenticatedRouteRouteImport } from "./routes/_authenticated/route";
-import { Route as LoginRouteImport } from "./routes/login";
-import { Route as PrivacidadeRouteImport } from "./routes/privacidade";
-import { Route as RecuperarSenhaRouteImport } from "./routes/recuperar-senha";
-import { Route as ResetPasswordRouteImport } from "./routes/reset-password";
-import { Route as SignupRouteImport } from "./routes/signup";
-import { Route as SoftwaresRouteImport } from "./routes/softwares";
-import { Route as SuporteRouteImport } from "./routes/suporte";
-import { Route as TermosRouteImport } from "./routes/termos";
-import { Route as AuthenticatedAdminRouteImport } from "./routes/_authenticated/admin";
-import { Route as AuthenticatedAssinaturaRouteImport } from "./routes/_authenticated/assinatura";
-import { Route as AuthenticatedCalcadosRouteImport } from "./routes/_authenticated/calcados";
-import { Route as AuthenticatedCalculadoraRouteImport } from "./routes/_authenticated/calculadora";
-import { Route as AuthenticatedClientesRouteImport } from "./routes/_authenticated/clientes";
-import { Route as AuthenticatedCobrancasRouteImport } from "./routes/_authenticated/cobrancas";
-import { Route as AuthenticatedComoFuncionaRouteImport } from "./routes/_authenticated/como-funciona";
-import { Route as AuthenticatedConfiguracoesRouteImport } from "./routes/_authenticated/configuracoes";
-import { Route as AuthenticatedDashboardRouteImport } from "./routes/_authenticated/dashboard";
-import { Route as AuthenticatedEncomendasRouteImport } from "./routes/_authenticated/encomendas";
-import { Route as AuthenticatedFaturamentoRouteImport } from "./routes/_authenticated/faturamento";
-import { Route as AuthenticatedFeedbackRouteImport } from "./routes/_authenticated/feedback";
-import { Route as AuthenticatedInformaticaRouteImport } from "./routes/_authenticated/informatica";
-import { Route as AuthenticatedJoiasRouteImport } from "./routes/_authenticated/joias";
-import { Route as AuthenticatedLojasPremiumRouteImport } from "./routes/_authenticated/lojas-premium";
-import { Route as AuthenticatedMinhaLojaRouteImport } from "./routes/_authenticated/minha-loja";
-import { Route as AuthenticatedOnboardingRouteImport } from "./routes/_authenticated/onboarding";
-import { Route as AuthenticatedPedidosRouteImport } from "./routes/_authenticated/pedidos";
-import { Route as AuthenticatedPizzariaRouteImport } from "./routes/_authenticated/pizzaria";
-import { Route as AuthenticatedProdutosRouteImport } from "./routes/_authenticated/produtos";
-import { Route as AuthenticatedProdutosIaRouteImport } from "./routes/_authenticated/produtos-ia";
-import { Route as AuthenticatedQrcodesRouteImport } from "./routes/_authenticated/qrcodes";
-import { Route as AuthenticatedRoupasRouteImport } from "./routes/_authenticated/roupas";
-import { Route as AuthenticatedRoupasEsportivasRouteImport } from "./routes/_authenticated/roupas-esportivas";
-import { Route as AuthenticatedRoupasTreinoRouteImport } from "./routes/_authenticated/roupas-treino";
-import { Route as CobrancaTokenRouteImport } from "./routes/cobranca.$token";
-import { Route as LojaSlugRouteImport } from "./routes/loja.$slug";
-import { Route as SSlugRouteImport } from "./routes/s.$slug";
-import { Route as SoftwaresSlugRouteImport } from "./routes/softwares.$slug";
-import { Route as AuthenticatedAdminAssinaturasRouteImport } from "./routes/_authenticated/admin_.assinaturas";
-import { Route as AuthenticatedAdminFaturamentoRouteImport } from "./routes/_authenticated/admin_.faturamento";
-import { Route as AuthenticatedAdminFeedbackRouteImport } from "./routes/_authenticated/admin_.feedback";
-import { Route as AuthenticatedAdminLandingRouteImport } from "./routes/_authenticated/admin_.landing";
-import { Route as AuthenticatedAdminLojasRouteImport } from "./routes/_authenticated/admin_.lojas";
-import { Route as AuthenticatedAdminNotificacoesRouteImport } from "./routes/_authenticated/admin_.notificacoes";
-import { Route as AuthenticatedAdminPrecosRouteImport } from "./routes/_authenticated/admin_.precos";
-import { Route as AuthenticatedAdminSoftwaresRouteImport } from "./routes/_authenticated/admin_.softwares";
-import { Route as AuthenticatedAdminSolicitacoesProRouteImport } from "./routes/_authenticated/admin_.solicitacoes-pro";
-import { Route as AuthenticatedPizzariaPedidosRouteImport } from "./routes/_authenticated/pizzaria_.pedidos";
-import { Route as ApiPublicWebhooksMercadopagoRouteImport } from "./routes/api/public/webhooks/mercadopago";
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
+import { Route as RecuperarSenhaRouteImport } from './routes/recuperar-senha'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as SoftwaresRouteImport } from './routes/softwares'
+import { Route as SuporteRouteImport } from './routes/suporte'
+import { Route as TermosRouteImport } from './routes/termos'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedAssinaturaRouteImport } from './routes/_authenticated/assinatura'
+import { Route as AuthenticatedCalcadosRouteImport } from './routes/_authenticated/calcados'
+import { Route as AuthenticatedCalculadoraRouteImport } from './routes/_authenticated/calculadora'
+import { Route as AuthenticatedClientesRouteImport } from './routes/_authenticated/clientes'
+import { Route as AuthenticatedCobrancasRouteImport } from './routes/_authenticated/cobrancas'
+import { Route as AuthenticatedComoFuncionaRouteImport } from './routes/_authenticated/como-funciona'
+import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedEncomendasRouteImport } from './routes/_authenticated/encomendas'
+import { Route as AuthenticatedFaturamentoRouteImport } from './routes/_authenticated/faturamento'
+import { Route as AuthenticatedFeedbackRouteImport } from './routes/_authenticated/feedback'
+import { Route as AuthenticatedInformaticaRouteImport } from './routes/_authenticated/informatica'
+import { Route as AuthenticatedJoiasRouteImport } from './routes/_authenticated/joias'
+import { Route as AuthenticatedLojasPremiumRouteImport } from './routes/_authenticated/lojas-premium'
+import { Route as AuthenticatedMinhaLojaRouteImport } from './routes/_authenticated/minha-loja'
+import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedPedidosRouteImport } from './routes/_authenticated/pedidos'
+import { Route as AuthenticatedPizzariaRouteImport } from './routes/_authenticated/pizzaria'
+import { Route as AuthenticatedProdutosRouteImport } from './routes/_authenticated/produtos'
+import { Route as AuthenticatedProdutosIaRouteImport } from './routes/_authenticated/produtos-ia'
+import { Route as AuthenticatedQrcodesRouteImport } from './routes/_authenticated/qrcodes'
+import { Route as AuthenticatedRoupasRouteImport } from './routes/_authenticated/roupas'
+import { Route as AuthenticatedRoupasEsportivasRouteImport } from './routes/_authenticated/roupas-esportivas'
+import { Route as AuthenticatedRoupasTreinoRouteImport } from './routes/_authenticated/roupas-treino'
+import { Route as CobrancaTokenRouteImport } from './routes/cobranca.$token'
+import { Route as LojaSlugRouteImport } from './routes/loja.$slug'
+import { Route as SSlugRouteImport } from './routes/s.$slug'
+import { Route as SoftwaresSlugRouteImport } from './routes/softwares.$slug'
+import { Route as AuthenticatedAdminAssinaturasRouteImport } from './routes/_authenticated/admin_.assinaturas'
+import { Route as AuthenticatedAdminFaturamentoRouteImport } from './routes/_authenticated/admin_.faturamento'
+import { Route as AuthenticatedAdminFeedbackRouteImport } from './routes/_authenticated/admin_.feedback'
+import { Route as AuthenticatedAdminLandingRouteImport } from './routes/_authenticated/admin_.landing'
+import { Route as AuthenticatedAdminLojasRouteImport } from './routes/_authenticated/admin_.lojas'
+import { Route as AuthenticatedAdminNotificacoesRouteImport } from './routes/_authenticated/admin_.notificacoes'
+import { Route as AuthenticatedAdminPrecosRouteImport } from './routes/_authenticated/admin_.precos'
+import { Route as AuthenticatedAdminSoftwaresRouteImport } from './routes/_authenticated/admin_.softwares'
+import { Route as AuthenticatedAdminSolicitacoesProRouteImport } from './routes/_authenticated/admin_.solicitacoes-pro'
+import { Route as AuthenticatedPizzariaPedidosRouteImport } from './routes/_authenticated/pizzaria_.pedidos'
+import { Route as ApiPublicWebhooksMercadopagoRouteImport } from './routes/api/public/webhooks/mercadopago'
 
 const IndexRoute = IndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: "/_authenticated",
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const LoginRoute = LoginRouteImport.update({
-  id: "/login",
-  path: "/login",
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const PrivacidadeRoute = PrivacidadeRouteImport.update({
-  id: "/privacidade",
-  path: "/privacidade",
+  id: '/privacidade',
+  path: '/privacidade',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const RecuperarSenhaRoute = RecuperarSenhaRouteImport.update({
-  id: "/recuperar-senha",
-  path: "/recuperar-senha",
+  id: '/recuperar-senha',
+  path: '/recuperar-senha',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: "/reset-password",
-  path: "/reset-password",
+  id: '/reset-password',
+  path: '/reset-password',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const SignupRoute = SignupRouteImport.update({
-  id: "/signup",
-  path: "/signup",
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const SoftwaresRoute = SoftwaresRouteImport.update({
-  id: "/softwares",
-  path: "/softwares",
+  id: '/softwares',
+  path: '/softwares',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const SuporteRoute = SuporteRouteImport.update({
-  id: "/suporte",
-  path: "/suporte",
+  id: '/suporte',
+  path: '/suporte',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const TermosRoute = TermosRouteImport.update({
-  id: "/termos",
-  path: "/termos",
+  id: '/termos',
+  path: '/termos',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: "/admin",
-  path: "/admin",
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedAssinaturaRoute = AuthenticatedAssinaturaRouteImport.update({
-  id: "/assinatura",
-  path: "/assinatura",
+  id: '/assinatura',
+  path: '/assinatura',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedCalcadosRoute = AuthenticatedCalcadosRouteImport.update({
-  id: "/calcados",
-  path: "/calcados",
+  id: '/calcados',
+  path: '/calcados',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedCalculadoraRoute =
   AuthenticatedCalculadoraRouteImport.update({
-    id: "/calculadora",
-    path: "/calculadora",
+    id: '/calculadora',
+    path: '/calculadora',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedClientesRoute = AuthenticatedClientesRouteImport.update({
-  id: "/clientes",
-  path: "/clientes",
+  id: '/clientes',
+  path: '/clientes',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedCobrancasRoute = AuthenticatedCobrancasRouteImport.update({
-  id: "/cobrancas",
-  path: "/cobrancas",
+  id: '/cobrancas',
+  path: '/cobrancas',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedComoFuncionaRoute =
   AuthenticatedComoFuncionaRouteImport.update({
-    id: "/como-funciona",
-    path: "/como-funciona",
+    id: '/como-funciona',
+    path: '/como-funciona',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedConfiguracoesRoute =
   AuthenticatedConfiguracoesRouteImport.update({
-    id: "/configuracoes",
-    path: "/configuracoes",
+    id: '/configuracoes',
+    path: '/configuracoes',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: "/dashboard",
-  path: "/dashboard",
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedEncomendasRoute = AuthenticatedEncomendasRouteImport.update({
-  id: "/encomendas",
-  path: "/encomendas",
+  id: '/encomendas',
+  path: '/encomendas',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedFaturamentoRoute =
   AuthenticatedFaturamentoRouteImport.update({
-    id: "/faturamento",
-    path: "/faturamento",
+    id: '/faturamento',
+    path: '/faturamento',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedFeedbackRoute = AuthenticatedFeedbackRouteImport.update({
-  id: "/feedback",
-  path: "/feedback",
+  id: '/feedback',
+  path: '/feedback',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedInformaticaRoute =
   AuthenticatedInformaticaRouteImport.update({
-    id: "/informatica",
-    path: "/informatica",
+    id: '/informatica',
+    path: '/informatica',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedJoiasRoute = AuthenticatedJoiasRouteImport.update({
-  id: "/joias",
-  path: "/joias",
+  id: '/joias',
+  path: '/joias',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedLojasPremiumRoute =
   AuthenticatedLojasPremiumRouteImport.update({
-    id: "/lojas-premium",
-    path: "/lojas-premium",
+    id: '/lojas-premium',
+    path: '/lojas-premium',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedMinhaLojaRoute = AuthenticatedMinhaLojaRouteImport.update({
-  id: "/minha-loja",
-  path: "/minha-loja",
+  id: '/minha-loja',
+  path: '/minha-loja',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
-  id: "/onboarding",
-  path: "/onboarding",
+  id: '/onboarding',
+  path: '/onboarding',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedPedidosRoute = AuthenticatedPedidosRouteImport.update({
-  id: "/pedidos",
-  path: "/pedidos",
+  id: '/pedidos',
+  path: '/pedidos',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedPizzariaRoute = AuthenticatedPizzariaRouteImport.update({
-  id: "/pizzaria",
-  path: "/pizzaria",
+  id: '/pizzaria',
+  path: '/pizzaria',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedProdutosRoute = AuthenticatedProdutosRouteImport.update({
-  id: "/produtos",
-  path: "/produtos",
+  id: '/produtos',
+  path: '/produtos',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedProdutosIaRoute = AuthenticatedProdutosIaRouteImport.update({
-  id: "/produtos-ia",
-  path: "/produtos-ia",
+  id: '/produtos-ia',
+  path: '/produtos-ia',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedQrcodesRoute = AuthenticatedQrcodesRouteImport.update({
-  id: "/qrcodes",
-  path: "/qrcodes",
+  id: '/qrcodes',
+  path: '/qrcodes',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedRoupasRoute = AuthenticatedRoupasRouteImport.update({
-  id: "/roupas",
-  path: "/roupas",
+  id: '/roupas',
+  path: '/roupas',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedRoupasEsportivasRoute =
   AuthenticatedRoupasEsportivasRouteImport.update({
-    id: "/roupas-esportivas",
-    path: "/roupas-esportivas",
+    id: '/roupas-esportivas',
+    path: '/roupas-esportivas',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedRoupasTreinoRoute =
   AuthenticatedRoupasTreinoRouteImport.update({
-    id: "/roupas-treino",
-    path: "/roupas-treino",
+    id: '/roupas-treino',
+    path: '/roupas-treino',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const CobrancaTokenRoute = CobrancaTokenRouteImport.update({
-  id: "/cobranca/$token",
-  path: "/cobranca/$token",
+  id: '/cobranca/$token',
+  path: '/cobranca/$token',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const LojaSlugRoute = LojaSlugRouteImport.update({
-  id: "/loja/$slug",
-  path: "/loja/$slug",
+  id: '/loja/$slug',
+  path: '/loja/$slug',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const SSlugRoute = SSlugRouteImport.update({
-  id: "/s/$slug",
-  path: "/s/$slug",
+  id: '/s/$slug',
+  path: '/s/$slug',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const SoftwaresSlugRoute = SoftwaresSlugRouteImport.update({
-  id: "/$slug",
-  path: "/$slug",
+  id: '/$slug',
+  path: '/$slug',
   getParentRoute: () => SoftwaresRoute,
-} as any);
+} as any)
 const AuthenticatedAdminAssinaturasRoute =
   AuthenticatedAdminAssinaturasRouteImport.update({
-    id: "/admin_/assinaturas",
-    path: "/admin/assinaturas",
+    id: '/admin_/assinaturas',
+    path: '/admin/assinaturas',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAdminFaturamentoRoute =
   AuthenticatedAdminFaturamentoRouteImport.update({
-    id: "/admin_/faturamento",
-    path: "/admin/faturamento",
+    id: '/admin_/faturamento',
+    path: '/admin/faturamento',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAdminFeedbackRoute =
   AuthenticatedAdminFeedbackRouteImport.update({
-    id: "/admin_/feedback",
-    path: "/admin/feedback",
+    id: '/admin_/feedback',
+    path: '/admin/feedback',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAdminLandingRoute =
   AuthenticatedAdminLandingRouteImport.update({
-    id: "/admin_/landing",
-    path: "/admin/landing",
+    id: '/admin_/landing',
+    path: '/admin/landing',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAdminLojasRoute = AuthenticatedAdminLojasRouteImport.update({
-  id: "/admin_/lojas",
-  path: "/admin/lojas",
+  id: '/admin_/lojas',
+  path: '/admin/lojas',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedAdminNotificacoesRoute =
   AuthenticatedAdminNotificacoesRouteImport.update({
-    id: "/admin_/notificacoes",
-    path: "/admin/notificacoes",
+    id: '/admin_/notificacoes',
+    path: '/admin/notificacoes',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAdminPrecosRoute =
   AuthenticatedAdminPrecosRouteImport.update({
-    id: "/admin_/precos",
-    path: "/admin/precos",
+    id: '/admin_/precos',
+    path: '/admin/precos',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAdminSoftwaresRoute =
   AuthenticatedAdminSoftwaresRouteImport.update({
-    id: "/admin_/softwares",
-    path: "/admin/softwares",
+    id: '/admin_/softwares',
+    path: '/admin/softwares',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedAdminSolicitacoesProRoute =
   AuthenticatedAdminSolicitacoesProRouteImport.update({
-    id: "/admin_/solicitacoes-pro",
-    path: "/admin/solicitacoes-pro",
+    id: '/admin_/solicitacoes-pro',
+    path: '/admin/solicitacoes-pro',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const AuthenticatedPizzariaPedidosRoute =
   AuthenticatedPizzariaPedidosRouteImport.update({
-    id: "/pizzaria_/pedidos",
-    path: "/pizzaria/pedidos",
+    id: '/pizzaria_/pedidos',
+    path: '/pizzaria/pedidos',
     getParentRoute: () => AuthenticatedRouteRoute,
-  } as any);
+  } as any)
 const ApiPublicWebhooksMercadopagoRoute =
   ApiPublicWebhooksMercadopagoRouteImport.update({
-    id: "/api/public/webhooks/mercadopago",
-    path: "/api/public/webhooks/mercadopago",
+    id: '/api/public/webhooks/mercadopago',
+    path: '/api/public/webhooks/mercadopago',
     getParentRoute: () => rootRouteImport,
-  } as any);
+  } as any)
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute;
-  "/login": typeof LoginRoute;
-  "/privacidade": typeof PrivacidadeRoute;
-  "/recuperar-senha": typeof RecuperarSenhaRoute;
-  "/reset-password": typeof ResetPasswordRoute;
-  "/signup": typeof SignupRoute;
-  "/softwares": typeof SoftwaresRouteWithChildren;
-  "/suporte": typeof SuporteRoute;
-  "/termos": typeof TermosRoute;
-  "/admin": typeof AuthenticatedAdminRoute;
-  "/assinatura": typeof AuthenticatedAssinaturaRoute;
-  "/calcados": typeof AuthenticatedCalcadosRoute;
-  "/calculadora": typeof AuthenticatedCalculadoraRoute;
-  "/clientes": typeof AuthenticatedClientesRoute;
-  "/cobrancas": typeof AuthenticatedCobrancasRoute;
-  "/como-funciona": typeof AuthenticatedComoFuncionaRoute;
-  "/configuracoes": typeof AuthenticatedConfiguracoesRoute;
-  "/dashboard": typeof AuthenticatedDashboardRoute;
-  "/encomendas": typeof AuthenticatedEncomendasRoute;
-  "/faturamento": typeof AuthenticatedFaturamentoRoute;
-  "/feedback": typeof AuthenticatedFeedbackRoute;
-  "/informatica": typeof AuthenticatedInformaticaRoute;
-  "/joias": typeof AuthenticatedJoiasRoute;
-  "/lojas-premium": typeof AuthenticatedLojasPremiumRoute;
-  "/minha-loja": typeof AuthenticatedMinhaLojaRoute;
-  "/onboarding": typeof AuthenticatedOnboardingRoute;
-  "/pedidos": typeof AuthenticatedPedidosRoute;
-  "/pizzaria": typeof AuthenticatedPizzariaRoute;
-  "/produtos": typeof AuthenticatedProdutosRoute;
-  "/produtos-ia": typeof AuthenticatedProdutosIaRoute;
-  "/qrcodes": typeof AuthenticatedQrcodesRoute;
-  "/roupas": typeof AuthenticatedRoupasRoute;
-  "/roupas-esportivas": typeof AuthenticatedRoupasEsportivasRoute;
-  "/roupas-treino": typeof AuthenticatedRoupasTreinoRoute;
-  "/cobranca/$token": typeof CobrancaTokenRoute;
-  "/loja/$slug": typeof LojaSlugRoute;
-  "/s/$slug": typeof SSlugRoute;
-  "/softwares/$slug": typeof SoftwaresSlugRoute;
-  "/admin/assinaturas": typeof AuthenticatedAdminAssinaturasRoute;
-  "/admin/faturamento": typeof AuthenticatedAdminFaturamentoRoute;
-  "/admin/feedback": typeof AuthenticatedAdminFeedbackRoute;
-  "/admin/landing": typeof AuthenticatedAdminLandingRoute;
-  "/admin/lojas": typeof AuthenticatedAdminLojasRoute;
-  "/admin/notificacoes": typeof AuthenticatedAdminNotificacoesRoute;
-  "/admin/precos": typeof AuthenticatedAdminPrecosRoute;
-  "/admin/softwares": typeof AuthenticatedAdminSoftwaresRoute;
-  "/admin/solicitacoes-pro": typeof AuthenticatedAdminSolicitacoesProRoute;
-  "/pizzaria/pedidos": typeof AuthenticatedPizzariaPedidosRoute;
-  "/api/public/webhooks/mercadopago": typeof ApiPublicWebhooksMercadopagoRoute;
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/signup': typeof SignupRoute
+  '/softwares': typeof SoftwaresRouteWithChildren
+  '/suporte': typeof SuporteRoute
+  '/termos': typeof TermosRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/assinatura': typeof AuthenticatedAssinaturaRoute
+  '/calcados': typeof AuthenticatedCalcadosRoute
+  '/calculadora': typeof AuthenticatedCalculadoraRoute
+  '/clientes': typeof AuthenticatedClientesRoute
+  '/cobrancas': typeof AuthenticatedCobrancasRoute
+  '/como-funciona': typeof AuthenticatedComoFuncionaRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/encomendas': typeof AuthenticatedEncomendasRoute
+  '/faturamento': typeof AuthenticatedFaturamentoRoute
+  '/feedback': typeof AuthenticatedFeedbackRoute
+  '/informatica': typeof AuthenticatedInformaticaRoute
+  '/joias': typeof AuthenticatedJoiasRoute
+  '/lojas-premium': typeof AuthenticatedLojasPremiumRoute
+  '/minha-loja': typeof AuthenticatedMinhaLojaRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/pedidos': typeof AuthenticatedPedidosRoute
+  '/pizzaria': typeof AuthenticatedPizzariaRoute
+  '/produtos': typeof AuthenticatedProdutosRoute
+  '/produtos-ia': typeof AuthenticatedProdutosIaRoute
+  '/qrcodes': typeof AuthenticatedQrcodesRoute
+  '/roupas': typeof AuthenticatedRoupasRoute
+  '/roupas-esportivas': typeof AuthenticatedRoupasEsportivasRoute
+  '/roupas-treino': typeof AuthenticatedRoupasTreinoRoute
+  '/cobranca/$token': typeof CobrancaTokenRoute
+  '/loja/$slug': typeof LojaSlugRoute
+  '/s/$slug': typeof SSlugRoute
+  '/softwares/$slug': typeof SoftwaresSlugRoute
+  '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
+  '/admin/faturamento': typeof AuthenticatedAdminFaturamentoRoute
+  '/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
+  '/admin/landing': typeof AuthenticatedAdminLandingRoute
+  '/admin/lojas': typeof AuthenticatedAdminLojasRoute
+  '/admin/notificacoes': typeof AuthenticatedAdminNotificacoesRoute
+  '/admin/precos': typeof AuthenticatedAdminPrecosRoute
+  '/admin/softwares': typeof AuthenticatedAdminSoftwaresRoute
+  '/admin/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
+  '/pizzaria/pedidos': typeof AuthenticatedPizzariaPedidosRoute
+  '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/login": typeof LoginRoute;
-  "/privacidade": typeof PrivacidadeRoute;
-  "/recuperar-senha": typeof RecuperarSenhaRoute;
-  "/reset-password": typeof ResetPasswordRoute;
-  "/signup": typeof SignupRoute;
-  "/softwares": typeof SoftwaresRouteWithChildren;
-  "/suporte": typeof SuporteRoute;
-  "/termos": typeof TermosRoute;
-  "/admin": typeof AuthenticatedAdminRoute;
-  "/assinatura": typeof AuthenticatedAssinaturaRoute;
-  "/calcados": typeof AuthenticatedCalcadosRoute;
-  "/calculadora": typeof AuthenticatedCalculadoraRoute;
-  "/clientes": typeof AuthenticatedClientesRoute;
-  "/cobrancas": typeof AuthenticatedCobrancasRoute;
-  "/como-funciona": typeof AuthenticatedComoFuncionaRoute;
-  "/configuracoes": typeof AuthenticatedConfiguracoesRoute;
-  "/dashboard": typeof AuthenticatedDashboardRoute;
-  "/encomendas": typeof AuthenticatedEncomendasRoute;
-  "/faturamento": typeof AuthenticatedFaturamentoRoute;
-  "/feedback": typeof AuthenticatedFeedbackRoute;
-  "/informatica": typeof AuthenticatedInformaticaRoute;
-  "/joias": typeof AuthenticatedJoiasRoute;
-  "/lojas-premium": typeof AuthenticatedLojasPremiumRoute;
-  "/minha-loja": typeof AuthenticatedMinhaLojaRoute;
-  "/onboarding": typeof AuthenticatedOnboardingRoute;
-  "/pedidos": typeof AuthenticatedPedidosRoute;
-  "/pizzaria": typeof AuthenticatedPizzariaRoute;
-  "/produtos": typeof AuthenticatedProdutosRoute;
-  "/produtos-ia": typeof AuthenticatedProdutosIaRoute;
-  "/qrcodes": typeof AuthenticatedQrcodesRoute;
-  "/roupas": typeof AuthenticatedRoupasRoute;
-  "/roupas-esportivas": typeof AuthenticatedRoupasEsportivasRoute;
-  "/roupas-treino": typeof AuthenticatedRoupasTreinoRoute;
-  "/cobranca/$token": typeof CobrancaTokenRoute;
-  "/loja/$slug": typeof LojaSlugRoute;
-  "/s/$slug": typeof SSlugRoute;
-  "/softwares/$slug": typeof SoftwaresSlugRoute;
-  "/admin/assinaturas": typeof AuthenticatedAdminAssinaturasRoute;
-  "/admin/faturamento": typeof AuthenticatedAdminFaturamentoRoute;
-  "/admin/feedback": typeof AuthenticatedAdminFeedbackRoute;
-  "/admin/landing": typeof AuthenticatedAdminLandingRoute;
-  "/admin/lojas": typeof AuthenticatedAdminLojasRoute;
-  "/admin/notificacoes": typeof AuthenticatedAdminNotificacoesRoute;
-  "/admin/precos": typeof AuthenticatedAdminPrecosRoute;
-  "/admin/softwares": typeof AuthenticatedAdminSoftwaresRoute;
-  "/admin/solicitacoes-pro": typeof AuthenticatedAdminSolicitacoesProRoute;
-  "/pizzaria/pedidos": typeof AuthenticatedPizzariaPedidosRoute;
-  "/api/public/webhooks/mercadopago": typeof ApiPublicWebhooksMercadopagoRoute;
+  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/signup': typeof SignupRoute
+  '/softwares': typeof SoftwaresRouteWithChildren
+  '/suporte': typeof SuporteRoute
+  '/termos': typeof TermosRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/assinatura': typeof AuthenticatedAssinaturaRoute
+  '/calcados': typeof AuthenticatedCalcadosRoute
+  '/calculadora': typeof AuthenticatedCalculadoraRoute
+  '/clientes': typeof AuthenticatedClientesRoute
+  '/cobrancas': typeof AuthenticatedCobrancasRoute
+  '/como-funciona': typeof AuthenticatedComoFuncionaRoute
+  '/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/encomendas': typeof AuthenticatedEncomendasRoute
+  '/faturamento': typeof AuthenticatedFaturamentoRoute
+  '/feedback': typeof AuthenticatedFeedbackRoute
+  '/informatica': typeof AuthenticatedInformaticaRoute
+  '/joias': typeof AuthenticatedJoiasRoute
+  '/lojas-premium': typeof AuthenticatedLojasPremiumRoute
+  '/minha-loja': typeof AuthenticatedMinhaLojaRoute
+  '/onboarding': typeof AuthenticatedOnboardingRoute
+  '/pedidos': typeof AuthenticatedPedidosRoute
+  '/pizzaria': typeof AuthenticatedPizzariaRoute
+  '/produtos': typeof AuthenticatedProdutosRoute
+  '/produtos-ia': typeof AuthenticatedProdutosIaRoute
+  '/qrcodes': typeof AuthenticatedQrcodesRoute
+  '/roupas': typeof AuthenticatedRoupasRoute
+  '/roupas-esportivas': typeof AuthenticatedRoupasEsportivasRoute
+  '/roupas-treino': typeof AuthenticatedRoupasTreinoRoute
+  '/cobranca/$token': typeof CobrancaTokenRoute
+  '/loja/$slug': typeof LojaSlugRoute
+  '/s/$slug': typeof SSlugRoute
+  '/softwares/$slug': typeof SoftwaresSlugRoute
+  '/admin/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
+  '/admin/faturamento': typeof AuthenticatedAdminFaturamentoRoute
+  '/admin/feedback': typeof AuthenticatedAdminFeedbackRoute
+  '/admin/landing': typeof AuthenticatedAdminLandingRoute
+  '/admin/lojas': typeof AuthenticatedAdminLojasRoute
+  '/admin/notificacoes': typeof AuthenticatedAdminNotificacoesRoute
+  '/admin/precos': typeof AuthenticatedAdminPrecosRoute
+  '/admin/softwares': typeof AuthenticatedAdminSoftwaresRoute
+  '/admin/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
+  '/pizzaria/pedidos': typeof AuthenticatedPizzariaPedidosRoute
+  '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  "/": typeof IndexRoute;
-  "/_authenticated": typeof AuthenticatedRouteRouteWithChildren;
-  "/login": typeof LoginRoute;
-  "/privacidade": typeof PrivacidadeRoute;
-  "/recuperar-senha": typeof RecuperarSenhaRoute;
-  "/reset-password": typeof ResetPasswordRoute;
-  "/signup": typeof SignupRoute;
-  "/softwares": typeof SoftwaresRouteWithChildren;
-  "/suporte": typeof SuporteRoute;
-  "/termos": typeof TermosRoute;
-  "/_authenticated/admin": typeof AuthenticatedAdminRoute;
-  "/_authenticated/assinatura": typeof AuthenticatedAssinaturaRoute;
-  "/_authenticated/calcados": typeof AuthenticatedCalcadosRoute;
-  "/_authenticated/calculadora": typeof AuthenticatedCalculadoraRoute;
-  "/_authenticated/clientes": typeof AuthenticatedClientesRoute;
-  "/_authenticated/cobrancas": typeof AuthenticatedCobrancasRoute;
-  "/_authenticated/como-funciona": typeof AuthenticatedComoFuncionaRoute;
-  "/_authenticated/configuracoes": typeof AuthenticatedConfiguracoesRoute;
-  "/_authenticated/dashboard": typeof AuthenticatedDashboardRoute;
-  "/_authenticated/encomendas": typeof AuthenticatedEncomendasRoute;
-  "/_authenticated/faturamento": typeof AuthenticatedFaturamentoRoute;
-  "/_authenticated/feedback": typeof AuthenticatedFeedbackRoute;
-  "/_authenticated/informatica": typeof AuthenticatedInformaticaRoute;
-  "/_authenticated/joias": typeof AuthenticatedJoiasRoute;
-  "/_authenticated/lojas-premium": typeof AuthenticatedLojasPremiumRoute;
-  "/_authenticated/minha-loja": typeof AuthenticatedMinhaLojaRoute;
-  "/_authenticated/onboarding": typeof AuthenticatedOnboardingRoute;
-  "/_authenticated/pedidos": typeof AuthenticatedPedidosRoute;
-  "/_authenticated/pizzaria": typeof AuthenticatedPizzariaRoute;
-  "/_authenticated/produtos": typeof AuthenticatedProdutosRoute;
-  "/_authenticated/produtos-ia": typeof AuthenticatedProdutosIaRoute;
-  "/_authenticated/qrcodes": typeof AuthenticatedQrcodesRoute;
-  "/_authenticated/roupas": typeof AuthenticatedRoupasRoute;
-  "/_authenticated/roupas-esportivas": typeof AuthenticatedRoupasEsportivasRoute;
-  "/_authenticated/roupas-treino": typeof AuthenticatedRoupasTreinoRoute;
-  "/cobranca/$token": typeof CobrancaTokenRoute;
-  "/loja/$slug": typeof LojaSlugRoute;
-  "/s/$slug": typeof SSlugRoute;
-  "/softwares/$slug": typeof SoftwaresSlugRoute;
-  "/_authenticated/admin_/assinaturas": typeof AuthenticatedAdminAssinaturasRoute;
-  "/_authenticated/admin_/faturamento": typeof AuthenticatedAdminFaturamentoRoute;
-  "/_authenticated/admin_/feedback": typeof AuthenticatedAdminFeedbackRoute;
-  "/_authenticated/admin_/landing": typeof AuthenticatedAdminLandingRoute;
-  "/_authenticated/admin_/lojas": typeof AuthenticatedAdminLojasRoute;
-  "/_authenticated/admin_/notificacoes": typeof AuthenticatedAdminNotificacoesRoute;
-  "/_authenticated/admin_/precos": typeof AuthenticatedAdminPrecosRoute;
-  "/_authenticated/admin_/softwares": typeof AuthenticatedAdminSoftwaresRoute;
-  "/_authenticated/admin_/solicitacoes-pro": typeof AuthenticatedAdminSolicitacoesProRoute;
-  "/_authenticated/pizzaria_/pedidos": typeof AuthenticatedPizzariaPedidosRoute;
-  "/api/public/webhooks/mercadopago": typeof ApiPublicWebhooksMercadopagoRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/login': typeof LoginRoute
+  '/privacidade': typeof PrivacidadeRoute
+  '/recuperar-senha': typeof RecuperarSenhaRoute
+  '/reset-password': typeof ResetPasswordRoute
+  '/signup': typeof SignupRoute
+  '/softwares': typeof SoftwaresRouteWithChildren
+  '/suporte': typeof SuporteRoute
+  '/termos': typeof TermosRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/assinatura': typeof AuthenticatedAssinaturaRoute
+  '/_authenticated/calcados': typeof AuthenticatedCalcadosRoute
+  '/_authenticated/calculadora': typeof AuthenticatedCalculadoraRoute
+  '/_authenticated/clientes': typeof AuthenticatedClientesRoute
+  '/_authenticated/cobrancas': typeof AuthenticatedCobrancasRoute
+  '/_authenticated/como-funciona': typeof AuthenticatedComoFuncionaRoute
+  '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/encomendas': typeof AuthenticatedEncomendasRoute
+  '/_authenticated/faturamento': typeof AuthenticatedFaturamentoRoute
+  '/_authenticated/feedback': typeof AuthenticatedFeedbackRoute
+  '/_authenticated/informatica': typeof AuthenticatedInformaticaRoute
+  '/_authenticated/joias': typeof AuthenticatedJoiasRoute
+  '/_authenticated/lojas-premium': typeof AuthenticatedLojasPremiumRoute
+  '/_authenticated/minha-loja': typeof AuthenticatedMinhaLojaRoute
+  '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
+  '/_authenticated/pedidos': typeof AuthenticatedPedidosRoute
+  '/_authenticated/pizzaria': typeof AuthenticatedPizzariaRoute
+  '/_authenticated/produtos': typeof AuthenticatedProdutosRoute
+  '/_authenticated/produtos-ia': typeof AuthenticatedProdutosIaRoute
+  '/_authenticated/qrcodes': typeof AuthenticatedQrcodesRoute
+  '/_authenticated/roupas': typeof AuthenticatedRoupasRoute
+  '/_authenticated/roupas-esportivas': typeof AuthenticatedRoupasEsportivasRoute
+  '/_authenticated/roupas-treino': typeof AuthenticatedRoupasTreinoRoute
+  '/cobranca/$token': typeof CobrancaTokenRoute
+  '/loja/$slug': typeof LojaSlugRoute
+  '/s/$slug': typeof SSlugRoute
+  '/softwares/$slug': typeof SoftwaresSlugRoute
+  '/_authenticated/admin_/assinaturas': typeof AuthenticatedAdminAssinaturasRoute
+  '/_authenticated/admin_/faturamento': typeof AuthenticatedAdminFaturamentoRoute
+  '/_authenticated/admin_/feedback': typeof AuthenticatedAdminFeedbackRoute
+  '/_authenticated/admin_/landing': typeof AuthenticatedAdminLandingRoute
+  '/_authenticated/admin_/lojas': typeof AuthenticatedAdminLojasRoute
+  '/_authenticated/admin_/notificacoes': typeof AuthenticatedAdminNotificacoesRoute
+  '/_authenticated/admin_/precos': typeof AuthenticatedAdminPrecosRoute
+  '/_authenticated/admin_/softwares': typeof AuthenticatedAdminSoftwaresRoute
+  '/_authenticated/admin_/solicitacoes-pro': typeof AuthenticatedAdminSolicitacoesProRoute
+  '/_authenticated/pizzaria_/pedidos': typeof AuthenticatedPizzariaPedidosRoute
+  '/api/public/webhooks/mercadopago': typeof ApiPublicWebhooksMercadopagoRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | "/"
-    | "/login"
-    | "/privacidade"
-    | "/recuperar-senha"
-    | "/reset-password"
-    | "/signup"
-    | "/softwares"
-    | "/suporte"
-    | "/termos"
-    | "/admin"
-    | "/assinatura"
-    | "/calcados"
-    | "/calculadora"
-    | "/clientes"
-    | "/cobrancas"
-    | "/como-funciona"
-    | "/configuracoes"
-    | "/dashboard"
-    | "/encomendas"
-    | "/faturamento"
-    | "/feedback"
-    | "/informatica"
-    | "/joias"
-    | "/lojas-premium"
-    | "/minha-loja"
-    | "/onboarding"
-    | "/pedidos"
-    | "/pizzaria"
-    | "/produtos"
-    | "/produtos-ia"
-    | "/qrcodes"
-    | "/roupas"
-    | "/roupas-esportivas"
-    | "/roupas-treino"
-    | "/cobranca/$token"
-    | "/loja/$slug"
-    | "/s/$slug"
-    | "/softwares/$slug"
-    | "/admin/assinaturas"
-    | "/admin/faturamento"
-    | "/admin/feedback"
-    | "/admin/landing"
-    | "/admin/lojas"
-    | "/admin/notificacoes"
-    | "/admin/precos"
-    | "/admin/softwares"
-    | "/admin/solicitacoes-pro"
-    | "/pizzaria/pedidos"
-    | "/api/public/webhooks/mercadopago";
-  fileRoutesByTo: FileRoutesByTo;
+    | '/'
+    | '/login'
+    | '/privacidade'
+    | '/recuperar-senha'
+    | '/reset-password'
+    | '/signup'
+    | '/softwares'
+    | '/suporte'
+    | '/termos'
+    | '/admin'
+    | '/assinatura'
+    | '/calcados'
+    | '/calculadora'
+    | '/clientes'
+    | '/cobrancas'
+    | '/como-funciona'
+    | '/configuracoes'
+    | '/dashboard'
+    | '/encomendas'
+    | '/faturamento'
+    | '/feedback'
+    | '/informatica'
+    | '/joias'
+    | '/lojas-premium'
+    | '/minha-loja'
+    | '/onboarding'
+    | '/pedidos'
+    | '/pizzaria'
+    | '/produtos'
+    | '/produtos-ia'
+    | '/qrcodes'
+    | '/roupas'
+    | '/roupas-esportivas'
+    | '/roupas-treino'
+    | '/cobranca/$token'
+    | '/loja/$slug'
+    | '/s/$slug'
+    | '/softwares/$slug'
+    | '/admin/assinaturas'
+    | '/admin/faturamento'
+    | '/admin/feedback'
+    | '/admin/landing'
+    | '/admin/lojas'
+    | '/admin/notificacoes'
+    | '/admin/precos'
+    | '/admin/softwares'
+    | '/admin/solicitacoes-pro'
+    | '/pizzaria/pedidos'
+    | '/api/public/webhooks/mercadopago'
+  fileRoutesByTo: FileRoutesByTo
   to:
-    | "/"
-    | "/login"
-    | "/privacidade"
-    | "/recuperar-senha"
-    | "/reset-password"
-    | "/signup"
-    | "/softwares"
-    | "/suporte"
-    | "/termos"
-    | "/admin"
-    | "/assinatura"
-    | "/calcados"
-    | "/calculadora"
-    | "/clientes"
-    | "/cobrancas"
-    | "/como-funciona"
-    | "/configuracoes"
-    | "/dashboard"
-    | "/encomendas"
-    | "/faturamento"
-    | "/feedback"
-    | "/informatica"
-    | "/joias"
-    | "/lojas-premium"
-    | "/minha-loja"
-    | "/onboarding"
-    | "/pedidos"
-    | "/pizzaria"
-    | "/produtos"
-    | "/produtos-ia"
-    | "/qrcodes"
-    | "/roupas"
-    | "/roupas-esportivas"
-    | "/roupas-treino"
-    | "/cobranca/$token"
-    | "/loja/$slug"
-    | "/s/$slug"
-    | "/softwares/$slug"
-    | "/admin/assinaturas"
-    | "/admin/faturamento"
-    | "/admin/feedback"
-    | "/admin/landing"
-    | "/admin/lojas"
-    | "/admin/notificacoes"
-    | "/admin/precos"
-    | "/admin/softwares"
-    | "/admin/solicitacoes-pro"
-    | "/pizzaria/pedidos"
-    | "/api/public/webhooks/mercadopago";
+    | '/'
+    | '/login'
+    | '/privacidade'
+    | '/recuperar-senha'
+    | '/reset-password'
+    | '/signup'
+    | '/softwares'
+    | '/suporte'
+    | '/termos'
+    | '/admin'
+    | '/assinatura'
+    | '/calcados'
+    | '/calculadora'
+    | '/clientes'
+    | '/cobrancas'
+    | '/como-funciona'
+    | '/configuracoes'
+    | '/dashboard'
+    | '/encomendas'
+    | '/faturamento'
+    | '/feedback'
+    | '/informatica'
+    | '/joias'
+    | '/lojas-premium'
+    | '/minha-loja'
+    | '/onboarding'
+    | '/pedidos'
+    | '/pizzaria'
+    | '/produtos'
+    | '/produtos-ia'
+    | '/qrcodes'
+    | '/roupas'
+    | '/roupas-esportivas'
+    | '/roupas-treino'
+    | '/cobranca/$token'
+    | '/loja/$slug'
+    | '/s/$slug'
+    | '/softwares/$slug'
+    | '/admin/assinaturas'
+    | '/admin/faturamento'
+    | '/admin/feedback'
+    | '/admin/landing'
+    | '/admin/lojas'
+    | '/admin/notificacoes'
+    | '/admin/precos'
+    | '/admin/softwares'
+    | '/admin/solicitacoes-pro'
+    | '/pizzaria/pedidos'
+    | '/api/public/webhooks/mercadopago'
   id:
-    | "__root__"
-    | "/"
-    | "/_authenticated"
-    | "/login"
-    | "/privacidade"
-    | "/recuperar-senha"
-    | "/reset-password"
-    | "/signup"
-    | "/softwares"
-    | "/suporte"
-    | "/termos"
-    | "/_authenticated/admin"
-    | "/_authenticated/assinatura"
-    | "/_authenticated/calcados"
-    | "/_authenticated/calculadora"
-    | "/_authenticated/clientes"
-    | "/_authenticated/cobrancas"
-    | "/_authenticated/como-funciona"
-    | "/_authenticated/configuracoes"
-    | "/_authenticated/dashboard"
-    | "/_authenticated/encomendas"
-    | "/_authenticated/faturamento"
-    | "/_authenticated/feedback"
-    | "/_authenticated/informatica"
-    | "/_authenticated/joias"
-    | "/_authenticated/lojas-premium"
-    | "/_authenticated/minha-loja"
-    | "/_authenticated/onboarding"
-    | "/_authenticated/pedidos"
-    | "/_authenticated/pizzaria"
-    | "/_authenticated/produtos"
-    | "/_authenticated/produtos-ia"
-    | "/_authenticated/qrcodes"
-    | "/_authenticated/roupas"
-    | "/_authenticated/roupas-esportivas"
-    | "/_authenticated/roupas-treino"
-    | "/cobranca/$token"
-    | "/loja/$slug"
-    | "/s/$slug"
-    | "/softwares/$slug"
-    | "/_authenticated/admin_/assinaturas"
-    | "/_authenticated/admin_/faturamento"
-    | "/_authenticated/admin_/feedback"
-    | "/_authenticated/admin_/landing"
-    | "/_authenticated/admin_/lojas"
-    | "/_authenticated/admin_/notificacoes"
-    | "/_authenticated/admin_/precos"
-    | "/_authenticated/admin_/softwares"
-    | "/_authenticated/admin_/solicitacoes-pro"
-    | "/_authenticated/pizzaria_/pedidos"
-    | "/api/public/webhooks/mercadopago";
-  fileRoutesById: FileRoutesById;
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/login'
+    | '/privacidade'
+    | '/recuperar-senha'
+    | '/reset-password'
+    | '/signup'
+    | '/softwares'
+    | '/suporte'
+    | '/termos'
+    | '/_authenticated/admin'
+    | '/_authenticated/assinatura'
+    | '/_authenticated/calcados'
+    | '/_authenticated/calculadora'
+    | '/_authenticated/clientes'
+    | '/_authenticated/cobrancas'
+    | '/_authenticated/como-funciona'
+    | '/_authenticated/configuracoes'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/encomendas'
+    | '/_authenticated/faturamento'
+    | '/_authenticated/feedback'
+    | '/_authenticated/informatica'
+    | '/_authenticated/joias'
+    | '/_authenticated/lojas-premium'
+    | '/_authenticated/minha-loja'
+    | '/_authenticated/onboarding'
+    | '/_authenticated/pedidos'
+    | '/_authenticated/pizzaria'
+    | '/_authenticated/produtos'
+    | '/_authenticated/produtos-ia'
+    | '/_authenticated/qrcodes'
+    | '/_authenticated/roupas'
+    | '/_authenticated/roupas-esportivas'
+    | '/_authenticated/roupas-treino'
+    | '/cobranca/$token'
+    | '/loja/$slug'
+    | '/s/$slug'
+    | '/softwares/$slug'
+    | '/_authenticated/admin_/assinaturas'
+    | '/_authenticated/admin_/faturamento'
+    | '/_authenticated/admin_/feedback'
+    | '/_authenticated/admin_/landing'
+    | '/_authenticated/admin_/lojas'
+    | '/_authenticated/admin_/notificacoes'
+    | '/_authenticated/admin_/precos'
+    | '/_authenticated/admin_/softwares'
+    | '/_authenticated/admin_/solicitacoes-pro'
+    | '/_authenticated/pizzaria_/pedidos'
+    | '/api/public/webhooks/mercadopago'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren;
-  LoginRoute: typeof LoginRoute;
-  PrivacidadeRoute: typeof PrivacidadeRoute;
-  RecuperarSenhaRoute: typeof RecuperarSenhaRoute;
-  ResetPasswordRoute: typeof ResetPasswordRoute;
-  SignupRoute: typeof SignupRoute;
-  SoftwaresRoute: typeof SoftwaresRouteWithChildren;
-  SuporteRoute: typeof SuporteRoute;
-  TermosRoute: typeof TermosRoute;
-  CobrancaTokenRoute: typeof CobrancaTokenRoute;
-  LojaSlugRoute: typeof LojaSlugRoute;
-  SSlugRoute: typeof SSlugRoute;
-  ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute;
+  IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  PrivacidadeRoute: typeof PrivacidadeRoute
+  RecuperarSenhaRoute: typeof RecuperarSenhaRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
+  SignupRoute: typeof SignupRoute
+  SoftwaresRoute: typeof SoftwaresRouteWithChildren
+  SuporteRoute: typeof SuporteRoute
+  TermosRoute: typeof TermosRoute
+  CobrancaTokenRoute: typeof CobrancaTokenRoute
+  LojaSlugRoute: typeof LojaSlugRoute
+  SSlugRoute: typeof SSlugRoute
+  ApiPublicWebhooksMercadopagoRoute: typeof ApiPublicWebhooksMercadopagoRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_authenticated": {
-      id: "/_authenticated";
-      path: "";
-      fullPath: "/";
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/login": {
-      id: "/login";
-      path: "/login";
-      fullPath: "/login";
-      preLoaderRoute: typeof LoginRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/privacidade": {
-      id: "/privacidade";
-      path: "/privacidade";
-      fullPath: "/privacidade";
-      preLoaderRoute: typeof PrivacidadeRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/recuperar-senha": {
-      id: "/recuperar-senha";
-      path: "/recuperar-senha";
-      fullPath: "/recuperar-senha";
-      preLoaderRoute: typeof RecuperarSenhaRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/reset-password": {
-      id: "/reset-password";
-      path: "/reset-password";
-      fullPath: "/reset-password";
-      preLoaderRoute: typeof ResetPasswordRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/signup": {
-      id: "/signup";
-      path: "/signup";
-      fullPath: "/signup";
-      preLoaderRoute: typeof SignupRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/softwares": {
-      id: "/softwares";
-      path: "/softwares";
-      fullPath: "/softwares";
-      preLoaderRoute: typeof SoftwaresRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/suporte": {
-      id: "/suporte";
-      path: "/suporte";
-      fullPath: "/suporte";
-      preLoaderRoute: typeof SuporteRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/termos": {
-      id: "/termos";
-      path: "/termos";
-      fullPath: "/termos";
-      preLoaderRoute: typeof TermosRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_authenticated/admin": {
-      id: "/_authenticated/admin";
-      path: "/admin";
-      fullPath: "/admin";
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/assinatura": {
-      id: "/_authenticated/assinatura";
-      path: "/assinatura";
-      fullPath: "/assinatura";
-      preLoaderRoute: typeof AuthenticatedAssinaturaRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/calcados": {
-      id: "/_authenticated/calcados";
-      path: "/calcados";
-      fullPath: "/calcados";
-      preLoaderRoute: typeof AuthenticatedCalcadosRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/calculadora": {
-      id: "/_authenticated/calculadora";
-      path: "/calculadora";
-      fullPath: "/calculadora";
-      preLoaderRoute: typeof AuthenticatedCalculadoraRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/clientes": {
-      id: "/_authenticated/clientes";
-      path: "/clientes";
-      fullPath: "/clientes";
-      preLoaderRoute: typeof AuthenticatedClientesRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/cobrancas": {
-      id: "/_authenticated/cobrancas";
-      path: "/cobrancas";
-      fullPath: "/cobrancas";
-      preLoaderRoute: typeof AuthenticatedCobrancasRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/como-funciona": {
-      id: "/_authenticated/como-funciona";
-      path: "/como-funciona";
-      fullPath: "/como-funciona";
-      preLoaderRoute: typeof AuthenticatedComoFuncionaRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/configuracoes": {
-      id: "/_authenticated/configuracoes";
-      path: "/configuracoes";
-      fullPath: "/configuracoes";
-      preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/dashboard": {
-      id: "/_authenticated/dashboard";
-      path: "/dashboard";
-      fullPath: "/dashboard";
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/encomendas": {
-      id: "/_authenticated/encomendas";
-      path: "/encomendas";
-      fullPath: "/encomendas";
-      preLoaderRoute: typeof AuthenticatedEncomendasRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/faturamento": {
-      id: "/_authenticated/faturamento";
-      path: "/faturamento";
-      fullPath: "/faturamento";
-      preLoaderRoute: typeof AuthenticatedFaturamentoRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/feedback": {
-      id: "/_authenticated/feedback";
-      path: "/feedback";
-      fullPath: "/feedback";
-      preLoaderRoute: typeof AuthenticatedFeedbackRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/informatica": {
-      id: "/_authenticated/informatica";
-      path: "/informatica";
-      fullPath: "/informatica";
-      preLoaderRoute: typeof AuthenticatedInformaticaRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/joias": {
-      id: "/_authenticated/joias";
-      path: "/joias";
-      fullPath: "/joias";
-      preLoaderRoute: typeof AuthenticatedJoiasRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/lojas-premium": {
-      id: "/_authenticated/lojas-premium";
-      path: "/lojas-premium";
-      fullPath: "/lojas-premium";
-      preLoaderRoute: typeof AuthenticatedLojasPremiumRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/minha-loja": {
-      id: "/_authenticated/minha-loja";
-      path: "/minha-loja";
-      fullPath: "/minha-loja";
-      preLoaderRoute: typeof AuthenticatedMinhaLojaRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/onboarding": {
-      id: "/_authenticated/onboarding";
-      path: "/onboarding";
-      fullPath: "/onboarding";
-      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/pedidos": {
-      id: "/_authenticated/pedidos";
-      path: "/pedidos";
-      fullPath: "/pedidos";
-      preLoaderRoute: typeof AuthenticatedPedidosRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/pizzaria": {
-      id: "/_authenticated/pizzaria";
-      path: "/pizzaria";
-      fullPath: "/pizzaria";
-      preLoaderRoute: typeof AuthenticatedPizzariaRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/produtos": {
-      id: "/_authenticated/produtos";
-      path: "/produtos";
-      fullPath: "/produtos";
-      preLoaderRoute: typeof AuthenticatedProdutosRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/produtos-ia": {
-      id: "/_authenticated/produtos-ia";
-      path: "/produtos-ia";
-      fullPath: "/produtos-ia";
-      preLoaderRoute: typeof AuthenticatedProdutosIaRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/qrcodes": {
-      id: "/_authenticated/qrcodes";
-      path: "/qrcodes";
-      fullPath: "/qrcodes";
-      preLoaderRoute: typeof AuthenticatedQrcodesRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/roupas": {
-      id: "/_authenticated/roupas";
-      path: "/roupas";
-      fullPath: "/roupas";
-      preLoaderRoute: typeof AuthenticatedRoupasRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/roupas-esportivas": {
-      id: "/_authenticated/roupas-esportivas";
-      path: "/roupas-esportivas";
-      fullPath: "/roupas-esportivas";
-      preLoaderRoute: typeof AuthenticatedRoupasEsportivasRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/roupas-treino": {
-      id: "/_authenticated/roupas-treino";
-      path: "/roupas-treino";
-      fullPath: "/roupas-treino";
-      preLoaderRoute: typeof AuthenticatedRoupasTreinoRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/cobranca/$token": {
-      id: "/cobranca/$token";
-      path: "/cobranca/$token";
-      fullPath: "/cobranca/$token";
-      preLoaderRoute: typeof CobrancaTokenRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/loja/$slug": {
-      id: "/loja/$slug";
-      path: "/loja/$slug";
-      fullPath: "/loja/$slug";
-      preLoaderRoute: typeof LojaSlugRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/s/$slug": {
-      id: "/s/$slug";
-      path: "/s/$slug";
-      fullPath: "/s/$slug";
-      preLoaderRoute: typeof SSlugRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/softwares/$slug": {
-      id: "/softwares/$slug";
-      path: "/$slug";
-      fullPath: "/softwares/$slug";
-      preLoaderRoute: typeof SoftwaresSlugRouteImport;
-      parentRoute: typeof SoftwaresRoute;
-    };
-    "/_authenticated/admin_/assinaturas": {
-      id: "/_authenticated/admin_/assinaturas";
-      path: "/admin/assinaturas";
-      fullPath: "/admin/assinaturas";
-      preLoaderRoute: typeof AuthenticatedAdminAssinaturasRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/admin_/faturamento": {
-      id: "/_authenticated/admin_/faturamento";
-      path: "/admin/faturamento";
-      fullPath: "/admin/faturamento";
-      preLoaderRoute: typeof AuthenticatedAdminFaturamentoRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/admin_/feedback": {
-      id: "/_authenticated/admin_/feedback";
-      path: "/admin/feedback";
-      fullPath: "/admin/feedback";
-      preLoaderRoute: typeof AuthenticatedAdminFeedbackRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/admin_/landing": {
-      id: "/_authenticated/admin_/landing";
-      path: "/admin/landing";
-      fullPath: "/admin/landing";
-      preLoaderRoute: typeof AuthenticatedAdminLandingRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/admin_/lojas": {
-      id: "/_authenticated/admin_/lojas";
-      path: "/admin/lojas";
-      fullPath: "/admin/lojas";
-      preLoaderRoute: typeof AuthenticatedAdminLojasRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/admin_/notificacoes": {
-      id: "/_authenticated/admin_/notificacoes";
-      path: "/admin/notificacoes";
-      fullPath: "/admin/notificacoes";
-      preLoaderRoute: typeof AuthenticatedAdminNotificacoesRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/admin_/precos": {
-      id: "/_authenticated/admin_/precos";
-      path: "/admin/precos";
-      fullPath: "/admin/precos";
-      preLoaderRoute: typeof AuthenticatedAdminPrecosRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/admin_/softwares": {
-      id: "/_authenticated/admin_/softwares";
-      path: "/admin/softwares";
-      fullPath: "/admin/softwares";
-      preLoaderRoute: typeof AuthenticatedAdminSoftwaresRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/admin_/solicitacoes-pro": {
-      id: "/_authenticated/admin_/solicitacoes-pro";
-      path: "/admin/solicitacoes-pro";
-      fullPath: "/admin/solicitacoes-pro";
-      preLoaderRoute: typeof AuthenticatedAdminSolicitacoesProRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/pizzaria_/pedidos": {
-      id: "/_authenticated/pizzaria_/pedidos";
-      path: "/pizzaria/pedidos";
-      fullPath: "/pizzaria/pedidos";
-      preLoaderRoute: typeof AuthenticatedPizzariaPedidosRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/api/public/webhooks/mercadopago": {
-      id: "/api/public/webhooks/mercadopago";
-      path: "/api/public/webhooks/mercadopago";
-      fullPath: "/api/public/webhooks/mercadopago";
-      preLoaderRoute: typeof ApiPublicWebhooksMercadopagoRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recuperar-senha': {
+      id: '/recuperar-senha'
+      path: '/recuperar-senha'
+      fullPath: '/recuperar-senha'
+      preLoaderRoute: typeof RecuperarSenhaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/softwares': {
+      id: '/softwares'
+      path: '/softwares'
+      fullPath: '/softwares'
+      preLoaderRoute: typeof SoftwaresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/suporte': {
+      id: '/suporte'
+      path: '/suporte'
+      fullPath: '/suporte'
+      preLoaderRoute: typeof SuporteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/termos': {
+      id: '/termos'
+      path: '/termos'
+      fullPath: '/termos'
+      preLoaderRoute: typeof TermosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/assinatura': {
+      id: '/_authenticated/assinatura'
+      path: '/assinatura'
+      fullPath: '/assinatura'
+      preLoaderRoute: typeof AuthenticatedAssinaturaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/calcados': {
+      id: '/_authenticated/calcados'
+      path: '/calcados'
+      fullPath: '/calcados'
+      preLoaderRoute: typeof AuthenticatedCalcadosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/calculadora': {
+      id: '/_authenticated/calculadora'
+      path: '/calculadora'
+      fullPath: '/calculadora'
+      preLoaderRoute: typeof AuthenticatedCalculadoraRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/clientes': {
+      id: '/_authenticated/clientes'
+      path: '/clientes'
+      fullPath: '/clientes'
+      preLoaderRoute: typeof AuthenticatedClientesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/cobrancas': {
+      id: '/_authenticated/cobrancas'
+      path: '/cobrancas'
+      fullPath: '/cobrancas'
+      preLoaderRoute: typeof AuthenticatedCobrancasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/como-funciona': {
+      id: '/_authenticated/como-funciona'
+      path: '/como-funciona'
+      fullPath: '/como-funciona'
+      preLoaderRoute: typeof AuthenticatedComoFuncionaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/configuracoes': {
+      id: '/_authenticated/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/encomendas': {
+      id: '/_authenticated/encomendas'
+      path: '/encomendas'
+      fullPath: '/encomendas'
+      preLoaderRoute: typeof AuthenticatedEncomendasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/faturamento': {
+      id: '/_authenticated/faturamento'
+      path: '/faturamento'
+      fullPath: '/faturamento'
+      preLoaderRoute: typeof AuthenticatedFaturamentoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/feedback': {
+      id: '/_authenticated/feedback'
+      path: '/feedback'
+      fullPath: '/feedback'
+      preLoaderRoute: typeof AuthenticatedFeedbackRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/informatica': {
+      id: '/_authenticated/informatica'
+      path: '/informatica'
+      fullPath: '/informatica'
+      preLoaderRoute: typeof AuthenticatedInformaticaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/joias': {
+      id: '/_authenticated/joias'
+      path: '/joias'
+      fullPath: '/joias'
+      preLoaderRoute: typeof AuthenticatedJoiasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/lojas-premium': {
+      id: '/_authenticated/lojas-premium'
+      path: '/lojas-premium'
+      fullPath: '/lojas-premium'
+      preLoaderRoute: typeof AuthenticatedLojasPremiumRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/minha-loja': {
+      id: '/_authenticated/minha-loja'
+      path: '/minha-loja'
+      fullPath: '/minha-loja'
+      preLoaderRoute: typeof AuthenticatedMinhaLojaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/onboarding': {
+      id: '/_authenticated/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pedidos': {
+      id: '/_authenticated/pedidos'
+      path: '/pedidos'
+      fullPath: '/pedidos'
+      preLoaderRoute: typeof AuthenticatedPedidosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pizzaria': {
+      id: '/_authenticated/pizzaria'
+      path: '/pizzaria'
+      fullPath: '/pizzaria'
+      preLoaderRoute: typeof AuthenticatedPizzariaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/produtos': {
+      id: '/_authenticated/produtos'
+      path: '/produtos'
+      fullPath: '/produtos'
+      preLoaderRoute: typeof AuthenticatedProdutosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/produtos-ia': {
+      id: '/_authenticated/produtos-ia'
+      path: '/produtos-ia'
+      fullPath: '/produtos-ia'
+      preLoaderRoute: typeof AuthenticatedProdutosIaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/qrcodes': {
+      id: '/_authenticated/qrcodes'
+      path: '/qrcodes'
+      fullPath: '/qrcodes'
+      preLoaderRoute: typeof AuthenticatedQrcodesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/roupas': {
+      id: '/_authenticated/roupas'
+      path: '/roupas'
+      fullPath: '/roupas'
+      preLoaderRoute: typeof AuthenticatedRoupasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/roupas-esportivas': {
+      id: '/_authenticated/roupas-esportivas'
+      path: '/roupas-esportivas'
+      fullPath: '/roupas-esportivas'
+      preLoaderRoute: typeof AuthenticatedRoupasEsportivasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/roupas-treino': {
+      id: '/_authenticated/roupas-treino'
+      path: '/roupas-treino'
+      fullPath: '/roupas-treino'
+      preLoaderRoute: typeof AuthenticatedRoupasTreinoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/cobranca/$token': {
+      id: '/cobranca/$token'
+      path: '/cobranca/$token'
+      fullPath: '/cobranca/$token'
+      preLoaderRoute: typeof CobrancaTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/loja/$slug': {
+      id: '/loja/$slug'
+      path: '/loja/$slug'
+      fullPath: '/loja/$slug'
+      preLoaderRoute: typeof LojaSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/s/$slug': {
+      id: '/s/$slug'
+      path: '/s/$slug'
+      fullPath: '/s/$slug'
+      preLoaderRoute: typeof SSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/softwares/$slug': {
+      id: '/softwares/$slug'
+      path: '/$slug'
+      fullPath: '/softwares/$slug'
+      preLoaderRoute: typeof SoftwaresSlugRouteImport
+      parentRoute: typeof SoftwaresRoute
+    }
+    '/_authenticated/admin_/assinaturas': {
+      id: '/_authenticated/admin_/assinaturas'
+      path: '/admin/assinaturas'
+      fullPath: '/admin/assinaturas'
+      preLoaderRoute: typeof AuthenticatedAdminAssinaturasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin_/faturamento': {
+      id: '/_authenticated/admin_/faturamento'
+      path: '/admin/faturamento'
+      fullPath: '/admin/faturamento'
+      preLoaderRoute: typeof AuthenticatedAdminFaturamentoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin_/feedback': {
+      id: '/_authenticated/admin_/feedback'
+      path: '/admin/feedback'
+      fullPath: '/admin/feedback'
+      preLoaderRoute: typeof AuthenticatedAdminFeedbackRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin_/landing': {
+      id: '/_authenticated/admin_/landing'
+      path: '/admin/landing'
+      fullPath: '/admin/landing'
+      preLoaderRoute: typeof AuthenticatedAdminLandingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin_/lojas': {
+      id: '/_authenticated/admin_/lojas'
+      path: '/admin/lojas'
+      fullPath: '/admin/lojas'
+      preLoaderRoute: typeof AuthenticatedAdminLojasRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin_/notificacoes': {
+      id: '/_authenticated/admin_/notificacoes'
+      path: '/admin/notificacoes'
+      fullPath: '/admin/notificacoes'
+      preLoaderRoute: typeof AuthenticatedAdminNotificacoesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin_/precos': {
+      id: '/_authenticated/admin_/precos'
+      path: '/admin/precos'
+      fullPath: '/admin/precos'
+      preLoaderRoute: typeof AuthenticatedAdminPrecosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin_/softwares': {
+      id: '/_authenticated/admin_/softwares'
+      path: '/admin/softwares'
+      fullPath: '/admin/softwares'
+      preLoaderRoute: typeof AuthenticatedAdminSoftwaresRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/admin_/solicitacoes-pro': {
+      id: '/_authenticated/admin_/solicitacoes-pro'
+      path: '/admin/solicitacoes-pro'
+      fullPath: '/admin/solicitacoes-pro'
+      preLoaderRoute: typeof AuthenticatedAdminSolicitacoesProRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/pizzaria_/pedidos': {
+      id: '/_authenticated/pizzaria_/pedidos'
+      path: '/pizzaria/pedidos'
+      fullPath: '/pizzaria/pedidos'
+      preLoaderRoute: typeof AuthenticatedPizzariaPedidosRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/webhooks/mercadopago': {
+      id: '/api/public/webhooks/mercadopago'
+      path: '/api/public/webhooks/mercadopago'
+      fullPath: '/api/public/webhooks/mercadopago'
+      preLoaderRoute: typeof ApiPublicWebhooksMercadopagoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute;
-  AuthenticatedAssinaturaRoute: typeof AuthenticatedAssinaturaRoute;
-  AuthenticatedCalcadosRoute: typeof AuthenticatedCalcadosRoute;
-  AuthenticatedCalculadoraRoute: typeof AuthenticatedCalculadoraRoute;
-  AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute;
-  AuthenticatedCobrancasRoute: typeof AuthenticatedCobrancasRoute;
-  AuthenticatedComoFuncionaRoute: typeof AuthenticatedComoFuncionaRoute;
-  AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute;
-  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute;
-  AuthenticatedEncomendasRoute: typeof AuthenticatedEncomendasRoute;
-  AuthenticatedFaturamentoRoute: typeof AuthenticatedFaturamentoRoute;
-  AuthenticatedFeedbackRoute: typeof AuthenticatedFeedbackRoute;
-  AuthenticatedInformaticaRoute: typeof AuthenticatedInformaticaRoute;
-  AuthenticatedJoiasRoute: typeof AuthenticatedJoiasRoute;
-  AuthenticatedLojasPremiumRoute: typeof AuthenticatedLojasPremiumRoute;
-  AuthenticatedMinhaLojaRoute: typeof AuthenticatedMinhaLojaRoute;
-  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute;
-  AuthenticatedPedidosRoute: typeof AuthenticatedPedidosRoute;
-  AuthenticatedPizzariaRoute: typeof AuthenticatedPizzariaRoute;
-  AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRoute;
-  AuthenticatedProdutosIaRoute: typeof AuthenticatedProdutosIaRoute;
-  AuthenticatedQrcodesRoute: typeof AuthenticatedQrcodesRoute;
-  AuthenticatedRoupasRoute: typeof AuthenticatedRoupasRoute;
-  AuthenticatedRoupasEsportivasRoute: typeof AuthenticatedRoupasEsportivasRoute;
-  AuthenticatedRoupasTreinoRoute: typeof AuthenticatedRoupasTreinoRoute;
-  AuthenticatedAdminAssinaturasRoute: typeof AuthenticatedAdminAssinaturasRoute;
-  AuthenticatedAdminFaturamentoRoute: typeof AuthenticatedAdminFaturamentoRoute;
-  AuthenticatedAdminFeedbackRoute: typeof AuthenticatedAdminFeedbackRoute;
-  AuthenticatedAdminLandingRoute: typeof AuthenticatedAdminLandingRoute;
-  AuthenticatedAdminLojasRoute: typeof AuthenticatedAdminLojasRoute;
-  AuthenticatedAdminNotificacoesRoute: typeof AuthenticatedAdminNotificacoesRoute;
-  AuthenticatedAdminPrecosRoute: typeof AuthenticatedAdminPrecosRoute;
-  AuthenticatedAdminSoftwaresRoute: typeof AuthenticatedAdminSoftwaresRoute;
-  AuthenticatedAdminSolicitacoesProRoute: typeof AuthenticatedAdminSolicitacoesProRoute;
-  AuthenticatedPizzariaPedidosRoute: typeof AuthenticatedPizzariaPedidosRoute;
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedAssinaturaRoute: typeof AuthenticatedAssinaturaRoute
+  AuthenticatedCalcadosRoute: typeof AuthenticatedCalcadosRoute
+  AuthenticatedCalculadoraRoute: typeof AuthenticatedCalculadoraRoute
+  AuthenticatedClientesRoute: typeof AuthenticatedClientesRoute
+  AuthenticatedCobrancasRoute: typeof AuthenticatedCobrancasRoute
+  AuthenticatedComoFuncionaRoute: typeof AuthenticatedComoFuncionaRoute
+  AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedEncomendasRoute: typeof AuthenticatedEncomendasRoute
+  AuthenticatedFaturamentoRoute: typeof AuthenticatedFaturamentoRoute
+  AuthenticatedFeedbackRoute: typeof AuthenticatedFeedbackRoute
+  AuthenticatedInformaticaRoute: typeof AuthenticatedInformaticaRoute
+  AuthenticatedJoiasRoute: typeof AuthenticatedJoiasRoute
+  AuthenticatedLojasPremiumRoute: typeof AuthenticatedLojasPremiumRoute
+  AuthenticatedMinhaLojaRoute: typeof AuthenticatedMinhaLojaRoute
+  AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
+  AuthenticatedPedidosRoute: typeof AuthenticatedPedidosRoute
+  AuthenticatedPizzariaRoute: typeof AuthenticatedPizzariaRoute
+  AuthenticatedProdutosRoute: typeof AuthenticatedProdutosRoute
+  AuthenticatedProdutosIaRoute: typeof AuthenticatedProdutosIaRoute
+  AuthenticatedQrcodesRoute: typeof AuthenticatedQrcodesRoute
+  AuthenticatedRoupasRoute: typeof AuthenticatedRoupasRoute
+  AuthenticatedRoupasEsportivasRoute: typeof AuthenticatedRoupasEsportivasRoute
+  AuthenticatedRoupasTreinoRoute: typeof AuthenticatedRoupasTreinoRoute
+  AuthenticatedAdminAssinaturasRoute: typeof AuthenticatedAdminAssinaturasRoute
+  AuthenticatedAdminFaturamentoRoute: typeof AuthenticatedAdminFaturamentoRoute
+  AuthenticatedAdminFeedbackRoute: typeof AuthenticatedAdminFeedbackRoute
+  AuthenticatedAdminLandingRoute: typeof AuthenticatedAdminLandingRoute
+  AuthenticatedAdminLojasRoute: typeof AuthenticatedAdminLojasRoute
+  AuthenticatedAdminNotificacoesRoute: typeof AuthenticatedAdminNotificacoesRoute
+  AuthenticatedAdminPrecosRoute: typeof AuthenticatedAdminPrecosRoute
+  AuthenticatedAdminSoftwaresRoute: typeof AuthenticatedAdminSoftwaresRoute
+  AuthenticatedAdminSolicitacoesProRoute: typeof AuthenticatedAdminSolicitacoesProRoute
+  AuthenticatedPizzariaPedidosRoute: typeof AuthenticatedPizzariaPedidosRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1087,22 +1087,22 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminSolicitacoesProRoute:
     AuthenticatedAdminSolicitacoesProRoute,
   AuthenticatedPizzariaPedidosRoute: AuthenticatedPizzariaPedidosRoute,
-};
+}
 
 const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren);
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 interface SoftwaresRouteChildren {
-  SoftwaresSlugRoute: typeof SoftwaresSlugRoute;
+  SoftwaresSlugRoute: typeof SoftwaresSlugRoute
 }
 
 const SoftwaresRouteChildren: SoftwaresRouteChildren = {
   SoftwaresSlugRoute: SoftwaresSlugRoute,
-};
+}
 
 const SoftwaresRouteWithChildren = SoftwaresRoute._addFileChildren(
   SoftwaresRouteChildren,
-);
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -1119,7 +1119,17 @@ const rootRouteChildren: RootRouteChildren = {
   LojaSlugRoute: LojaSlugRoute,
   SSlugRoute: SSlugRoute,
   ApiPublicWebhooksMercadopagoRoute: ApiPublicWebhooksMercadopagoRoute,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
