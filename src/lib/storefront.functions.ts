@@ -7,6 +7,14 @@ import { normalizePhone } from "@/lib/format";
 import { isJewelryOfferCurrent } from "@/lib/jewelry";
 import { deliveryTotal } from "./delivery";
 import { filterCategoriesWithProducts } from "./storefront-visibility";
+import {
+  hasStoreProAccess,
+  quoteForStore,
+  readCanonicalDeliveryConfig,
+  type AdminDb,
+} from "./delivery-config.server";
+import { isSafeStoreAssetPath } from "./premium-storefront.schemas";
+import type { ServerSupabaseAdmin } from "./server-supabase.types";
 
 export type StorefrontVariant = {
   id: string;
@@ -158,9 +166,7 @@ export type Storefront = {
 } | null;
 
 export type PublicPizzeria = {
-  deliveryEnabled: boolean;
-  deliveryRadiusKm: number;
-  deliveryFee: number;
+  deliveryAvailable: boolean;
   displayName: string | null;
   instructions: string;
   allowHalf: boolean;
@@ -455,7 +461,16 @@ export const getStorefront = createServerFn({ method: "GET" })
         : Promise.resolve({ data: [] as never[] }),
     ]);
 
-    const pizzeriaRaw = await loadPizzeriaRows(publicDb, store.id);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ data: assetOwner }, pizzeriaRaw] = await Promise.all([
+      supabaseAdmin.from("stores").select("owner_id").eq("id", store.id).maybeSingle(),
+      loadPizzeriaRows(
+        publicDb as unknown as LooseDb,
+        supabaseAdmin as unknown as AdminDb & LooseDb,
+        store.id,
+      ),
+    ]);
+    const assetOwnerId = assetOwner?.owner_id ?? "";
 
     const paths = [
       ...(pizzeriaRaw?.flavors ?? []).map((f) => f.image_url),
@@ -468,11 +483,15 @@ export const getStorefront = createServerFn({ method: "GET" })
       ...(categories ?? []).map((c) => c.image_url),
       ...(variants ?? []).map((variant) => variant.image_url),
       ...(gallery ?? []).map((g) => g.image_url),
-    ].filter((p): p is string => Boolean(p) && !p!.startsWith("http"));
+    ].filter(
+      (path): path is string =>
+        typeof path === "string" &&
+        !path.startsWith("http") &&
+        isSafeStoreAssetPath(path, assetOwnerId),
+    );
     const signed = new Map<string, string>();
     if (paths.length) {
       // O bucket é privado; assinamos apenas os caminhos referenciados pela loja.
-      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: urls, error: signingError } = await supabaseAdmin.storage
         .from("store-assets")
         .createSignedUrls(paths, 60 * 60);
@@ -681,12 +700,12 @@ export const getStorefront = createServerFn({ method: "GET" })
 type PizzeriaRows = {
   settings: {
     delivery_enabled?: boolean;
-    delivery_radius_km?: number;
-    delivery_fee?: number;
     display_name: string | null;
     order_instructions: string;
     allow_half_flavors: boolean;
     allow_quarter_flavors: boolean;
+    require_size?: boolean;
+    require_flavors?: boolean;
     require_border?: boolean;
     require_sauce?: boolean;
     require_additional?: boolean;
@@ -711,45 +730,66 @@ type PizzeriaRows = {
   }[];
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type LooseDb = { from: (table: string) => any };
+type LooseDb = Pick<ServerSupabaseAdmin, "from">;
 
-/** Lê o cardápio público da Pizzaria; as regras de acesso do banco exigem módulo ativo e PRO. */
-async function loadPizzeriaRows(db: LooseDb, storeId: string): Promise<PizzeriaRows | null> {
+type PizzeriaSettingsRow = NonNullable<PizzeriaRows["settings"]>;
+type StoreModuleRow = { id: string };
+
+/** Lê catálogo público e apenas campos allowlisted da configuração no servidor. */
+async function loadPizzeriaRows(
+  db: LooseDb,
+  admin: AdminDb & LooseDb,
+  storeId: string,
+): Promise<PizzeriaRows | null> {
   const { data: moduleRow } = await db
-    .from("store_modules")
+    .from<StoreModuleRow>("store_modules")
     .select("id")
     .eq("store_id", storeId)
     .eq("module", "pizzaria")
     .eq("is_active", true)
     .maybeSingle();
-  if (!moduleRow) return null;
-  const [settings, sizes, flavors, prices, addons] = await Promise.all([
-    db.from("pizzeria_settings").select("*").eq("store_id", storeId).maybeSingle(),
+  if (!moduleRow || !(await hasStoreProAccess(admin, storeId))) return null;
+  const [settings, sizes, flavors, prices, addons, deliveryConfig] = await Promise.all([
+    admin
+      .from<PizzeriaSettingsRow>("pizzeria_settings")
+      .select(
+        "display_name, order_instructions, allow_half_flavors, allow_quarter_flavors, require_size, require_flavors, require_border, require_sauce, require_additional, require_drink",
+      )
+      .eq("store_id", storeId)
+      .maybeSingle(),
     db
-      .from("pizzeria_sizes")
+      .from<PizzeriaRows["sizes"]>("pizzeria_sizes")
       .select("id, name, diameter_cm, max_flavors")
       .eq("store_id", storeId)
       .eq("is_active", true)
       .order("sort_order"),
     db
-      .from("pizzeria_flavors")
+      .from<PizzeriaRows["flavors"]>("pizzeria_flavors")
       .select("id, name, description, category, image_url")
       .eq("store_id", storeId)
       .eq("is_active", true)
       .order("sort_order")
       .order("name"),
-    db.from("pizzeria_flavor_prices").select("size_id, flavor_id, price").eq("store_id", storeId),
     db
-      .from("pizzeria_addons")
+      .from<PizzeriaRows["prices"]>("pizzeria_flavor_prices")
+      .select("size_id, flavor_id, price")
+      .eq("store_id", storeId),
+    db
+      .from<PizzeriaRows["addons"]>("pizzeria_addons")
       .select("id, group_key, name, description, price, image_url")
       .eq("store_id", storeId)
       .eq("is_active", true)
       .order("sort_order")
       .order("name"),
+    readCanonicalDeliveryConfig(admin, storeId),
   ]);
+  if (settings.error || sizes.error || flavors.error || prices.error || addons.error) {
+    throw new Error("Não foi possível carregar o cardápio da pizzaria.");
+  }
   const rows: PizzeriaRows = {
-    settings: settings.data ?? null,
+    settings: settings.data
+      ? { ...settings.data, delivery_enabled: deliveryConfig?.enabled ?? false }
+      : null,
     sizes: sizes.data ?? [],
     flavors: flavors.data ?? [],
     prices: prices.data ?? [],
@@ -765,9 +805,7 @@ function mapPizzeria(
 ): PublicPizzeria {
   const s = rows.settings;
   return {
-    deliveryEnabled: Boolean(s?.delivery_enabled),
-    deliveryRadiusKm: Number(s?.delivery_radius_km ?? 5),
-    deliveryFee: Number(s?.delivery_fee ?? 0),
+    deliveryAvailable: Boolean(s?.delivery_enabled),
     displayName: s?.display_name ?? null,
     instructions: s?.order_instructions ?? "",
     allowHalf: s?.allow_half_flavors ?? true,
@@ -830,7 +868,7 @@ const orderSchema = z.object({
   receiptPath: z
     .string()
     .max(300)
-    .regex(/^receipts\/[0-9a-f-]{36}\/[0-9a-zA-Z._-]+$/)
+    .regex(/^receipts\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.(pdf|jpg|png|webp)$/i)
     .nullable()
     .optional(),
   items: z
@@ -874,19 +912,25 @@ export const submitOrder = createServerFn({ method: "POST" })
       .eq("id", data.storeId)
       .maybeSingle();
     if (!store || !store.is_active) throw new Error("Loja indisponível");
+    if (data.receiptPath && !data.receiptPath.startsWith(`receipts/${store.id}/`)) {
+      throw new Error("O comprovante não pertence a esta loja.");
+    }
     let deliveryFee = 0;
     let deliveryDistance: number | null = null;
     const hasPizzeriaItems = data.items.some((i) => i.pizza || i.addonId);
     if (hasPizzeriaItems) {
-      const { data: settings, error: settingsError } = await supabaseAdmin
-        .from("pizzeria_settings")
-        .select("delivery_enabled, delivery_origin_cep, delivery_radius_km, delivery_fee")
+      const admin = supabaseAdmin as unknown as AdminDb & LooseDb;
+      const { data: moduleRow, error: moduleError } = await admin
+        .from("store_modules")
+        .select("id")
         .eq("store_id", store.id)
+        .eq("module", "pizzaria")
+        .eq("is_active", true)
         .maybeSingle();
-      if (settingsError) throw new Error("Não foi possível verificar a área de entrega.");
+      if (moduleError || !moduleRow || !(await hasStoreProAccess(admin, store.id))) {
+        throw new Error("O cardápio da pizzaria está indisponível.");
+      }
       if (data.deliveryAddress) {
-        if (!settings?.delivery_enabled)
-          throw new Error("Entrega indisponível; selecione retirada na pizzaria.");
         const address = data.deliveryAddress;
         if (
           ![
@@ -898,17 +942,9 @@ export const submitOrder = createServerFn({ method: "POST" })
           ].every((v) => v.trim())
         )
           throw new Error("Preencha o endereço completo de entrega.");
-        const { checkPostalDelivery } = await import("./delivery.server");
-        const result = await checkPostalDelivery(
-          settings.delivery_origin_cep,
-          address.cep,
-          Number(settings.delivery_radius_km),
-        );
-        if (!result.allowed)
-          throw new Error(
-            `Não entregamos neste endereço. O limite de entrega é ${settings.delivery_radius_km} km, aproximadamente pelo CEP.`,
-          );
-        deliveryFee = Number(settings.delivery_fee);
+        const result = await quoteForStore(admin, store.id, address.cep);
+        if (!result.allowed) throw new Error("Não atendemos entrega neste CEP.");
+        deliveryFee = result.fee;
         deliveryDistance = result.distanceKm;
       }
     }
@@ -990,81 +1026,47 @@ export const submitOrder = createServerFn({ method: "POST" })
       subtotal: number;
     }[] = [...productRows, ...pizzeriaRows];
 
-    // Baixa de estoque atômica: só desconta quando ainda há unidades suficientes.
-    const taken: { table: "products" | "product_variants"; id: string; quantity: number }[] = [];
-    const rollback = async () => {
-      for (const entry of taken) {
-        const { data: row } = await supabaseAdmin
-          .from(entry.table)
-          .select("stock")
-          .eq("id", entry.id)
-          .maybeSingle();
-        if (row)
-          await supabaseAdmin
-            .from(entry.table)
-            .update({ stock: row.stock + entry.quantity })
-            .eq("id", entry.id);
+    const stockByRow = new Map<
+      string,
+      {
+        table: "products" | "product_variants";
+        id: string;
+        quantity: number;
+        available: number;
+        name: string;
       }
-    };
-
+    >();
     for (const item of productItems) {
       const product = (products ?? []).find((p) => p.id === item.productId);
       if (!product?.track_stock) continue;
       const variant = item.variantId
         ? (variants ?? []).find((v) => v.id === item.variantId && v.product_id === product.id)
         : null;
-      if (product.has_variants && !variant) {
-        await rollback();
+      if (product.has_variants && !variant)
         throw new Error(`Selecione uma variação para "${product.name}".`);
-      }
       const table = variant ? ("product_variants" as const) : ("products" as const);
       const rowId = variant ? variant.id : product.id;
-      const current = variant ? variant.stock : product.stock;
-      const { data: updated } = await supabaseAdmin
-        .from(table)
-        .update({ stock: current - item.quantity })
-        .eq("id", rowId)
-        .gte("stock", item.quantity)
-        .select("id")
-        .maybeSingle();
-      if (!updated) {
-        await rollback();
-        throw new Error(`Estoque insuficiente para "${product.name}".`);
-      }
-      taken.push({ table, id: rowId, quantity: item.quantity });
+      const key = `${table}:${rowId}`;
+      const existing = stockByRow.get(key);
+      stockByRow.set(key, {
+        table,
+        id: rowId,
+        quantity: (existing?.quantity ?? 0) + item.quantity,
+        available: Number(variant ? variant.stock : product.stock),
+        name: product.name,
+      });
     }
+    const stockAdjustments = [...stockByRow.values()].map(
+      ({ table, id, quantity, available, name }) => {
+        if (available < quantity) throw new Error(`Estoque insuficiente para "${name}".`);
+        return { table, id, quantity };
+      },
+    );
 
     const total = deliveryTotal(
       items.reduce((sum, i) => sum + i.subtotal, 0),
       deliveryFee,
     );
-
-    let customerId: string | null = null;
-    if (normalizedCustomerWhatsapp) {
-      const { data: customer } = await supabaseAdmin
-        .from("customers")
-        .upsert(
-          {
-            store_id: store.id,
-            whatsapp: normalizedCustomerWhatsapp,
-            name: data.customerName || "",
-            last_order_at: new Date().toISOString(),
-          },
-          { onConflict: "store_id,whatsapp" },
-        )
-        .select("id, orders_count, total_spent")
-        .maybeSingle();
-      if (customer) {
-        customerId = customer.id;
-        await supabaseAdmin
-          .from("customers")
-          .update({
-            orders_count: (customer.orders_count ?? 0) + 1,
-            total_spent: Number(customer.total_spent ?? 0) + total,
-          })
-          .eq("id", customer.id);
-      }
-    }
 
     // O parcelamento é validado no servidor contra as regras reais do vendedor.
     const installmentsAllowed =
@@ -1082,62 +1084,22 @@ export const submitOrder = createServerFn({ method: "POST" })
         candidate > 1 && perInstallment >= Number(store.min_installment_amount) ? candidate : 1;
     }
     const paymentMethod = installmentCount > 1 ? "parcelado" : "pix_avista";
-
-    const { data: order, error } = await supabaseAdmin
-      .from("orders")
-      .insert({
-        store_id: store.id,
-        customer_id: customerId,
-        customer_name: data.customerName,
-        customer_whatsapp: normalizedCustomerWhatsapp,
-        note: data.note,
-        delivery_cep: data.deliveryAddress?.cep ?? null,
-        delivery_address: data.deliveryAddress?.address ?? null,
-        delivery_number: data.deliveryAddress?.number ?? null,
-        delivery_complement: data.deliveryAddress?.complement ?? null,
-        delivery_neighborhood: data.deliveryAddress?.neighborhood ?? null,
-        delivery_city: data.deliveryAddress?.city ?? null,
-        delivery_state: data.deliveryAddress?.state ?? null,
-        delivery_fee: deliveryFee,
-        delivery_distance_km: deliveryDistance,
-        total,
-        payment_declared: data.paymentDeclared,
-        receipt_path: data.receiptPath ?? null,
-        payment_method: paymentMethod,
-        installments_count: installmentCount,
-        status: data.paymentDeclared ? "pagamento_informado" : "novo",
-      })
-      .select("id, number")
-      .single();
-    if (error) {
-      await rollback();
-      throw new Error(error.message);
-    }
-
-    const { error: itemsError } = await supabaseAdmin
-      .from("order_items")
-      .insert(items.map((i) => ({ ...i, order_id: order.id })));
-    if (itemsError) {
-      await supabaseAdmin.from("orders").delete().eq("id", order.id);
-      await rollback();
-      throw new Error("Não foi possível registrar os itens do pedido.");
-    }
-
+    const installmentRows: {
+      installment_number: number;
+      total_installments: number;
+      amount: number;
+      due_date: string;
+    }[] = [];
     if (installmentCount > 1) {
       const { splitInstallments, FIRST_DUE_OFFSET_DAYS, INSTALLMENT_INTERVAL_DAYS } =
         await import("./format");
       const values = splitInstallments(total, installmentCount);
       const today = new Date();
-      const { error: installmentsError } = await supabaseAdmin.from("installments").insert(
-        values.map((amount, index) => {
+      installmentRows.push(
+        ...values.map((amount, index) => {
           const due = new Date(today);
-          // Parcela 1 vence em +30 dias, parcela 2 em +60, e assim por diante.
           due.setDate(due.getDate() + FIRST_DUE_OFFSET_DAYS + index * INSTALLMENT_INTERVAL_DAYS);
-
           return {
-            store_id: store.id,
-            order_id: order.id,
-            customer_id: customerId,
             installment_number: index + 1,
             total_installments: installmentCount,
             amount,
@@ -1145,12 +1107,65 @@ export const submitOrder = createServerFn({ method: "POST" })
           };
         }),
       );
-      if (installmentsError) {
-        await supabaseAdmin.from("order_items").delete().eq("order_id", order.id);
-        await supabaseAdmin.from("orders").delete().eq("id", order.id);
-        await rollback();
-        throw new Error("Não foi possível registrar o parcelamento.");
+    }
+
+    // This RPC owns the database transaction and locks stock rows before updating them.
+    const atomicDb = supabaseAdmin as unknown as {
+      rpc: (
+        functionName: string,
+        args: Record<string, unknown>,
+      ) => Promise<{
+        data: unknown;
+        error: { message: string; code?: string } | null;
+      }>;
+    };
+    const { data: atomicResult, error: atomicError } = await atomicDb.rpc(
+      "create_storefront_order_atomic",
+      {
+        p_order: {
+          store_id: store.id,
+          customer_name: data.customerName,
+          customer_whatsapp: normalizedCustomerWhatsapp,
+          note: data.note,
+          delivery_cep: data.deliveryAddress?.cep ?? null,
+          delivery_address: data.deliveryAddress?.address ?? null,
+          delivery_number: data.deliveryAddress?.number ?? null,
+          delivery_complement: data.deliveryAddress?.complement ?? null,
+          delivery_neighborhood: data.deliveryAddress?.neighborhood ?? null,
+          delivery_city: data.deliveryAddress?.city ?? null,
+          delivery_state: data.deliveryAddress?.state ?? null,
+          delivery_fee: deliveryFee,
+          delivery_distance_km: deliveryDistance,
+          total,
+          payment_declared: data.paymentDeclared,
+          receipt_path: data.receiptPath ?? null,
+          payment_method: paymentMethod,
+          installments_count: installmentCount,
+          status: data.paymentDeclared ? "pagamento_informado" : "novo",
+        },
+        p_items: items,
+        p_stock_adjustments: stockAdjustments,
+        p_installments: installmentRows,
+        p_customer_name: data.customerName || "",
+        p_customer_whatsapp: normalizedCustomerWhatsapp,
+      },
+    );
+    if (atomicError) {
+      if (/stock|estoque/i.test(atomicError.message)) {
+        throw new Error("Estoque insuficiente para um ou mais itens do pedido.");
       }
+      console.error("[checkout] falha na transação de pedido", { code: atomicError.code });
+      throw new Error("Não foi possível registrar o pedido. Tente novamente.");
+    }
+    const order = (Array.isArray(atomicResult) ? atomicResult[0] : atomicResult) as {
+      id?: string;
+      number?: number;
+      customer_id?: string | null;
+    } | null;
+    if (!order?.id || order.number === undefined) {
+      throw new Error("A transação não retornou os dados do pedido.");
+    }
+    if (installmentCount > 1) {
       await supabaseAdmin.from("audit_logs").insert({
         store_id: store.id,
         action: "installments_created",
@@ -1267,6 +1282,14 @@ export const getOrderReceiptUrl = createServerFn({ method: "POST" })
   });
 
 type OrderItemInput = z.infer<typeof orderSchema>["items"][number];
+type PizzeriaOrderingSettings = {
+  allow_half_flavors?: boolean;
+  allow_quarter_flavors?: boolean;
+  require_border?: boolean;
+  require_sauce?: boolean;
+  require_additional?: boolean;
+  require_drink?: boolean;
+};
 
 /**
  * Converte pizzas montadas e bebidas avulsas em linhas de pedido, sempre com
@@ -1279,7 +1302,7 @@ async function buildPizzeriaOrderRows(db: LooseDb, storeId: string, input: Order
   const { pizzaUnitPrice, pizzaItemName } = await import("./pizzeria");
 
   const { data: moduleRow } = await db
-    .from("store_modules")
+    .from<StoreModuleRow>("store_modules")
     .select("id")
     .eq("store_id", storeId)
     .eq("module", "pizzaria")
@@ -1289,35 +1312,35 @@ async function buildPizzeriaOrderRows(db: LooseDb, storeId: string, input: Order
 
   const sizeIds = pizzas.map((i) => i.pizza!.sizeId);
   const flavorIds = pizzas.flatMap((i) => i.pizza!.flavorIds);
-  const addonIds = [...pizzas.flatMap((i) => i.pizza!.addonIds), ...loose.map((i) => i.addonId!)];
   const none = ["00000000-0000-0000-0000-000000000000"];
   const [sizes, flavors, prices, addons, settings] = await Promise.all([
     db
-      .from("pizzeria_sizes")
+      .from<PizzeriaRows["sizes"]>("pizzeria_sizes")
       .select("id, name, max_flavors")
       .eq("store_id", storeId)
       .eq("is_active", true)
       .in("id", [...none, ...sizeIds]),
     db
-      .from("pizzeria_flavors")
+      .from<PizzeriaRows["flavors"]>("pizzeria_flavors")
       .select("id, name")
       .eq("store_id", storeId)
       .eq("is_active", true)
       .in("id", [...none, ...flavorIds]),
     db
-      .from("pizzeria_flavor_prices")
+      .from<PizzeriaRows["prices"]>("pizzeria_flavor_prices")
       .select("size_id, flavor_id, price")
       .eq("store_id", storeId)
       .in("flavor_id", [...none, ...flavorIds]),
     db
-      .from("pizzeria_addons")
+      .from<PizzeriaRows["addons"]>("pizzeria_addons")
       .select("id, group_key, name, price")
       .eq("store_id", storeId)
-      .eq("is_active", true)
-      .in("id", [...none, ...addonIds]),
+      .eq("is_active", true),
     db
-      .from("pizzeria_settings")
-      .select("allow_half_flavors, allow_quarter_flavors")
+      .from<PizzeriaOrderingSettings>("pizzeria_settings")
+      .select(
+        "allow_half_flavors, allow_quarter_flavors, require_border, require_sauce, require_additional, require_drink",
+      )
       .eq("store_id", storeId)
       .maybeSingle(),
   ]);
@@ -1351,6 +1374,22 @@ async function buildPizzeriaOrderRows(db: LooseDb, storeId: string, input: Order
       if (!addon) throw new Error("Adicional indisponível.");
       return addon;
     });
+    const requiredGroups = [
+      { required: settings.data?.require_border, group: "borda", message: "Escolha a borda." },
+      { required: settings.data?.require_sauce, group: "molho", message: "Escolha o molho." },
+      {
+        required: settings.data?.require_additional,
+        group: "adicional",
+        message: "Escolha pelo menos um adicional.",
+      },
+    ];
+    for (const requirement of requiredGroups) {
+      const groupAvailable = addonList.some((addon) => addon.group_key === requirement.group);
+      const groupSelected = extras.some((addon) => addon.group_key === requirement.group);
+      if (requirement.required && groupAvailable && !groupSelected) {
+        throw new Error(requirement.message);
+      }
+    }
     const unit = pizzaUnitPrice(
       chosen.map((c) => c.price),
       extras.map((e) => Number(e.price)),
@@ -1372,8 +1411,18 @@ async function buildPizzeriaOrderRows(db: LooseDb, storeId: string, input: Order
       subtotal: Number((unit * item.quantity).toFixed(2)),
     };
   });
+  if (
+    pizzas.length &&
+    settings.data?.require_drink &&
+    addonList.some((addon) => addon.group_key === "bebida") &&
+    !loose.some((item) =>
+      addonList.some((addon) => addon.id === item.addonId && addon.group_key === "bebida"),
+    )
+  ) {
+    throw new Error("Escolha pelo menos uma bebida para acompanhar a pizza.");
+  }
   for (const item of loose) {
-    const addon = addonList.find((a) => a.id === item.addonId);
+    const addon = addonList.find((a) => a.id === item.addonId && a.group_key === "bebida");
     if (!addon) throw new Error("Item da pizzaria indisponível.");
     const unit = Number(addon.price);
     rows.push({

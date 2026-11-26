@@ -55,6 +55,7 @@ import { EncomendaDialog } from "@/components/EncomendaDialog";
 import { BackButton } from "@/components/BackButton";
 import { PizzeriaBuilder } from "@/components/PizzeriaBuilder";
 import { quoteDelivery } from "@/lib/delivery.functions";
+import { getPublicPremiumSections } from "@/lib/premium-storefront.functions";
 import { deliveryTotal } from "@/lib/delivery";
 import {
   buildTechnologyQuoteMessage,
@@ -70,8 +71,13 @@ import {
   TechnologyStorefrontTop,
 } from "@/components/storefront/TechnologyStorefront";
 import { PremiumStorefrontNav } from "@/components/storefront/PremiumStorefrontNav";
+import { PublicPremiumSections } from "@/components/storefront/PublicPremiumSections";
 
-type StorePageLoaderData = PublicStorefrontPageData;
+type StorePageLoaderData =
+  | (PublicStorefrontPageData & {
+      premiumSections: { key: string; sortOrder: number; content: unknown }[];
+    })
+  | null;
 
 function instagramHref(value: string | null | undefined) {
   const raw = value?.trim();
@@ -100,7 +106,14 @@ const loadPublicStorefront = createPublicStorefrontLoader({
 });
 
 export const Route = createFileRoute("/loja/$slug")({
-  loader: ({ params }) => loadPublicStorefront(params.slug),
+  loader: async ({ params }) => {
+    const storefront = await loadPublicStorefront(params.slug);
+    if (!storefront) return null;
+    const premiumSections = storefront.store.is_premium
+      ? await getPublicPremiumSections({ data: { slug: params.slug } })
+      : [];
+    return { ...storefront, premiumSections };
+  },
   head: ({ loaderData }) => {
     if (!loaderData) {
       return {
@@ -183,12 +196,9 @@ export function StorePage() {
   const sendOrder = useServerFn(submitOrder);
   const getDeliveryQuote = useServerFn(quoteDelivery);
   const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">("delivery");
-  const [deliveryQuote, setDeliveryQuote] = useState<{
-    allowed: boolean;
-    distanceKm: number;
-    fee: number;
-    cep: string;
-  } | null>(null);
+  const [deliveryQuote, setDeliveryQuote] = useState<
+    { allowed: true; fee: number; cep: string } | { allowed: false; cep: string } | null
+  >(null);
   const [checkingDelivery, setCheckingDelivery] = useState(false);
   const [deliveryError, setDeliveryError] = useState("");
 
@@ -413,14 +423,10 @@ export function StorePage() {
 
   const hasPizzaItems = cart.items.some((item) => item.pizza || item.addonId);
   const pizzaDelivery =
-    hasPizzaItems && Boolean(data?.pizzeria?.deliveryEnabled) && fulfillment === "delivery";
+    hasPizzaItems && Boolean(data?.pizzeria?.deliveryAvailable) && fulfillment === "delivery";
   const currentQuote =
     deliveryQuote?.cep === delivery.cep.replace(/\D/g, "") ? deliveryQuote : null;
-  const shippingFee = pizzaDelivery
-    ? currentQuote?.allowed
-      ? currentQuote.fee
-      : Number(data?.pizzeria?.deliveryFee ?? 0)
-    : 0;
+  const shippingFee = pizzaDelivery ? (currentQuote?.allowed ? currentQuote.fee : 0) : 0;
   const checkoutTotal = deliveryTotal(cart.total, shippingFee);
   const plans = useMemo(() => {
     if (!data?.store.allow_installments) return [];
@@ -473,11 +479,9 @@ export function StorePage() {
     setDeliveryQuote(null);
     try {
       const result = await getDeliveryQuote({ data: { slug: params.slug, cep } });
-      setDeliveryQuote(result);
+      setDeliveryQuote({ ...result, cep });
       if (!result.allowed)
-        setDeliveryError(
-          `Não entregamos neste endereço. Limite: ${result.radiusKm} km aproximadamente pelo CEP. Você pode escolher retirada.`,
-        );
+        setDeliveryError("Não atendemos entrega neste CEP. Você pode escolher retirada.");
     } catch (error) {
       setDeliveryError(
         error instanceof Error
@@ -843,6 +847,10 @@ export function StorePage() {
           ) : null}
         </div>
       </header>
+
+      {isPremium && data.premiumSections.length ? (
+        <PublicPremiumSections sections={data.premiumSections} primaryColor={store.primary_color} />
+      ) : null}
 
       <div
         className={cn(
@@ -1769,7 +1777,7 @@ export function StorePage() {
                 {hasPizzaItems ? (
                   <div className="space-y-3 border-b pb-4">
                     <p className="text-sm font-semibold">Entrega ou retirada</p>
-                    {data.pizzeria?.deliveryEnabled ? (
+                    {data.pizzeria?.deliveryAvailable ? (
                       <div className="grid grid-cols-2 gap-2">
                         <Button
                           variant={fulfillment === "delivery" ? "default" : "outline"}
@@ -1789,8 +1797,9 @@ export function StorePage() {
                     )}
                     {pizzaDelivery ? (
                       <p className="text-sm">
-                        Frete: {brl(shippingFee)} · Raio aproximado de{" "}
-                        {data.pizzeria?.deliveryRadiusKm} km pelo CEP
+                        {currentQuote?.allowed
+                          ? `Frete: ${brl(shippingFee)}`
+                          : "Informe o CEP e verifique a disponibilidade para calcular o frete."}
                       </p>
                     ) : null}
                   </div>
@@ -1957,8 +1966,7 @@ export function StorePage() {
                         ) : null}
                         {currentQuote?.allowed ? (
                           <p role="status" className="text-sm text-primary">
-                            Entregamos neste CEP · {currentQuote.distanceKm} km aproximadamente ·
-                            Frete {brl(currentQuote.fee)}
+                            Entrega disponível neste CEP · Frete {brl(currentQuote.fee)}
                           </p>
                         ) : null}
                       </div>
