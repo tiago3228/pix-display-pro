@@ -506,8 +506,13 @@ export const getStorefront = createServerFn({ method: "GET" })
         if (entry.path && entry.signedUrl) signed.set(entry.path, entry.signedUrl);
       }
     }
-    const resolve = (p: string | null) =>
-      !p ? null : p.startsWith("http") ? p : (signed.get(p) ?? null);
+    const resolve = (p: string | null) => {
+      if (!p) return null;
+      if (p.startsWith("http") || /^\/assets\/confeitaria\/[a-z0-9-]+\.webp$/i.test(p)) {
+        return p;
+      }
+      return signed.get(p) ?? null;
+    };
 
     return {
       store: {
