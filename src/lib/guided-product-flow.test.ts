@@ -29,3 +29,17 @@ test("ativa o fallback pela categoria escolhida sem depender do segmento geral d
   assert.deepEqual(getGuidedCatalogSuggestions("cafeteria", "categoria sem catálogo", []), []);
   assert.deepEqual(getGuidedCatalogSuggestions("roupas", "🍰 Bolos e Doces", []), []);
 });
+
+test("sugere os produtos genéricos de cafeteria pelas categorias correspondentes", () => {
+  const namesFor = (category: string) =>
+    getGuidedCatalogSuggestions("cafeteria", category, []).map((item) => item.name);
+
+  assert.deepEqual(namesFor("☕ Cafés"), ["Café", "Cappuccino"]);
+  assert.deepEqual(namesFor("Cappuccinos"), ["Cappuccino"]);
+  assert.deepEqual(namesFor("🥟 Empadas"), ["Empada"]);
+  assert.deepEqual(namesFor("🥐 Pastéis Assados"), ["Pastel Assado"]);
+  assert.deepEqual(namesFor("🥧 Tortinhas"), ["Tortinha"]);
+  assert.deepEqual(namesFor("🥤 Bebidas"), ["Cappuccino", "Bebida"]);
+  assert.deepEqual(namesFor("Salgados e Lanches"), ["Empada", "Pastel Assado", "Tortinha"]);
+  assert.deepEqual(getGuidedCatalogSuggestions("cafeteria", "Empadas", [{ name: "EMPADA" }]), []);
+});

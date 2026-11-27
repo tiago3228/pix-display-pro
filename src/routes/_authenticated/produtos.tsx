@@ -23,6 +23,7 @@ import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { getSignedAssetUrl } from "@/lib/images.functions";
 import { resolveAsset, uploadAsset } from "@/lib/images";
 import { FREE_PLAN_PRODUCT_LIMIT, brl } from "@/lib/format";
+import { CAFETERIA_GUIDED_DESCRIPTION_DEFAULTS } from "@/lib/cafeteria-catalog";
 import {
   filterGuidedCategoryProducts,
   getGuidedCatalogSuggestions,
@@ -31,7 +32,6 @@ import { searchProductDiscovery, type DiscoveryResult } from "@/lib/product-disc
 import { listSportsNodes, sportsDb, type SportsNode } from "@/lib/sports";
 import {
   buildConfectioneryProductRows,
-  CONFECTIONERY_CATALOG,
   CONFECTIONERY_CATEGORY_NAMES,
   searchConfectionerySuggestions,
 } from "@/lib/confeitaria-catalog";
@@ -393,17 +393,7 @@ const guidedDescriptionDefaults: Record<string, Record<string, string>> = {
     Esportivos: "Calçado esportivo para treinos, caminhadas e atividades físicas.",
     Personalizados: "Calçado personalizado conforme o estilo e a necessidade do cliente.",
   },
-  cafeteria: {
-    Café: "Café preparado na hora com sabor e aroma especiais.",
-    Cappuccino: "Cappuccino cremoso para acompanhar seu momento de pausa.",
-    Empada: "Empada assada com massa leve e recheio saboroso.",
-    "Pastel Assado": "Pastel assado com massa dourada e recheio caprichado.",
-    Tortinha: "Tortinha artesanal com recheio especial e massa crocante.",
-    Bolo: "Bolo caseiro macio e saboroso, feito com carinho.",
-    Doce: "Doce especial para adoçar seu dia.",
-    Bebida: "Bebida refrescante para acompanhar seu pedido.",
-    Combo: "Combo especial com itens selecionados por um preço diferenciado.",
-  },
+  cafeteria: CAFETERIA_GUIDED_DESCRIPTION_DEFAULTS,
   roupas_treino: {
     "Camiseta de treino": "Camiseta confortável para treinos e atividades físicas.",
     "Camiseta Dry Fit": "Camiseta Dry Fit leve, respirável e de secagem rápida.",
@@ -948,7 +938,9 @@ function Products() {
     }
 
     const selectedCatalogSuggestion = guidedProductId.startsWith(guidedCatalogOptionPrefix)
-      ? CONFECTIONERY_CATALOG.find((item) => guidedCatalogOptionValue(item) === guidedProductId)
+      ? getGuidedCatalogSuggestions(guidedModule, selectedGuidedCategory?.name, []).find(
+          (item) => guidedCatalogOptionValue(item) === guidedProductId,
+        )
       : undefined;
     const name = selectedCatalogSuggestion?.name ?? guidedManualName.trim();
     if (!name) return;
@@ -2266,7 +2258,8 @@ function Products() {
               <Label>3. Escolha um produto ou digite o nome</Label>
               <p className="mt-1 text-xs text-muted-foreground">
                 Primeiro aparecem os produtos já cadastrados nesta categoria e loja. Para
-                confeitaria, também há sugestões iniciais do catálogo; você pode digitar outro nome.
+                confeitaria e cafeteria, também há sugestões iniciais do catálogo; você pode digitar
+                outro nome.
               </p>
             </div>
             <Select
@@ -2278,7 +2271,7 @@ function Products() {
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione um produto cadastrado (opcional)" />
+                <SelectValue placeholder="Selecione um produto cadastrado ou sugestão (opcional)" />
               </SelectTrigger>
               <SelectContent>
                 {guidedCategoryProducts.map((product) => (
@@ -2306,8 +2299,8 @@ function Products() {
             </Select>
             {guidedCatalogSuggestions.length ? (
               <p className="text-xs text-muted-foreground">
-                Sugestões de confeitaria são apenas um ponto de partida. Elas serão abertas como
-                rascunho oculto, sem preço nem compra ativos, para revisão da loja.
+                Sugestões locais são apenas um ponto de partida. Elas serão abertas como rascunho
+                oculto, sem preço nem compra ativos, para revisão da loja.
               </p>
             ) : null}
             {guidedCategoryId &&

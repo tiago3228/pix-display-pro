@@ -1,3 +1,4 @@
+import { getCafeteriaCatalogSuggestions } from "./cafeteria-catalog.ts";
 import { getConfectioneryCatalogSuggestions } from "./confeitaria-catalog.ts";
 
 export function filterGuidedCategoryProducts<T extends { category_id: string | null }>(
@@ -14,5 +15,8 @@ export function getGuidedCatalogSuggestions<T extends { name: string }>(
   categoryProducts: T[],
 ) {
   if (module !== "cafeteria") return [];
-  return getConfectioneryCatalogSuggestions(categoryName, categoryProducts);
+  return [
+    ...getConfectioneryCatalogSuggestions(categoryName, categoryProducts),
+    ...getCafeteriaCatalogSuggestions(categoryName, categoryProducts),
+  ];
 }
