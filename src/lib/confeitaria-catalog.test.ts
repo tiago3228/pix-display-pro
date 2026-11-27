@@ -4,6 +4,7 @@ import {
   buildConfectioneryProductRows,
   CONFECTIONERY_CATALOG,
   CONFECTIONERY_CATEGORY_NAMES,
+  getConfectioneryCatalogSuggestions,
   searchConfectioneryCatalog,
   searchConfectionerySuggestions,
 } from "./confeitaria-catalog.ts";
@@ -103,6 +104,24 @@ test("sugere primeiro produtos já cadastrados na loja sem repetir itens do cat�
   );
   assert.equal(suggestions[0]?.description, "Descrição salva");
   assert.equal(suggestions[0]?.category, "Bolos no Pote");
+});
+
+test("oferece sugestões locais da categoria e omite produtos já cadastrados", () => {
+  const cakeSuggestions = getConfectioneryCatalogSuggestions("Bolos no Pote", [
+    { name: " brigadeiro " },
+  ]);
+  const sweetSuggestions = getConfectioneryCatalogSuggestions("Doces", [
+    { name: "Beijinho Gourmet" },
+  ]);
+
+  assert.equal(cakeSuggestions.length, 20);
+  assert.ok(!cakeSuggestions.some((item) => item.name === "Brigadeiro"));
+  assert.ok(cakeSuggestions.every((item) => item.category === "Bolos no Pote"));
+  assert.ok(!sweetSuggestions.some((item) => item.name === "Beijinho"));
+  assert.equal(getConfectioneryCatalogSuggestions("categoria desconhecida").length, 0);
+  assert.equal(getConfectioneryCatalogSuggestions("🍰 Bolos e Doces").length, 28);
+  assert.equal(getConfectioneryCatalogSuggestions("Confeitaria").length, 28);
+  assert.equal(getConfectioneryCatalogSuggestions(null).length, 0);
 });
 
 test("pré-cadastra 28 itens ocultos, indisponíveis e sem preço comercial ativo", () => {

@@ -244,6 +244,28 @@ export function searchConfectioneryCatalog(query: string, limit = 8) {
   ).slice(0, limit);
 }
 
+export function getConfectioneryCatalogSuggestions(
+  categoryName: string | null | undefined,
+  existingProducts: Pick<ConfectionerySuggestion, "name">[] = [],
+): ConfectioneryCatalogItem[] {
+  if (!categoryName?.trim()) return [];
+  const category = normalizeConfectioneryName(categoryName).replace(/^[^a-z0-9]+/i, "");
+  const isBroadConfectioneryCategory = ["bolos e doces", "confeitaria"].includes(category);
+  const existingNames = new Set(
+    existingProducts.map((product) => normalizeConfectioneryName(product.name)),
+  );
+
+  return CONFECTIONERY_CATALOG.filter((item) => {
+    if (!isBroadConfectioneryCategory && normalizeConfectioneryName(item.category) !== category) {
+      return false;
+    }
+    const name = normalizeConfectioneryName(item.name);
+    const aliases =
+      item.name === "Beijinho" && item.category === "Doces" ? [name, "beijinho gourmet"] : [name];
+    return !aliases.some((alias) => existingNames.has(alias));
+  });
+}
+
 export function searchConfectionerySuggestions(
   query: string,
   existingProducts: ConfectionerySuggestion[] = [],

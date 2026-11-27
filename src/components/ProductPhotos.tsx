@@ -159,6 +159,10 @@ function Thumb({
       setUrl(path);
       return;
     }
+    if (/^\/assets\/confeitaria\/[a-z0-9-]+\.webp$/i.test(path)) {
+      setUrl(path);
+      return;
+    }
     void signAsset({ data: { path } })
       .then((result) => setUrl(result.url))
       .catch(() => setUrl(null));

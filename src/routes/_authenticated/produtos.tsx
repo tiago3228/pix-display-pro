@@ -23,11 +23,14 @@ import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { getSignedAssetUrl } from "@/lib/images.functions";
 import { resolveAsset, uploadAsset } from "@/lib/images";
 import { FREE_PLAN_PRODUCT_LIMIT, brl } from "@/lib/format";
+import { filterGuidedCategoryProducts } from "@/lib/guided-product-flow";
 import { searchProductDiscovery, type DiscoveryResult } from "@/lib/product-discovery.functions";
 import { listSportsNodes, sportsDb, type SportsNode } from "@/lib/sports";
 import {
   buildConfectioneryProductRows,
+  CONFECTIONERY_CATALOG,
   CONFECTIONERY_CATEGORY_NAMES,
+  getConfectioneryCatalogSuggestions,
   searchConfectionerySuggestions,
 } from "@/lib/confeitaria-catalog";
 import {
@@ -342,6 +345,12 @@ function normalizeCatalogName(value: string) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLocaleLowerCase("pt-BR");
+}
+
+const guidedCatalogOptionPrefix = "catalog:";
+
+function guidedCatalogOptionValue(item: { category: string; name: string }) {
+  return `${guidedCatalogOptionPrefix}${normalizeCatalogName(item.category)}:${normalizeCatalogName(item.name)}`;
 }
 
 const guidedDescriptionDefaults: Record<string, Record<string, string>> = {
@@ -682,12 +691,14 @@ function Products() {
           "id, module, name, description, service_estimated_time, price, purchase_enabled, quantity_enabled, price_visible, show_price_from, quote_enabled, stock, track_stock, has_variants, is_available, is_hidden, is_featured, image_url, category_id, order_enabled, order_unit_price, order_min_quantity, order_max_quantity, order_lead_time, order_notes, order_progressive_pricing, sports_product_type, sports_audience, sports_is_retro, sports_is_new_release, sports_original_price, sports_offer_price, sports_offer_percent, sports_is_customized, sports_offer_active, meal_period, delivery_enabled, shoe_brand_id, shoe_model_id, shoe_authenticity, shoe_gender, shoe_size, shoe_color, jewelry_material, jewelry_plating, jewelry_color, jewelry_stone, jewelry_is_new_release, jewelry_offer_active, jewelry_original_price, jewelry_offer_price, jewelry_offer_percent, jewelry_offer_expires_at, product_variants(id, label, price, stock, sku, image_url), product_order_tiers(min_quantity, unit_price)",
         )
         .eq("store_id", store!.id);
-      if (trainingOnly) query = query.eq("module", "roupas_treino");
-      if (shoesOnly) query = query.eq("module", "calcados");
-      if (cafeteriaOnly) query = query.eq("module", "cafeteria");
-      if (marmitariaOnly) query = query.eq("module", "marmitaria");
-      if (jewelryOnly) query = query.eq("module", "joias");
-      if (informaticaOnly) query = query.eq("module", "informatica");
+      if (!guidedProductOpen) {
+        if (trainingOnly) query = query.eq("module", "roupas_treino");
+        if (shoesOnly) query = query.eq("module", "calcados");
+        if (cafeteriaOnly) query = query.eq("module", "cafeteria");
+        if (marmitariaOnly) query = query.eq("module", "marmitaria");
+        if (jewelryOnly) query = query.eq("module", "joias");
+        if (informaticaOnly) query = query.eq("module", "informatica");
+      }
       const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
       return data as unknown as ProductRow[];
@@ -700,12 +711,17 @@ function Products() {
         (!category.module && guidedModule === getStoreNicheModule(store?.category))) &&
       category.is_active !== false,
   );
-  const guidedCategoryProducts = (products ?? []).filter(
-    (product) =>
-      product.module === guidedModule &&
-      product.category_id === guidedCategoryId &&
-      Boolean(guidedCategoryId),
+  const guidedCategoryProducts = filterGuidedCategoryProducts(products ?? [], guidedCategoryId);
+  const selectedGuidedCategory = guidedCategories.find(
+    (category) => category.id === guidedCategoryId,
   );
+  const guidedCatalogSuggestions =
+    guidedProductFlowEligible &&
+    guidedModule === "cafeteria" &&
+    isConfectioneryStoreCategory(store?.category) &&
+    guidedCategoryId
+      ? getConfectioneryCatalogSuggestions(selectedGuidedCategory?.name, guidedCategoryProducts)
+      : [];
 
   const existingConfectioneryProducts = (products ?? [])
     .filter((product) => product.module === "cafeteria")
@@ -928,10 +944,17 @@ function Products() {
       return;
     }
 
-    const name = guidedManualName.trim();
+    const selectedCatalogSuggestion = guidedProductId.startsWith(guidedCatalogOptionPrefix)
+      ? CONFECTIONERY_CATALOG.find((item) => guidedCatalogOptionValue(item) === guidedProductId)
+      : undefined;
+    const name = selectedCatalogSuggestion?.name ?? guidedManualName.trim();
     if (!name) return;
     const matchingProduct = guidedCategoryProducts.find(
-      (product) => normalizeCatalogName(product.name) === normalizeCatalogName(name),
+      (product) =>
+        normalizeCatalogName(product.name) === normalizeCatalogName(name) ||
+        (selectedCatalogSuggestion?.name === "Beijinho" &&
+          selectedCatalogSuggestion.category === "Doces" &&
+          normalizeCatalogName(product.name) === "beijinho gourmet"),
     );
     if (matchingProduct) {
       setGuidedProductOpen(false);
@@ -949,15 +972,27 @@ function Products() {
       ...emptyForm,
       module: guidedModule,
       name,
+      description: selectedCatalogSuggestion?.description ?? "",
+      price: emptyForm.price,
+      purchase_enabled: selectedCatalogSuggestion ? false : emptyForm.purchase_enabled,
+      quantity_enabled: selectedCatalogSuggestion ? false : emptyForm.quantity_enabled,
+      price_visible: selectedCatalogSuggestion ? false : emptyForm.price_visible,
+      show_price_from: false,
+      quote_enabled: false,
+      is_available: selectedCatalogSuggestion ? false : emptyForm.is_available,
+      is_hidden: selectedCatalogSuggestion ? true : emptyForm.is_hidden,
       category_id: guidedCategoryId,
     });
     setVariants([]);
     setOrderTiers([]);
-    setPhotos([]);
+    setPhotos(selectedCatalogSuggestion?.imageUrl ? [selectedCatalogSuggestion.imageUrl] : []);
     setSportsNodeId("none");
     setSportsCollectionId("none");
     setGuidedProductOpen(false);
     setOpen(true);
+    if (selectedCatalogSuggestion) {
+      toast.info("Sugestão preenchida como rascunho oculto. Revise os dados antes de publicar.");
+    }
   }
 
   function openEdit(product: ProductRow) {
@@ -2227,8 +2262,8 @@ function Products() {
             <div>
               <Label>3. Escolha um produto ou digite o nome</Label>
               <p className="mt-1 text-xs text-muted-foreground">
-                As sugestões abaixo vêm dos produtos desta categoria e desta loja. Você também pode
-                cadastrar qualquer outro nome manualmente.
+                Primeiro aparecem os produtos já cadastrados nesta categoria e loja. Para
+                confeitaria, também há sugestões iniciais do catálogo; você pode digitar outro nome.
               </p>
             </div>
             <Select
@@ -2249,11 +2284,35 @@ function Products() {
                     {product.is_hidden ? " · rascunho/oculto" : ""}
                   </SelectItem>
                 ))}
+                {guidedCatalogSuggestions.map((item) => (
+                  <SelectItem
+                    key={guidedCatalogOptionValue(item)}
+                    value={guidedCatalogOptionValue(item)}
+                  >
+                    {item.name} · sugestão do catálogo
+                  </SelectItem>
+                ))}
+                {guidedCategoryId &&
+                !guidedCategoryProducts.length &&
+                !guidedCatalogSuggestions.length ? (
+                  <SelectItem value="__guided_no_products" disabled>
+                    Sem opções cadastradas nesta categoria
+                  </SelectItem>
+                ) : null}
               </SelectContent>
             </Select>
-            {guidedCategoryId && !guidedCategoryProducts.length ? (
+            {guidedCatalogSuggestions.length ? (
               <p className="text-xs text-muted-foreground">
-                Ainda não há produtos nesta categoria. Digite o nome abaixo para começar.
+                Sugestões de confeitaria são apenas um ponto de partida. Elas serão abertas como
+                rascunho oculto, sem preço nem compra ativos, para revisão da loja.
+              </p>
+            ) : null}
+            {guidedCategoryId &&
+            !guidedCategoryProducts.length &&
+            !guidedCatalogSuggestions.length ? (
+              <p className="text-xs text-muted-foreground">
+                Ainda não há produtos cadastrados nesta categoria. Digite o nome abaixo para
+                começar.
               </p>
             ) : null}
             <div className="space-y-1.5">
@@ -2279,7 +2338,11 @@ function Products() {
               disabled={!guidedCategoryId || (!guidedProductId && !guidedManualName.trim())}
               onClick={continueGuidedProductCreation}
             >
-              {guidedProductId ? "Abrir cadastro para editar" : "Continuar para os detalhes"}
+              {guidedProductId.startsWith(guidedCatalogOptionPrefix)
+                ? "Continuar com sugestão (rascunho)"
+                : guidedProductId
+                  ? "Abrir cadastro para editar"
+                  : "Continuar para os detalhes"}
             </Button>
           </DialogFooter>
         </DialogContent>
