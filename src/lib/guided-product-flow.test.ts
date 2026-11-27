@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { filterGuidedCategoryProducts } from "./guided-product-flow.ts";
+import {
+  filterGuidedCategoryProducts,
+  getGuidedCatalogSuggestions,
+} from "./guided-product-flow.ts";
 
 test("filtra produtos pelo ID da categoria sem excluir módulo legado divergente", () => {
   const products = [
@@ -17,4 +20,12 @@ test("filtra produtos pelo ID da categoria sem excluir módulo legado divergente
   assert.deepEqual(filterGuidedCategoryProducts(products, "category-missing"), []);
   assert.deepEqual(filterGuidedCategoryProducts(products, ""), []);
   assert.deepEqual(filterGuidedCategoryProducts(products, null), []);
+});
+
+test("ativa o fallback pela categoria escolhida sem depender do segmento geral da loja", () => {
+  const suggestions = getGuidedCatalogSuggestions("cafeteria", "🍰 Bolos e Doces", []);
+
+  assert.equal(suggestions.length, 28);
+  assert.deepEqual(getGuidedCatalogSuggestions("cafeteria", "categoria sem catálogo", []), []);
+  assert.deepEqual(getGuidedCatalogSuggestions("roupas", "🍰 Bolos e Doces", []), []);
 });

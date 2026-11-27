@@ -23,14 +23,16 @@ import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { getSignedAssetUrl } from "@/lib/images.functions";
 import { resolveAsset, uploadAsset } from "@/lib/images";
 import { FREE_PLAN_PRODUCT_LIMIT, brl } from "@/lib/format";
-import { filterGuidedCategoryProducts } from "@/lib/guided-product-flow";
+import {
+  filterGuidedCategoryProducts,
+  getGuidedCatalogSuggestions,
+} from "@/lib/guided-product-flow";
 import { searchProductDiscovery, type DiscoveryResult } from "@/lib/product-discovery.functions";
 import { listSportsNodes, sportsDb, type SportsNode } from "@/lib/sports";
 import {
   buildConfectioneryProductRows,
   CONFECTIONERY_CATALOG,
   CONFECTIONERY_CATEGORY_NAMES,
-  getConfectioneryCatalogSuggestions,
   searchConfectionerySuggestions,
 } from "@/lib/confeitaria-catalog";
 import {
@@ -716,11 +718,12 @@ function Products() {
     (category) => category.id === guidedCategoryId,
   );
   const guidedCatalogSuggestions =
-    guidedProductFlowEligible &&
-    guidedModule === "cafeteria" &&
-    isConfectioneryStoreCategory(store?.category) &&
-    guidedCategoryId
-      ? getConfectioneryCatalogSuggestions(selectedGuidedCategory?.name, guidedCategoryProducts)
+    guidedProductFlowEligible && guidedCategoryId
+      ? getGuidedCatalogSuggestions(
+          guidedModule,
+          selectedGuidedCategory?.name,
+          guidedCategoryProducts,
+        )
       : [];
 
   const existingConfectioneryProducts = (products ?? [])
